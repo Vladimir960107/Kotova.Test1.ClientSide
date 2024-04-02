@@ -1,11 +1,114 @@
-using System.Text;
+Ôªøusing System.Text;
 using System;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Transactions;
 
 namespace Kotova.Test1.ClientSide
-{
+{ 
+
+    public partial class Form2 : Form
+    {
+        static string? selectedFolderPath = null;
+        public Form2()
+        {
+            InitializeComponent();
+            InitializeListBox();
+        }
+        private void InitializeListBox()
+        {
+            listBox1.Items.Add("Option 1");
+        }
+
+        private void buttonCreateNotification_Click(object sender, EventArgs e)
+        {
+            if (selectedFolderPath is null)
+            {
+                MessageBox.Show("–ü—É—Ç—å –¥–æ –∏–Ω—Å—Ç—Ä—É–∫—Ç–∞–∂–∞ –Ω–µ –≤—ã–±—Ä–∞–Ω!");
+                return;
+            }
+
+            string tableName_sql_BeginDate = "BeginDate";
+            string tableName_sql_EndDate = "EndDate";
+            string tableName_sql_IsForDrivers = "IsForDrivers";
+            string tableName_sql_PathToInstruction = "PathToInstruction";
+            string tableName_sql_NameOfInstrutcion = "NameOfInstruction";
+
+            DateTime startTime = DateTime.Now;
+
+            DateTime endDate = datePickerEnd.Value.Date;
+
+            if (endDate <= startTime)
+            {
+                MessageBox.Show("End date must be after start date.");
+                return;
+            }
+
+            string endDateString = endDate.ToString("dd/MM/yyyy");
+
+
+            bool isForDrivers = checkBoxIsForDrivers.Checked;
+
+            int bitValueIsForDrivers = isForDrivers ? 1 : 0;
+
+            string nameOfInstruction = InstructionTextBox.Text;
+
+
+            // Validation for end date
+
+            var parameters = new Dictionary<string, object>
+            {
+                { tableName_sql_BeginDate, startTime },
+                { tableName_sql_EndDate, endDate },
+                { tableName_sql_IsForDrivers, bitValueIsForDrivers},
+                { tableName_sql_PathToInstruction, selectedFolderPath},
+                { tableName_sql_NameOfInstrutcion, nameOfInstruction}
+            };
+
+            try
+            {
+                // Create a new instance of SqlInsertCommandBuilder for the Notifications table
+                var builder = new SqlInsertCommandBuilder("dbo.Notifications");
+
+                // Add column values
+                foreach (var parameter in parameters)
+                {
+                    builder.AddColumnValue(parameter.Key, parameter.Value);
+                }
+
+                // Use DatabaseManager to execute the constructed query with parameters
+                DatabaseManager.ExecuteQueryWithBuilder(builder); // Adjusted for compatibility
+
+                MessageBox.Show("Notification created successfully.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}");
+            }
+        }
+
+        private void buttonChoosePathToInstruction_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            {
+                // Optionally set the initial directory
+                // folderBrowserDialog.SelectedPath = @"C:\Initial\Folder\Path";
+
+                DialogResult result = folderBrowserDialog.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                {
+                    // Store the selected folder path in a variable
+                    selectedFolderPath = folderBrowserDialog.SelectedPath;
+
+                    // Use the selectedFolderPath variable as needed in your code
+                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
+
+                }
+            }
+        }
+    }
+
     public static class DatabaseManager
     {
         private static string connectionString = "Server=localhost;Database=TestDB;Integrated Security=True;";
@@ -110,101 +213,4 @@ namespace Kotova.Test1.ClientSide
     }
 
 
-    public partial class Form1 : Form
-    {
-        static string? selectedFolderPath = null;
-        public Form1()
-        {
-            InitializeComponent();
-        }
-
-        private void buttonCreateNotification_Click(object sender, EventArgs e)
-        {
-            if (selectedFolderPath is null)
-            {
-                MessageBox.Show("œÛÚ¸ ‰Ó ËÌÒÚÛÍÚ‡Ê‡ ÌÂ ‚˚·‡Ì!");
-                return;
-            }
-
-
-
-
-            string tableName_sql_BeginDate = "BeginDate";
-            string tableName_sql_EndDate = "EndDate";
-            string tableName_sql_IsForDrivers = "IsForDrivers";
-            string tableName_sql_PathToInstruction = "PathToInstruction";
-            string tableName_sql_NameOfInstruction = "NameOfInstruction";
-
-            DateTime startTime = DateTime.Now;
-
-            DateTime endDate = datePickerEnd.Value.Date;
-
-            if (endDate <= startTime)
-            {
-                MessageBox.Show("End date must be after start date.");
-                return;
-            }
-
-            string endDateString = endDate.ToString("dd/MM/yyyy");
-
-
-            bool isForDrivers = checkBoxIsForDrivers.Checked;
-
-            int bitValueIsForDrivers = isForDrivers ? 1 : 0;
-
-
-            // Validation for end date
-            
-            var parameters = new Dictionary<string, object>
-            {
-                { tableName_sql_BeginDate, startTime },
-                { tableName_sql_EndDate, endDate },
-                { tableName_sql_IsForDrivers, bitValueIsForDrivers},
-                { tableName_sql_PathToInstruction, selectedFolderPath}
-            };
-
-            try
-            {
-                // Create a new instance of SqlInsertCommandBuilder for the Notifications table
-                var builder = new SqlInsertCommandBuilder("dbo.Notifications");
-
-                // Add column values
-                foreach (var parameter in parameters)
-                {
-                    builder.AddColumnValue(parameter.Key, parameter.Value);
-                }
-
-                // Use DatabaseManager to execute the constructed query with parameters
-                DatabaseManager.ExecuteQueryWithBuilder(builder); // Adjusted for compatibility
-
-                MessageBox.Show("Notification created successfully.");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}");
-            }
-        }
-
-        private void buttonChoosePathToInstruction_Click(object sender, EventArgs e)
-        {
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
-            {
-                // Optionally set the initial directory
-                // folderBrowserDialog.SelectedPath = @"C:\Initial\Folder\Path";
-
-                DialogResult result = folderBrowserDialog.ShowDialog();
-
-                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
-                {
-                    // Store the selected folder path in a variable
-                    selectedFolderPath = folderBrowserDialog.SelectedPath;
-
-                    // Use the selectedFolderPath variable as needed in your code
-                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
-                    
-                }
-            }
-        }
-    }
-    
 }
