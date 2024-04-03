@@ -36,6 +36,8 @@
             buttonChoosePathToInstruction = new Button();
             checkBoxIsForDrivers = new CheckBox();
             listBox1 = new ListBox();
+            buttonTest = new Button();
+            UploadFileToServer = new Button();
             SuspendLayout();
             // 
             // button1
@@ -111,11 +113,33 @@
             listBox1.Size = new Size(284, 104);
             listBox1.TabIndex = 8;
             // 
+            // buttonTest
+            // 
+            buttonTest.Location = new Point(479, 256);
+            buttonTest.Name = "buttonTest";
+            buttonTest.Size = new Size(150, 29);
+            buttonTest.TabIndex = 9;
+            buttonTest.Text = "Тест сервера";
+            buttonTest.UseVisualStyleBackColor = true;
+            buttonTest.Click += buttonTest_Click;
+            // 
+            // UploadFileToServer
+            // 
+            UploadFileToServer.Location = new Point(479, 314);
+            UploadFileToServer.Name = "UploadFileToServer";
+            UploadFileToServer.Size = new Size(192, 29);
+            UploadFileToServer.TabIndex = 10;
+            UploadFileToServer.Text = "Upload file to server";
+            UploadFileToServer.UseVisualStyleBackColor = true;
+            UploadFileToServer.Click += UploadFileToServer_Click;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(UploadFileToServer);
+            Controls.Add(buttonTest);
             Controls.Add(listBox1);
             Controls.Add(checkBoxIsForDrivers);
             Controls.Add(buttonChoosePathToInstruction);
@@ -140,5 +164,7 @@
         private Button buttonChoosePathToInstruction;
         private CheckBox checkBoxIsForDrivers;
         private ListBox listBox1;
+        private Button buttonTest;
+        private Button UploadFileToServer;
     }
 }

@@ -3,9 +3,10 @@ using System;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Transactions;
+using System.Net.Http.Headers;
 
 namespace Kotova.Test1.ClientSide
-{ 
+{
 
     public partial class Form2 : Form
     {
@@ -104,6 +105,67 @@ namespace Kotova.Test1.ClientSide
                     // Use the selectedFolderPath variable as needed in your code
                     MessageBox.Show($"Selected Folder: {selectedFolderPath}");
 
+                }
+            }
+        }
+        private async void buttonTest_Click(object sender, EventArgs e)
+        {
+            string url = "https://localhost:7052/WeatherForecast/greeting"; // Replace with your actual API URL
+            try
+            {
+                using (HttpClientHandler handler = new HttpClientHandler())
+                {
+                    // Bypass SSL certificate validation (for development use only!)
+                    handler.ServerCertificateCustomValidationCallback = (request, certificate, chain, sslPolicyErrors) => true;
+                    using (HttpClient client = new HttpClient(handler))
+                    {
+                        HttpResponseMessage response = await client.GetAsync(url);
+                        response.EnsureSuccessStatusCode();
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show(responseBody); // Update the label with the response
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+        }
+
+        private async void UploadFileToServer_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    var filePath = openFileDialog.FileName;
+                    var url = "https://localhost:7052/WeatherForecast/upload";
+                    using (var client = new HttpClient())
+                    using (var content = new MultipartFormDataContent())
+                    {
+                        // Load the file and set the content
+                        var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+                        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
+
+                        // "file" parameter name should match the name of the parameter in the server action
+                        content.Add(fileContent, "file", Path.GetFileName(filePath));
+
+                        try
+                        {
+                            // Post the file to the server
+                            var response = await client.PostAsync(url, content);
+                            response.EnsureSuccessStatusCode();
+
+                            // Read the response and display it on the form
+                            var responseBody = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"File uploaded successfully: {responseBody}");
+                        }
+                        catch (HttpRequestException ex)
+                        {
+                            MessageBox.Show($"Error uploading file: {ex.Message}");
+                        }
+                    }
                 }
             }
         }
