@@ -110,20 +110,15 @@ namespace Kotova.Test1.ClientSide
         }
         private async void buttonTest_Click(object sender, EventArgs e)
         {
-            string url = "https://localhost:7052/WeatherForecast/greeting"; // Replace with your actual API URL
+            string url = "https://localhost:7052/WeatherForecast/greeting"; 
             try
             {
-                using (HttpClientHandler handler = new HttpClientHandler())
+                using (HttpClient client = new HttpClient())
                 {
-                    // Bypass SSL certificate validation (for development use only!)
-                    handler.ServerCertificateCustomValidationCallback = (request, certificate, chain, sslPolicyErrors) => true;
-                    using (HttpClient client = new HttpClient(handler))
-                    {
-                        HttpResponseMessage response = await client.GetAsync(url);
-                        response.EnsureSuccessStatusCode();
-                        string responseBody = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show(responseBody); // Update the label with the response
-                    }
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show(responseBody); 
                 }
             }
             catch (HttpRequestException ex)
@@ -135,6 +130,7 @@ namespace Kotova.Test1.ClientSide
 
         private async void UploadFileToServer_Click(object sender, EventArgs e)
         {
+            UploadFileToServer.Enabled = false;
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
@@ -144,30 +140,50 @@ namespace Kotova.Test1.ClientSide
                     using (var client = new HttpClient())
                     using (var content = new MultipartFormDataContent())
                     {
-                        // Load the file and set the content
-                        var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
-                        fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data");
-
-                        // "file" parameter name should match the name of the parameter in the server action
-                        content.Add(fileContent, "file", Path.GetFileName(filePath));
-
                         try
                         {
+                            string mimeType = Path.GetExtension(filePath).ToLowerInvariant() switch
+                            {
+                                ".xls" => "application/vnd.ms-excel",
+                                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                _ => throw new InvalidOperationException("Unsupported file type.")
+                            };
+
+                            var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+                            fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(mimeType);
+
+                            // "file" parameter name should match the name of the parameter in the server action
+                            content.Add(fileContent, "file", Path.GetFileName(filePath));
+                        
                             // Post the file to the server
                             var response = await client.PostAsync(url, content);
-                            response.EnsureSuccessStatusCode();
 
-                            // Read the response and display it on the form
-                            var responseBody = await response.Content.ReadAsStringAsync();
-                            MessageBox.Show($"File uploaded successfully: {responseBody}");
+                            // Instead of calling EnsureSuccessStatusCode, check the status code manually
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                // Read the response content and include it in the error message
+                                var errorContent = await response.Content.ReadAsStringAsync();
+                                MessageBox.Show($"Error uploading file: {errorContent}");
+                            }
+                            else
+                            {
+                                // If the call was successful, read the response and display it on the form
+                                var responseBody = await response.Content.ReadAsStringAsync();
+                                MessageBox.Show($"File uploaded successfully: {responseBody}");
+                            }
                         }
                         catch (HttpRequestException ex)
+                        {
+                            MessageBox.Show($"Error uploading file: {ex.Message}");
+                        }
+                        catch (InvalidOperationException ex)
                         {
                             MessageBox.Show($"Error uploading file: {ex.Message}");
                         }
                     }
                 }
             }
+            UploadFileToServer.Enabled = true;
         }
     }
 
