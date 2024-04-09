@@ -230,6 +230,11 @@ namespace Kotova.Test1.ClientSide
 
             Download_file_excel.Enabled = true;
         }
+
+        private void syncExcelAndDB_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 
 

@@ -39,6 +39,7 @@
             buttonTest = new Button();
             UploadFileToServer = new Button();
             Download_file_excel = new Button();
+            syncExcelAndDB = new Button();
             SuspendLayout();
             // 
             // button1
@@ -116,7 +117,7 @@
             // 
             // buttonTest
             // 
-            buttonTest.Location = new Point(479, 256);
+            buttonTest.Location = new Point(479, 221);
             buttonTest.Name = "buttonTest";
             buttonTest.Size = new Size(150, 29);
             buttonTest.TabIndex = 9;
@@ -126,7 +127,7 @@
             // 
             // UploadFileToServer
             // 
-            UploadFileToServer.Location = new Point(479, 314);
+            UploadFileToServer.Location = new Point(479, 256);
             UploadFileToServer.Name = "UploadFileToServer";
             UploadFileToServer.Size = new Size(192, 29);
             UploadFileToServer.TabIndex = 10;
@@ -136,7 +137,7 @@
             // 
             // Download_file_excel
             // 
-            Download_file_excel.Location = new Point(479, 369);
+            Download_file_excel.Location = new Point(479, 326);
             Download_file_excel.Name = "Download_file_excel";
             Download_file_excel.Size = new Size(247, 29);
             Download_file_excel.TabIndex = 11;
@@ -144,11 +145,22 @@
             Download_file_excel.UseVisualStyleBackColor = true;
             Download_file_excel.Click += Download_file_excel_Click;
             // 
+            // syncExcelAndDB
+            // 
+            syncExcelAndDB.Location = new Point(479, 291);
+            syncExcelAndDB.Name = "syncExcelAndDB";
+            syncExcelAndDB.Size = new Size(219, 29);
+            syncExcelAndDB.TabIndex = 12;
+            syncExcelAndDB.Text = "Sync last excel file and DB";
+            syncExcelAndDB.UseVisualStyleBackColor = true;
+            syncExcelAndDB.Click += syncExcelAndDB_Click;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(syncExcelAndDB);
             Controls.Add(Download_file_excel);
             Controls.Add(UploadFileToServer);
             Controls.Add(buttonTest);
@@ -179,5 +191,6 @@
         private Button buttonTest;
         private Button UploadFileToServer;
         private Button Download_file_excel;
+        private Button syncExcelAndDB;
     }
 }
