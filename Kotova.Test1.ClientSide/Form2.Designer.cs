@@ -38,6 +38,7 @@
             listBox1 = new ListBox();
             buttonTest = new Button();
             UploadFileToServer = new Button();
+            Download_file_excel = new Button();
             SuspendLayout();
             // 
             // button1
@@ -133,11 +134,22 @@
             UploadFileToServer.UseVisualStyleBackColor = true;
             UploadFileToServer.Click += UploadFileToServer_Click;
             // 
+            // Download_file_excel
+            // 
+            Download_file_excel.Location = new Point(479, 369);
+            Download_file_excel.Name = "Download_file_excel";
+            Download_file_excel.Size = new Size(247, 29);
+            Download_file_excel.TabIndex = 11;
+            Download_file_excel.Text = "Download last file from server";
+            Download_file_excel.UseVisualStyleBackColor = true;
+            Download_file_excel.Click += Download_file_excel_Click;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(Download_file_excel);
             Controls.Add(UploadFileToServer);
             Controls.Add(buttonTest);
             Controls.Add(listBox1);
@@ -166,5 +178,6 @@
         private ListBox listBox1;
         private Button buttonTest;
         private Button UploadFileToServer;
+        private Button Download_file_excel;
     }
 }

@@ -110,7 +110,7 @@ namespace Kotova.Test1.ClientSide
         }
         private async void buttonTest_Click(object sender, EventArgs e)
         {
-            string url = "https://localhost:7052/WeatherForecast/greeting"; 
+            string url = "https://localhost:7052/WeatherForecast/greeting";
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -118,7 +118,7 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show(responseBody); 
+                    MessageBox.Show(responseBody);
                 }
             }
             catch (HttpRequestException ex)
@@ -154,7 +154,7 @@ namespace Kotova.Test1.ClientSide
 
                             // "file" parameter name should match the name of the parameter in the server action
                             content.Add(fileContent, "file", Path.GetFileName(filePath));
-                        
+
                             // Post the file to the server
                             var response = await client.PostAsync(url, content);
 
@@ -172,20 +172,67 @@ namespace Kotova.Test1.ClientSide
                                 MessageBox.Show($"File uploaded successfully: {responseBody}");
                             }
                         }
-                        catch (HttpRequestException ex)
+                        catch (Exception ex) when (
+                        ex is InvalidOperationException ||
+                        ex is IOException ||
+                        ex is HttpRequestException)
                         {
-                            MessageBox.Show($"Error uploading file: {ex.Message}");
+                            MessageBox.Show($"Error: {ex.Message}");
                         }
-                        catch (InvalidOperationException ex)
+                        catch (Exception ex)
                         {
-                            MessageBox.Show($"Error uploading file: {ex.Message}");
+                            // Handle all other exceptions that were not caught by the previous block
+                            MessageBox.Show($"General Error: {ex.Message}");
                         }
+
                     }
                 }
             }
             UploadFileToServer.Enabled = true;
         }
+
+        private async void Download_file_excel_Click(object sender, EventArgs e)
+        {
+            Download_file_excel.Enabled = false;
+            var url = "https://localhost:7052/WeatherForecast/download-newest"; // URL to your download endpoint
+
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead); // Use ResponseHeadersRead to avoid buffering the entire file
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var contentDisposition = response.Content.Headers.ContentDisposition;
+                        var filename = contentDisposition?.FileNameStar ?? contentDisposition?.FileName ?? "downloaded_file.xlsx";
+                        var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), filename); // Save to My Documents or another appropriate location
+
+                        using (var stream = await response.Content.ReadAsStreamAsync())
+                        using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await stream.CopyToAsync(fileStream);
+                        }
+
+                        MessageBox.Show($"File downloaded successfully: {filePath}");
+                    }
+                    else
+                    {
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Error downloading file: {errorContent}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}");
+                }
+            }
+
+            Download_file_excel.Enabled = true;
+        }
     }
+
+
 
     public static class DatabaseManager
     {
