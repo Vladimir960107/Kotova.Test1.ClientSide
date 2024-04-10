@@ -40,6 +40,7 @@
             UploadFileToServer = new Button();
             Download_file_excel = new Button();
             syncExcelAndDB = new Button();
+            SyncNamesWithDB = new Button();
             SuspendLayout();
             // 
             // button1
@@ -99,7 +100,7 @@
             // checkBoxIsForDrivers
             // 
             checkBoxIsForDrivers.AutoSize = true;
-            checkBoxIsForDrivers.Location = new Point(479, 55);
+            checkBoxIsForDrivers.Location = new Point(479, 23);
             checkBoxIsForDrivers.Name = "checkBoxIsForDrivers";
             checkBoxIsForDrivers.Size = new Size(192, 24);
             checkBoxIsForDrivers.TabIndex = 7;
@@ -155,11 +156,22 @@
             syncExcelAndDB.UseVisualStyleBackColor = true;
             syncExcelAndDB.Click += syncExcelAndDB_Click;
             // 
+            // SyncNamesWithDB
+            // 
+            SyncNamesWithDB.Location = new Point(479, 64);
+            SyncNamesWithDB.Name = "SyncNamesWithDB";
+            SyncNamesWithDB.Size = new Size(247, 29);
+            SyncNamesWithDB.TabIndex = 13;
+            SyncNamesWithDB.Text = "Синхр. ФИО с Базой Данных";
+            SyncNamesWithDB.UseVisualStyleBackColor = true;
+            SyncNamesWithDB.Click += SyncNamesWithDB_Click;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(SyncNamesWithDB);
             Controls.Add(syncExcelAndDB);
             Controls.Add(Download_file_excel);
             Controls.Add(UploadFileToServer);
@@ -192,5 +204,6 @@
         private Button UploadFileToServer;
         private Button Download_file_excel;
         private Button syncExcelAndDB;
+        private Button SyncNamesWithDB;
     }
 }

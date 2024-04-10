@@ -231,9 +231,72 @@ namespace Kotova.Test1.ClientSide
             Download_file_excel.Enabled = true;
         }
 
-        private void syncExcelAndDB_Click(object sender, EventArgs e)
+        private async void syncExcelAndDB_Click(object sender, EventArgs e)
         {
+            try
+            {
+                syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
 
+                using (var httpClient = new HttpClient())
+                {
+                    // Assuming you're calling a GET method based on your ImportIntoDB action
+                    var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/import-into-db");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Successfully called the ImportIntoDB endpoint, handle accordingly
+                        MessageBox.Show("Data successfully imported into the database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        // The call was not successful, handle errors or retry logic
+                        MessageBox.Show($"Failed to import data. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Exception handling for networking errors, etc.
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                syncExcelAndDB.Enabled = true; // Re-enable the button after the operation completes
+            }
+        }
+
+        private async void SyncNamesWithDB_Click(object sender, EventArgs e) // Next code just repeats the same as syncExcelAndDB, so create func or something
+        {
+            try
+            {
+                syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
+
+                using (var httpClient = new HttpClient())
+                {
+                    // Assuming you're calling a GET method based on your ImportIntoDB action
+                    var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/sync-names-with-db");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Successfully called the ImportIntoDB endpoint, handle accordingly
+                        MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        // The call was not successful, handle errors or retry logic
+                        MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Exception handling for networking errors, etc.
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                syncExcelAndDB.Enabled = true; // Re-enable the button after the operation completes
+            }
         }
     }
 
