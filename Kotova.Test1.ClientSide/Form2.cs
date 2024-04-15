@@ -272,6 +272,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
+                listBox1.Items.Clear();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -280,6 +281,7 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
+                        
                         string responseBody = await response.Content.ReadAsStringAsync();
                         List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
                         if (result is null)
@@ -294,8 +296,10 @@ namespace Kotova.Test1.ClientSide
                     }
                     else
                     {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
                         // The call was not successful, handle errors or retry logic
-                        MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

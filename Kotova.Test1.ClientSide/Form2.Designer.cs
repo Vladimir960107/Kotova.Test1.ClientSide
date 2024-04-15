@@ -41,6 +41,7 @@
             Download_file_excel = new Button();
             syncExcelAndDB = new Button();
             SyncNamesWithDB = new Button();
+            label3 = new Label();
             SuspendLayout();
             // 
             // button1
@@ -100,7 +101,7 @@
             // checkBoxIsForDrivers
             // 
             checkBoxIsForDrivers.AutoSize = true;
-            checkBoxIsForDrivers.Location = new Point(479, 23);
+            checkBoxIsForDrivers.Location = new Point(401, 23);
             checkBoxIsForDrivers.Name = "checkBoxIsForDrivers";
             checkBoxIsForDrivers.Size = new Size(192, 24);
             checkBoxIsForDrivers.TabIndex = 7;
@@ -111,14 +112,15 @@
             // 
             listBox1.FormattingEnabled = true;
             listBox1.ItemHeight = 20;
-            listBox1.Location = new Point(479, 109);
+            listBox1.Location = new Point(401, 109);
             listBox1.Name = "listBox1";
+            listBox1.SelectionMode = SelectionMode.MultiExtended;
             listBox1.Size = new Size(284, 104);
             listBox1.TabIndex = 8;
             // 
             // buttonTest
             // 
-            buttonTest.Location = new Point(479, 221);
+            buttonTest.Location = new Point(401, 256);
             buttonTest.Name = "buttonTest";
             buttonTest.Size = new Size(150, 29);
             buttonTest.TabIndex = 9;
@@ -128,7 +130,7 @@
             // 
             // UploadFileToServer
             // 
-            UploadFileToServer.Location = new Point(479, 256);
+            UploadFileToServer.Location = new Point(401, 291);
             UploadFileToServer.Name = "UploadFileToServer";
             UploadFileToServer.Size = new Size(192, 29);
             UploadFileToServer.TabIndex = 10;
@@ -138,7 +140,7 @@
             // 
             // Download_file_excel
             // 
-            Download_file_excel.Location = new Point(479, 326);
+            Download_file_excel.Location = new Point(401, 361);
             Download_file_excel.Name = "Download_file_excel";
             Download_file_excel.Size = new Size(247, 29);
             Download_file_excel.TabIndex = 11;
@@ -148,7 +150,7 @@
             // 
             // syncExcelAndDB
             // 
-            syncExcelAndDB.Location = new Point(479, 291);
+            syncExcelAndDB.Location = new Point(401, 326);
             syncExcelAndDB.Name = "syncExcelAndDB";
             syncExcelAndDB.Size = new Size(219, 29);
             syncExcelAndDB.TabIndex = 12;
@@ -158,7 +160,7 @@
             // 
             // SyncNamesWithDB
             // 
-            SyncNamesWithDB.Location = new Point(479, 64);
+            SyncNamesWithDB.Location = new Point(401, 64);
             SyncNamesWithDB.Name = "SyncNamesWithDB";
             SyncNamesWithDB.Size = new Size(247, 29);
             SyncNamesWithDB.TabIndex = 13;
@@ -166,11 +168,21 @@
             SyncNamesWithDB.UseVisualStyleBackColor = true;
             SyncNamesWithDB.Click += SyncNamesWithDB_Click;
             // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(401, 216);
+            label3.Name = "label3";
+            label3.Size = new Size(387, 20);
+            label3.TabIndex = 14;
+            label3.Text = "Чтобы отменить выбор - ctrl+ЛКМ(левый клик мыши)";
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(label3);
             Controls.Add(SyncNamesWithDB);
             Controls.Add(syncExcelAndDB);
             Controls.Add(Download_file_excel);
@@ -205,5 +217,6 @@
         private Button Download_file_excel;
         private Button syncExcelAndDB;
         private Button SyncNamesWithDB;
+        private Label label3;
     }
 }
