@@ -42,6 +42,11 @@
             syncExcelAndDB = new Button();
             SyncNamesWithDB = new Button();
             label3 = new Label();
+            button2 = new Button();
+            listOfInstructions = new ListBox();
+            label4 = new Label();
+            label5 = new Label();
+            buttonSyncManualyInstrWithDB = new Button();
             SuspendLayout();
             // 
             // button1
@@ -112,7 +117,7 @@
             // 
             listBox1.FormattingEnabled = true;
             listBox1.ItemHeight = 20;
-            listBox1.Location = new Point(401, 109);
+            listBox1.Location = new Point(856, 93);
             listBox1.Name = "listBox1";
             listBox1.SelectionMode = SelectionMode.MultiExtended;
             listBox1.Size = new Size(284, 104);
@@ -160,7 +165,7 @@
             // 
             // SyncNamesWithDB
             // 
-            SyncNamesWithDB.Location = new Point(401, 64);
+            SyncNamesWithDB.Location = new Point(856, 48);
             SyncNamesWithDB.Name = "SyncNamesWithDB";
             SyncNamesWithDB.Size = new Size(247, 29);
             SyncNamesWithDB.TabIndex = 13;
@@ -171,17 +176,68 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(401, 216);
+            label3.Location = new Point(856, 200);
             label3.Name = "label3";
             label3.Size = new Size(387, 20);
             label3.TabIndex = 14;
             label3.Text = "Чтобы отменить выбор - ctrl+ЛКМ(левый клик мыши)";
             // 
+            // button2
+            // 
+            button2.Location = new Point(856, 242);
+            button2.Name = "button2";
+            button2.Size = new Size(247, 95);
+            button2.TabIndex = 15;
+            button2.Text = "Отправить выбранным людям уведомление об инструктаже";
+            button2.UseVisualStyleBackColor = true;
+            // 
+            // listOfInstructions
+            // 
+            listOfInstructions.FormattingEnabled = true;
+            listOfInstructions.ItemHeight = 20;
+            listOfInstructions.Location = new Point(401, 93);
+            listOfInstructions.Name = "listOfInstructions";
+            listOfInstructions.Size = new Size(284, 104);
+            listOfInstructions.TabIndex = 16;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(401, 218);
+            label4.Name = "label4";
+            label4.Size = new Size(156, 20);
+            label4.TabIndex = 17;
+            label4.Text = "Дата инструктажа до:";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(563, 218);
+            label5.Name = "label5";
+            label5.Size = new Size(95, 20);
+            label5.TabIndex = 18;
+            label5.Text = "Не выбрано";
+            // 
+            // buttonSyncManualyInstrwithDB
+            // 
+            buttonSyncManualyInstrWithDB.Location = new Point(401, 51);
+            buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrwithDB";
+            buttonSyncManualyInstrWithDB.Size = new Size(247, 29);
+            buttonSyncManualyInstrWithDB.TabIndex = 19;
+            buttonSyncManualyInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
+            buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
+            buttonSyncManualyInstrWithDB.Click += buttonSyncManualyInstrWithDB_Click;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(1265, 450);
+            Controls.Add(buttonSyncManualyInstrWithDB);
+            Controls.Add(label5);
+            Controls.Add(label4);
+            Controls.Add(listOfInstructions);
+            Controls.Add(button2);
             Controls.Add(label3);
             Controls.Add(SyncNamesWithDB);
             Controls.Add(syncExcelAndDB);
@@ -218,5 +274,10 @@
         private Button syncExcelAndDB;
         private Button SyncNamesWithDB;
         private Label label3;
+        private Button button2;
+        private ListBox listOfInstructions;
+        private Label label4;
+        private Label label5;
+        private Button buttonSyncManualyInstrWithDB;
     }
 }

@@ -281,7 +281,7 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
-                        
+
                         string responseBody = await response.Content.ReadAsStringAsync();
                         List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
                         if (result is null)
@@ -293,6 +293,53 @@ namespace Kotova.Test1.ClientSide
                         listBox1.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        // The call was not successful, handle errors or retry logic
+                        //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Exception handling for networking errors, etc.
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                syncExcelAndDB.Enabled = true; // Re-enable the button after the operation completes
+            }
+        }
+
+        private async void buttonSyncManualyInstrWithDB_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
+                listBox1.Items.Clear();
+
+                using (var httpClient = new HttpClient())
+                {
+                    // Assuming you're calling a GET method based on your ImportIntoDB action
+                    var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/sync-instructions-with-db");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        /*
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
+                        if (result is null)
+                        {
+                            //THROW OR RETURN!!!!!! something or somestuff
+                            return;
+                        }
+                        string[] resultArray = result.ToArray<string>();
+                        listBox1.Items.AddRange(resultArray);
+                        // Successfully called the ImportIntoDB endpoint, handle accordingly
+                        MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        */ //Переделать!
                     }
                     else
                     {
