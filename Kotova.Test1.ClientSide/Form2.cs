@@ -4,6 +4,8 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.Transactions;
 using System.Net.Http.Headers;
+using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -18,7 +20,7 @@ namespace Kotova.Test1.ClientSide
         }
         private void InitializeListBox()
         {
-            listBox1.Items.Add("Option 1");
+            listBox1.Items.Add("Тестовая опция 1");
         }
 
         private void buttonCreateNotification_Click(object sender, EventArgs e)
@@ -278,6 +280,15 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
+                        if (result is null)
+                        {
+                            //THROW OR RETURN!!!!!! something or somestuff
+                            return;
+                        }
+                        string[] resultArray = result.ToArray<string>();
+                        listBox1.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
