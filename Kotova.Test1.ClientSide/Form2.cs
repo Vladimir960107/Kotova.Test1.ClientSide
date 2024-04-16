@@ -6,6 +6,7 @@ using System.Transactions;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using Kotova.CommonClasses;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -286,8 +287,7 @@ namespace Kotova.Test1.ClientSide
                         List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
                         if (result is null)
                         {
-                            //THROW OR RETURN!!!!!! something or somestuff
-                            return;
+                            throw new Exception("responseBody is empty");
                         }
                         string[] resultArray = result.ToArray<string>();
                         listBox1.Items.AddRange(resultArray);
@@ -319,7 +319,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
-                listBox1.Items.Clear();
+                listOfInstructions.Items.Clear();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -327,19 +327,16 @@ namespace Kotova.Test1.ClientSide
                     var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/sync-instructions-with-db");
                     if (response.IsSuccessStatusCode)
                     {
-                        /*
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
-                        if (result is null)
+                        if (string.IsNullOrWhiteSpace(responseBody))
                         {
-                            //THROW OR RETURN!!!!!! something or somestuff
-                            return;
+                            throw new Exception("responseBody is empty"); //throw here better something
                         }
-                        string[] resultArray = result.ToArray<string>();
-                        listBox1.Items.AddRange(resultArray);
-                        // Successfully called the ImportIntoDB endpoint, handle accordingly
+                        List<Notification> result = JsonConvert.DeserializeObject<List<Notification>>(responseBody); //checked that is not null before!
+
+                        string[] resultArray = result.Select(n => n.NameOfInstruction).ToArray();
+                        listOfInstructions.Items.AddRange(resultArray);
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        */ //Переделать!
                     }
                     else
                     {
