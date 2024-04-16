@@ -21,7 +21,7 @@ namespace Kotova.Test1.ClientSide
         }
         private void InitializeListBox()
         {
-            listBox1.Items.Add("Тестовая опция 1");
+            ListBoxNamesOfPeople.Items.Add("Тестовая опция 1");
         }
 
         private void buttonCreateNotification_Click(object sender, EventArgs e)
@@ -273,7 +273,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
-                listBox1.Items.Clear();
+                ListBoxNamesOfPeople.Items.Clear();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -290,7 +290,7 @@ namespace Kotova.Test1.ClientSide
                             throw new Exception("responseBody is empty");
                         }
                         string[] resultArray = result.ToArray<string>();
-                        listBox1.Items.AddRange(resultArray);
+                        ListBoxNamesOfPeople.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
@@ -334,7 +334,7 @@ namespace Kotova.Test1.ClientSide
                         }
                         List<Notification> result = JsonConvert.DeserializeObject<List<Notification>>(responseBody); //checked that is not null before!
 
-                        string[] resultArray = result.Select(n => n.NameOfInstruction).ToArray();
+                        string[] resultArray = result.Select(n => n.NameOfInstruction).ToArray(); //check that they are not null;
                         listOfInstructions.Items.AddRange(resultArray);
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
@@ -355,6 +355,15 @@ namespace Kotova.Test1.ClientSide
             finally
             {
                 syncExcelAndDB.Enabled = true; // Re-enable the button after the operation completes
+            }
+        }
+
+        private void submitInstructionToPeople_Click(object sender, EventArgs e)
+        {
+            var ListOfNames = ListBoxNamesOfPeople.SelectedItems;
+            foreach (string name in ListOfNames)
+            {
+                
             }
         }
     }

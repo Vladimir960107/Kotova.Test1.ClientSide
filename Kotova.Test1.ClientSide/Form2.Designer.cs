@@ -35,14 +35,14 @@
             label2 = new Label();
             buttonChoosePathToInstruction = new Button();
             checkBoxIsForDrivers = new CheckBox();
-            listBox1 = new ListBox();
+            ListBoxNamesOfPeople = new ListBox();
             buttonTest = new Button();
             UploadFileToServer = new Button();
             Download_file_excel = new Button();
             syncExcelAndDB = new Button();
             SyncNamesWithDB = new Button();
             label3 = new Label();
-            button2 = new Button();
+            submitInstructionToPeople = new Button();
             listOfInstructions = new ListBox();
             label4 = new Label();
             label5 = new Label();
@@ -115,13 +115,13 @@
             // 
             // listBox1
             // 
-            listBox1.FormattingEnabled = true;
-            listBox1.ItemHeight = 20;
-            listBox1.Location = new Point(856, 93);
-            listBox1.Name = "listBox1";
-            listBox1.SelectionMode = SelectionMode.MultiExtended;
-            listBox1.Size = new Size(284, 104);
-            listBox1.TabIndex = 8;
+            ListBoxNamesOfPeople.FormattingEnabled = true;
+            ListBoxNamesOfPeople.ItemHeight = 20;
+            ListBoxNamesOfPeople.Location = new Point(856, 93);
+            ListBoxNamesOfPeople.Name = "listBox1";
+            ListBoxNamesOfPeople.SelectionMode = SelectionMode.MultiExtended;
+            ListBoxNamesOfPeople.Size = new Size(284, 104);
+            ListBoxNamesOfPeople.TabIndex = 8;
             // 
             // buttonTest
             // 
@@ -182,14 +182,15 @@
             label3.TabIndex = 14;
             label3.Text = "Чтобы отменить выбор - ctrl+ЛКМ(левый клик мыши)";
             // 
-            // button2
+            // submitInstructionToPeople
             // 
-            button2.Location = new Point(856, 242);
-            button2.Name = "button2";
-            button2.Size = new Size(247, 95);
-            button2.TabIndex = 15;
-            button2.Text = "Отправить выбранным людям уведомление об инструктаже";
-            button2.UseVisualStyleBackColor = true;
+            submitInstructionToPeople.Location = new Point(856, 242);
+            submitInstructionToPeople.Name = "submitInstructionToPeople";
+            submitInstructionToPeople.Size = new Size(247, 95);
+            submitInstructionToPeople.TabIndex = 15;
+            submitInstructionToPeople.Text = "Отправить выбранным людям уведомление об инструктаже";
+            submitInstructionToPeople.UseVisualStyleBackColor = true;
+            submitInstructionToPeople.Click += submitInstructionToPeople_Click;
             // 
             // listOfInstructions
             // 
@@ -218,10 +219,10 @@
             label5.TabIndex = 18;
             label5.Text = "Не выбрано";
             // 
-            // buttonSyncManualyInstrwithDB
+            // buttonSyncManualyInstrWithDB
             // 
             buttonSyncManualyInstrWithDB.Location = new Point(401, 51);
-            buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrwithDB";
+            buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrWithDB";
             buttonSyncManualyInstrWithDB.Size = new Size(247, 29);
             buttonSyncManualyInstrWithDB.TabIndex = 19;
             buttonSyncManualyInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
@@ -237,14 +238,14 @@
             Controls.Add(label5);
             Controls.Add(label4);
             Controls.Add(listOfInstructions);
-            Controls.Add(button2);
+            Controls.Add(submitInstructionToPeople);
             Controls.Add(label3);
             Controls.Add(SyncNamesWithDB);
             Controls.Add(syncExcelAndDB);
             Controls.Add(Download_file_excel);
             Controls.Add(UploadFileToServer);
             Controls.Add(buttonTest);
-            Controls.Add(listBox1);
+            Controls.Add(ListBoxNamesOfPeople);
             Controls.Add(checkBoxIsForDrivers);
             Controls.Add(buttonChoosePathToInstruction);
             Controls.Add(label2);
@@ -267,14 +268,14 @@
         private Label label2;
         private Button buttonChoosePathToInstruction;
         private CheckBox checkBoxIsForDrivers;
-        private ListBox listBox1;
+        private ListBox ListBoxNamesOfPeople;
         private Button buttonTest;
         private Button UploadFileToServer;
         private Button Download_file_excel;
         private Button syncExcelAndDB;
         private Button SyncNamesWithDB;
         private Label label3;
-        private Button button2;
+        private Button submitInstructionToPeople;
         private ListBox listOfInstructions;
         private Label label4;
         private Label label5;
