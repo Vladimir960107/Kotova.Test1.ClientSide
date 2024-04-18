@@ -8,11 +8,19 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using Kotova.CommonClasses;
 
+
+
 namespace Kotova.Test1.ClientSide
 {
 
     public partial class Form2 : Form
     {
+        private const string tableName_sql_BeginDate = "begin_date";
+        private const string tableName_sql_EndDate = "end_date";
+        private const string tableName_sql_IsForDrivers = "is_for_drivers";
+        private const string tableName_sql_PathToInstruction = "path_to_instruction";
+        private const string tableName_sql_NameOfInstrutcion = "name_of_instruction";
+
         static string? selectedFolderPath = null;
         public Form2()
         {
@@ -32,11 +40,7 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
 
-            string tableName_sql_BeginDate = "BeginDate";
-            string tableName_sql_EndDate = "EndDate";
-            string tableName_sql_IsForDrivers = "IsForDrivers";
-            string tableName_sql_PathToInstruction = "PathToInstruction";
-            string tableName_sql_NameOfInstrutcion = "NameOfInstruction";
+            
 
             DateTime startTime = DateTime.Now;
 
