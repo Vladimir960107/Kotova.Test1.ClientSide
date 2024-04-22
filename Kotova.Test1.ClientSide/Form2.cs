@@ -386,13 +386,12 @@ namespace Kotova.Test1.ClientSide
             InstructionPackage package = new InstructionPackage(listOfNamesString, instructionNameString);
             string jsonData = JsonConvert.SerializeObject(package);
             string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
-
             try
             {
                 using (var httpClient = new HttpClient())
                 {
                     // Set the URI of your server endpoint
-                    var uri = new Uri("https://localhost:7052/WeatherForecast/sendInstruction");
+                    var uri = new Uri("https://localhost:7052/WeatherForecast/send-instruction-and-names");
 
                     // Prepare the content to send
                     var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
@@ -402,7 +401,7 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Data successfully sent to the server.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Data successfully sent to the server and Instructions added to User.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
