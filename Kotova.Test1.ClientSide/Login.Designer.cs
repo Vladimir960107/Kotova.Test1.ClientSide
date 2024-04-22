@@ -34,22 +34,22 @@
             label1 = new Label();
             pictureBox1 = new PictureBox();
             panel2 = new Panel();
-            panel3 = new Panel();
-            panel4 = new Panel();
-            label3 = new Label();
-            pictureBox2 = new PictureBox();
-            pictureBox3 = new PictureBox();
-            textBox1 = new TextBox();
-            textBox2 = new TextBox();
-            button1 = new Button();
-            linkLabel1 = new LinkLabel();
             label4 = new Label();
+            linkLabel1 = new LinkLabel();
+            button1 = new Button();
+            panel3 = new Panel();
+            textBox1 = new TextBox();
+            pictureBox2 = new PictureBox();
+            panel4 = new Panel();
+            textBox2 = new TextBox();
+            pictureBox3 = new PictureBox();
+            label3 = new Label();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
             panel3.SuspendLayout();
-            panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
+            panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
             SuspendLayout();
             // 
@@ -95,10 +95,10 @@
             // pictureBox1
             // 
             pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
-            pictureBox1.Location = new Point(102, 61);
+            pictureBox1.Location = new Point(116, 61);
             pictureBox1.Margin = new Padding(3, 2, 3, 2);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(105, 102);
+            pictureBox1.Size = new Size(136, 102);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
@@ -118,89 +118,16 @@
             panel2.Size = new Size(614, 589);
             panel2.TabIndex = 1;
             // 
-            // panel3
+            // label4
             // 
-            panel3.BackColor = Color.White;
-            panel3.Controls.Add(textBox1);
-            panel3.Controls.Add(pictureBox2);
-            panel3.Location = new Point(0, 211);
-            panel3.Name = "panel3";
-            panel3.Size = new Size(614, 54);
-            panel3.TabIndex = 3;
-            // 
-            // panel4
-            // 
-            panel4.BackColor = Color.White;
-            panel4.Controls.Add(textBox2);
-            panel4.Controls.Add(pictureBox3);
-            panel4.Location = new Point(0, 271);
-            panel4.Name = "panel4";
-            panel4.Size = new Size(614, 54);
-            panel4.TabIndex = 2;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
-            label3.ForeColor = Color.FromArgb(41, 128, 185);
-            label3.Location = new Point(42, 151);
-            label3.Name = "label3";
-            label3.Size = new Size(229, 29);
-            label3.TabIndex = 0;
-            label3.Text = "Login to your account";
-            // 
-            // pictureBox2
-            // 
-            pictureBox2.BackColor = Color.White;
-            pictureBox2.Image = Properties.Resources.user;
-            pictureBox2.InitialImage = null;
-            pictureBox2.Location = new Point(5, 10);
-            pictureBox2.Name = "pictureBox2";
-            pictureBox2.Size = new Size(35, 33);
-            pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureBox2.TabIndex = 0;
-            pictureBox2.TabStop = false;
-            // 
-            // pictureBox3
-            // 
-            pictureBox3.BackColor = Color.White;
-            pictureBox3.Image = (Image)resources.GetObject("pictureBox3.Image");
-            pictureBox3.InitialImage = null;
-            pictureBox3.Location = new Point(5, 10);
-            pictureBox3.Name = "pictureBox3";
-            pictureBox3.Size = new Size(35, 33);
-            pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureBox3.TabIndex = 1;
-            pictureBox3.TabStop = false;
-            // 
-            // textBox1
-            // 
-            textBox1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            textBox1.ForeColor = Color.FromArgb(0, 0, 0, 6);
-            textBox1.Location = new Point(56, 12);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(546, 29);
-            textBox1.TabIndex = 1;
-            // 
-            // textBox2
-            // 
-            textBox2.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            textBox2.Location = new Point(56, 12);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(546, 29);
-            textBox2.TabIndex = 2;
-            // 
-            // button1
-            // 
-            button1.BackColor = Color.FromArgb(41, 128, 185);
-            button1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            button1.ForeColor = Color.White;
-            button1.Location = new Point(5, 356);
-            button1.Name = "button1";
-            button1.Size = new Size(115, 44);
-            button1.TabIndex = 4;
-            button1.Text = "Login";
-            button1.UseVisualStyleBackColor = false;
+            label4.AutoSize = true;
+            label4.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            label4.ForeColor = SystemColors.ControlDark;
+            label4.Location = new Point(6, 507);
+            label4.Name = "label4";
+            label4.Size = new Size(269, 68);
+            label4.TabIndex = 2;
+            label4.Text = "Support:\r\nIf you have any question about this application\r\nsubmit an email message to:\r\n loginovvladimirforwork@gmail.com";
             // 
             // linkLabel1
             // 
@@ -214,16 +141,89 @@
             linkLabel1.TabStop = true;
             linkLabel1.Text = "Forgot Password?";
             // 
-            // label4
+            // button1
             // 
-            label4.AutoSize = true;
-            label4.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            label4.ForeColor = SystemColors.ControlDark;
-            label4.Location = new Point(6, 507);
-            label4.Name = "label4";
-            label4.Size = new Size(269, 68);
-            label4.TabIndex = 2;
-            label4.Text = "Support:\r\nIf you have any question about this application\r\nsubmit an email message to:\r\n loginovvladimirforwork@gmail.com";
+            button1.BackColor = Color.FromArgb(41, 128, 185);
+            button1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            button1.ForeColor = Color.White;
+            button1.Location = new Point(5, 356);
+            button1.Name = "button1";
+            button1.Size = new Size(115, 44);
+            button1.TabIndex = 4;
+            button1.Text = "Login";
+            button1.UseVisualStyleBackColor = false;
+            // 
+            // panel3
+            // 
+            panel3.BackColor = Color.White;
+            panel3.Controls.Add(textBox1);
+            panel3.Controls.Add(pictureBox2);
+            panel3.Location = new Point(0, 211);
+            panel3.Name = "panel3";
+            panel3.Size = new Size(614, 54);
+            panel3.TabIndex = 3;
+            // 
+            // textBox1
+            // 
+            textBox1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            textBox1.ForeColor = Color.FromArgb(0, 0, 0, 6);
+            textBox1.Location = new Point(56, 12);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(546, 29);
+            textBox1.TabIndex = 1;
+            // 
+            // pictureBox2
+            // 
+            pictureBox2.BackColor = Color.White;
+            pictureBox2.Image = Properties.Resources.user;
+            pictureBox2.InitialImage = null;
+            pictureBox2.Location = new Point(5, 10);
+            pictureBox2.Name = "pictureBox2";
+            pictureBox2.Size = new Size(35, 33);
+            pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBox2.TabIndex = 0;
+            pictureBox2.TabStop = false;
+            // 
+            // panel4
+            // 
+            panel4.BackColor = Color.White;
+            panel4.Controls.Add(textBox2);
+            panel4.Controls.Add(pictureBox3);
+            panel4.Location = new Point(0, 271);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(614, 54);
+            panel4.TabIndex = 2;
+            // 
+            // textBox2
+            // 
+            textBox2.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            textBox2.Location = new Point(56, 12);
+            textBox2.Name = "textBox2";
+            textBox2.Size = new Size(546, 29);
+            textBox2.TabIndex = 2;
+            // 
+            // pictureBox3
+            // 
+            pictureBox3.BackColor = Color.White;
+            pictureBox3.Image = (Image)resources.GetObject("pictureBox3.Image");
+            pictureBox3.InitialImage = null;
+            pictureBox3.Location = new Point(5, 10);
+            pictureBox3.Name = "pictureBox3";
+            pictureBox3.Size = new Size(35, 33);
+            pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureBox3.TabIndex = 1;
+            pictureBox3.TabStop = false;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
+            label3.ForeColor = Color.FromArgb(41, 128, 185);
+            label3.Location = new Point(42, 151);
+            label3.Name = "label3";
+            label3.Size = new Size(229, 29);
+            label3.TabIndex = 0;
+            label3.Text = "Login to your account";
             // 
             // Login
             // 
@@ -242,9 +242,9 @@
             panel2.PerformLayout();
             panel3.ResumeLayout(false);
             panel3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).EndInit();
             ResumeLayout(false);
         }

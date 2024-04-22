@@ -288,12 +288,13 @@ namespace Kotova.Test1.ClientSide
                     {
 
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        List<string>? result = JsonConvert.DeserializeObject<List<string>>(responseBody);
+                        List<Tuple<string, string>>? result = JsonConvert.DeserializeObject<List<Tuple<string, string>>>(responseBody);
                         if (result is null)
                         {
                             throw new Exception("responseBody is empty");
                         }
-                        string[] resultArray = result.ToArray<string>();
+                        string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
+
                         ListBoxNamesOfPeople.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -362,12 +363,56 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private void submitInstructionToPeople_Click(object sender, EventArgs e)
+        private async void submitInstructionToPeople_Click(object sender, EventArgs e)
         {
-            var ListOfNames = ListBoxNamesOfPeople.SelectedItems;
-            foreach (string name in ListOfNames)
+            var listOfNames = ListBoxNamesOfPeople.SelectedItems;
+            List<string> listOfNamesString = new List<string>();
+            if (listOfNames.Count == 0) 
             {
-                
+                MessageBox.Show("Люди для инструктажа не выбраны!");
+                return;
+            }
+            var selectedInstruction = listOfInstructions.SelectedItem;
+            if (selectedInstruction is null)
+            {
+                MessageBox.Show("инструктаж не выбран!");
+                return;
+            }
+            foreach (var item in listOfNames)
+            {
+                listOfNamesString.Add(item.ToString());  
+            }
+            string instructionNameString = selectedInstruction.ToString();
+            InstructionPackage package = new InstructionPackage(listOfNamesString, instructionNameString);
+            string jsonData = JsonConvert.SerializeObject(package);
+            string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    // Set the URI of your server endpoint
+                    var uri = new Uri("https://localhost:7052/WeatherForecast/sendInstruction");
+
+                    // Prepare the content to send
+                    var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+
+                    // Send a POST request with the serialized JSON content
+                    var response = await httpClient.PostAsync(uri, content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Data successfully sent to the server.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while sending data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
@@ -476,6 +521,7 @@ namespace Kotova.Test1.ClientSide
             command.CommandText = $"INSERT INTO {tableName} ({columnsPart}) VALUES ({parametersPart})";
         }
     }
+
 
 
 }
