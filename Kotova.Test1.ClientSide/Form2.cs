@@ -369,13 +369,13 @@ namespace Kotova.Test1.ClientSide
             List<string> listOfNamesString = new List<string>();
             if (listOfNames.Count == 0) 
             {
-                MessageBox.Show("Люди для инструктажа не выбраны!");
+                MessageBox.Show("People not selected!");
                 return;
             }
             var selectedInstruction = listOfInstructions.SelectedItem;
             if (selectedInstruction is null)
             {
-                MessageBox.Show("инструктаж не выбран!");
+                MessageBox.Show("Instruction not selected!");
                 return;
             }
             foreach (var item in listOfNames)
@@ -405,7 +405,8 @@ namespace Kotova.Test1.ClientSide
                     }
                     else
                     {
-                        MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        var errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
