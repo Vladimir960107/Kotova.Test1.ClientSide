@@ -41,7 +41,7 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
 
-            
+
 
             DateTime startTime = DateTime.Now;
 
@@ -368,7 +368,7 @@ namespace Kotova.Test1.ClientSide
         {
             var listOfNames = ListBoxNamesOfPeople.SelectedItems;
             List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
-            if (listOfNames.Count == 0) 
+            if (listOfNames.Count == 0)
             {
                 MessageBox.Show("People not selected!");
                 return;
@@ -381,7 +381,7 @@ namespace Kotova.Test1.ClientSide
             }
             foreach (var item in listOfNames)
             {
-                listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));  
+                listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
             }
             string instructionNameString = selectedInstruction.ToString();
             InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
@@ -434,6 +434,11 @@ namespace Kotova.Test1.ClientSide
             {
                 throw new ArgumentException("nameWithBirthDate doesn't match the pattern! in DeconstructNameAndBirthDate");
             }
+        }
+
+        private void CheckForNewInstructions_Click(object sender, EventArgs e)
+        {
+            //Continue HERE!!!
         }
     }
 
