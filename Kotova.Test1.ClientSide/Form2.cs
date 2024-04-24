@@ -3,6 +3,7 @@ using System;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Transactions;
+using System.Text.RegularExpressions;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -366,7 +367,7 @@ namespace Kotova.Test1.ClientSide
         private async void submitInstructionToPeople_Click(object sender, EventArgs e)
         {
             var listOfNames = ListBoxNamesOfPeople.SelectedItems;
-            List<string> listOfNamesString = new List<string>();
+            List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
             if (listOfNames.Count == 0) 
             {
                 MessageBox.Show("People not selected!");
@@ -380,10 +381,10 @@ namespace Kotova.Test1.ClientSide
             }
             foreach (var item in listOfNames)
             {
-                listOfNamesString.Add(item.ToString());  
+                listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));  
             }
             string instructionNameString = selectedInstruction.ToString();
-            InstructionPackage package = new InstructionPackage(listOfNamesString, instructionNameString);
+            InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
             string jsonData = JsonConvert.SerializeObject(package);
             string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
             try
@@ -413,6 +414,25 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred while sending data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private Tuple<string, string> DeconstructNameAndBirthDate(string? nameWithBirthDate)
+        {
+            string pattern = @"^(.+?)\s\((\d{2}-\d{2}-\d{4})\)$";
+            if (nameWithBirthDate == null) { throw new ArgumentException("nameWithBirthDate is null! in DeconstructNameAndBirthDate"); }
+            Regex regex = new Regex(pattern);
+            Match match = regex.Match(nameWithBirthDate);
+
+            if (match.Success)
+            {
+                string fullName = match.Groups[1].Value;  // ФИО
+                string birthDate = match.Groups[2].Value; // BirthDate
+                return Tuple.Create(fullName, birthDate);
+            }
+            else
+            {
+                throw new ArgumentException("nameWithBirthDate doesn't match the pattern! in DeconstructNameAndBirthDate");
             }
         }
     }
