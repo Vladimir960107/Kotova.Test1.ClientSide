@@ -53,8 +53,6 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
 
-            string endDateString = endDate.ToString("dd/MM/yyyy");
-
 
             bool isForDrivers = checkBoxIsForDrivers.Checked;
 
@@ -303,7 +301,6 @@ namespace Kotova.Test1.ClientSide
                     else
                     {
                         string errorMessage = await response.Content.ReadAsStringAsync();
-                        // The call was not successful, handle errors or retry logic
                         //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -419,7 +416,7 @@ namespace Kotova.Test1.ClientSide
 
         private Tuple<string, string> DeconstructNameAndBirthDate(string? nameWithBirthDate)
         {
-            string pattern = @"^(.+?)\s\((\d{2}-\d{2}-\d{4})\)$";
+            string pattern = @"^(.+?)\s\((\d{4}-\d{2}-\d{2})\)$"; //Эта строка соответсвует birthDate_format в Server side
             if (nameWithBirthDate == null) { throw new ArgumentException("nameWithBirthDate is null! in DeconstructNameAndBirthDate"); }
             Regex regex = new Regex(pattern);
             Match match = regex.Match(nameWithBirthDate);

@@ -1,6 +1,6 @@
 ﻿namespace Kotova.Test1.ClientSide
 {
-    partial class Login
+    partial class Login_Russian
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Login));
             panel1 = new Panel();
             label2 = new Label();
             label1 = new Label();
@@ -76,11 +75,11 @@
             label2.AutoSize = true;
             label2.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
             label2.ForeColor = Color.White;
-            label2.Location = new Point(102, 507);
+            label2.Location = new Point(28, 507);
             label2.Name = "label2";
-            label2.Size = new Size(196, 51);
+            label2.Size = new Size(273, 51);
             label2.TabIndex = 1;
-            label2.Text = "Developed By Loginov Vladimir\r\n(Special thanks for this Design to: \r\nCode Galaxy T e c h)";
+            label2.Text = "Разработал Логинов Владимир\r\n(Отдельная благодарность за пример дизайна:\r\nCode Galaxy T e c h)\r\n";
             label2.TextAlign = ContentAlignment.BottomRight;
             label2.UseMnemonic = false;
             // 
@@ -91,19 +90,19 @@
             label1.ForeColor = Color.White;
             label1.Location = new Point(32, 186);
             label1.Name = "label1";
-            label1.Size = new Size(220, 87);
+            label1.Size = new Size(247, 87);
             label1.TabIndex = 0;
-            label1.Text = "Welcome to the\r\nService Management\r\nSystem\r\n";
+            label1.Text = "Добро пожаловать\r\nВ Систему Управления\r\nИнструктажей";
             label1.TextAlign = ContentAlignment.TopRight;
             label1.UseMnemonic = false;
             // 
             // pictureBox1
             // 
-            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
-            pictureBox1.Location = new Point(116, 57);
+            pictureBox1.Image = Properties.Resources.nanotechnology_white;
+            pictureBox1.Location = new Point(111, 57);
             pictureBox1.Margin = new Padding(3, 2, 3, 2);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(136, 123);
+            pictureBox1.Size = new Size(141, 123);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
@@ -141,9 +140,9 @@
             label4.ForeColor = SystemColors.ControlDark;
             label4.Location = new Point(6, 507);
             label4.Name = "label4";
-            label4.Size = new Size(269, 68);
+            label4.Size = new Size(304, 85);
             label4.TabIndex = 2;
-            label4.Text = "Support:\r\nIf you have any question about this application\r\nsubmit an email message to:\r\n ";
+            label4.Text = "Если у вас есть какие-то вопросы по данному\r\nприложению - отправьте свой вопрос/предложение\r\nчерез указанную ниже почту:\r\n\r\n ";
             // 
             // linkLabel1
             // 
@@ -152,10 +151,10 @@
             linkLabel1.LinkColor = Color.FromArgb(41, 128, 185);
             linkLabel1.Location = new Point(237, 367);
             linkLabel1.Name = "linkLabel1";
-            linkLabel1.Size = new Size(130, 22);
+            linkLabel1.Size = new Size(126, 22);
             linkLabel1.TabIndex = 5;
             linkLabel1.TabStop = true;
-            linkLabel1.Text = "Forgot Password?";
+            linkLabel1.Text = "Забыли пароль?";
             // 
             // button1
             // 
@@ -166,8 +165,9 @@
             button1.Name = "button1";
             button1.Size = new Size(115, 44);
             button1.TabIndex = 4;
-            button1.Text = "Login";
+            button1.Text = "Войти";
             button1.UseVisualStyleBackColor = false;
+            button1.Click += button1_Click;
             // 
             // panel3
             // 
@@ -222,6 +222,7 @@
             pictureBox4.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox4.TabIndex = 3;
             pictureBox4.TabStop = false;
+            toolTip1.SetToolTip(pictureBox4, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
             pictureBox4.MouseDown += lookPassword_MouseDown;
             pictureBox4.MouseUp += pictureBox4_MouseUp;
             // 
@@ -239,7 +240,7 @@
             // pictureBox3
             // 
             pictureBox3.BackColor = SystemColors.Control;
-            pictureBox3.Image = (Image)resources.GetObject("pictureBox3.Image");
+            pictureBox3.Image = Properties.Resources.output_onlinepngtools;
             pictureBox3.InitialImage = null;
             pictureBox3.Location = new Point(5, 10);
             pictureBox3.Name = "pictureBox3";
@@ -255,11 +256,11 @@
             label3.ForeColor = Color.FromArgb(41, 128, 185);
             label3.Location = new Point(42, 151);
             label3.Name = "label3";
-            label3.Size = new Size(229, 29);
+            label3.Size = new Size(248, 29);
             label3.TabIndex = 0;
-            label3.Text = "Login to your account";
+            label3.Text = "Войдите в свой аккаунт";
             // 
-            // Login
+            // Login_Russian
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -267,7 +268,7 @@
             Controls.Add(panel2);
             Controls.Add(panel1);
             Margin = new Padding(3, 2, 3, 2);
-            Name = "Login";
+            Name = "Login_Russian";
             Text = "Login";
             panel1.ResumeLayout(false);
             panel1.PerformLayout();

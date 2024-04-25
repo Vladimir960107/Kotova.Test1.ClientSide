@@ -12,6 +12,7 @@ namespace Kotova.Test1.ClientSide
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new Form2());
+            Application.Run(new Login_Russian());
         }
     }
 }

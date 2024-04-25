@@ -10,10 +10,10 @@ using System.Windows.Forms;
 
 namespace Kotova.Test1.ClientSide
 {
-    public partial class Login : Form
+    public partial class Login_Russian : Form
     {
 
-        public Login()
+        public Login_Russian()
         {
             InitializeComponent();
 
@@ -45,6 +45,17 @@ namespace Kotova.Test1.ClientSide
         private void pictureBox4_MouseUp(object sender, MouseEventArgs e)
         {
             textBox2.UseSystemPasswordChar = true;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (textBox1.Text == "" || textBox2.Text == "")
+            {
+                MessageBox.Show("Пожалуйста, заполните Логин и Пароль", "Не указан Логин и/или Пароль", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+
+                return;
+            }
         }
     }
 }
