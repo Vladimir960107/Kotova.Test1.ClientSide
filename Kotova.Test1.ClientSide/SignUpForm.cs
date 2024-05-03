@@ -10,23 +10,31 @@ using System.Windows.Forms;
 
 namespace Kotova.Test1.ClientSide
 {
-    public partial class Login_Russian : Form
+    public partial class SignUpForm : Form
     {
-
-        public Login_Russian()
+        private Login_Russian form1;
+        public SignUpForm(Login_Russian form)
         {
             InitializeComponent();
-
+            form1 = form;
         }
 
         private void textBox1_Click(object sender, EventArgs e)
         {
+            if (textBox1.Text == "Введите логин")
+            {
+                textBox1.Text = "";
+            }
             textBox1.BackColor = Color.White;
             textBox2.BackColor = SystemColors.Control;
 
         }
         private void textBox2_Click(object sender, EventArgs e)
         {
+            if (textBox2.Text == "Введите пароль")
+            {
+                textBox2.Text = "";
+            }
             textBox2.BackColor = Color.White;
             textBox1.BackColor = SystemColors.Control;
         }
@@ -69,12 +77,20 @@ namespace Kotova.Test1.ClientSide
 
         private void button1_Click(object sender, EventArgs e)
         {
-            SignUpForm signUpForm = new SignUpForm(this);
-            signUpForm.Location = this.Location;
-            signUpForm.Show();
-            this.Hide();
-            
+            this.Close();
 
+        }
+
+        private void returnButton_Click(object sender, EventArgs e)
+        {
+            form1.Location = this.Location;
+            form1.Show();
+            this.Hide(); // Hide Form2
+        }
+
+        private void RegistrationButton_Click(object sender, EventArgs e)
+        {
+            
         }
     }
 }
