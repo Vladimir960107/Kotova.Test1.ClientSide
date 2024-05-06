@@ -459,11 +459,6 @@ namespace Kotova.Test1.ClientSide
                 throw new ArgumentException("nameWithBirthDate doesn't match the pattern! in DeconstructNameAndBirthDate");
             }
         }
-
-        private void CheckForNewInstructions_Click(object sender, EventArgs e)
-        {
-            //Continue HERE!!!
-        }
     }
 
 

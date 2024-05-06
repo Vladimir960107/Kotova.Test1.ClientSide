@@ -47,7 +47,6 @@
             label4 = new Label();
             label5 = new Label();
             buttonSyncManualyInstrWithDB = new Button();
-            CheckForNewInstructions = new Button();
             SuspendLayout();
             // 
             // button1
@@ -244,22 +243,11 @@
             buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
             buttonSyncManualyInstrWithDB.Click += buttonSyncManualyInstrWithDB_Click;
             // 
-            // CheckForNewInstructions
-            // 
-            CheckForNewInstructions.Location = new Point(749, 271);
-            CheckForNewInstructions.Name = "CheckForNewInstructions";
-            CheckForNewInstructions.Size = new Size(273, 55);
-            CheckForNewInstructions.TabIndex = 20;
-            CheckForNewInstructions.Text = "Проверить есть ли у меня непройденные инструктажи";
-            CheckForNewInstructions.UseVisualStyleBackColor = true;
-            CheckForNewInstructions.Click += CheckForNewInstructions_Click;
-            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1107, 338);
-            Controls.Add(CheckForNewInstructions);
             Controls.Add(buttonSyncManualyInstrWithDB);
             Controls.Add(label5);
             Controls.Add(label4);
@@ -307,6 +295,5 @@
         private Label label4;
         private Label label5;
         private Button buttonSyncManualyInstrWithDB;
-        private Button CheckForNewInstructions;
     }
 }

@@ -197,19 +197,15 @@ namespace Kotova.Test1.ClientSide
                         // Make a GET request to the secured endpoint
                         HttpResponseMessage response = await client.GetAsync(_securedataUrl);
 
-                        // Ensure that the request was successful
                         response.EnsureSuccessStatusCode();
 
-                        // Read the response content as a string
                         string responseData = await response.Content.ReadAsStringAsync();
 
-                        // Display the result in a message box or another UI element
                         MessageBox.Show(responseData, "Secure Data");
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Handle any errors that occurred during the request
                     MessageBox.Show($"Error fetching secure data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 

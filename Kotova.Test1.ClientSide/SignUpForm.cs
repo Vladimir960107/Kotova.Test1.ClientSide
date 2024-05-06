@@ -85,7 +85,7 @@ namespace Kotova.Test1.ClientSide
         {
             form1.Location = this.Location;
             form1.Show();
-            this.Hide(); // Hide Form2
+            this.Hide(); 
         }
 
         private void RegistrationButton_Click(object sender, EventArgs e)
