@@ -9,6 +9,10 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using Kotova.CommonClasses;
 
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Windows.Forms;
+using Newtonsoft.Json.Linq;
 
 
 namespace Kotova.Test1.ClientSide
@@ -16,6 +20,7 @@ namespace Kotova.Test1.ClientSide
 
     public partial class Form2 : Form
     {
+        private Form? _loginForm;
         private const string tableName_sql_BeginDate = "begin_date";
         private const string tableName_sql_EndDate = "end_date";
         private const string tableName_sql_IsForDrivers = "is_for_drivers";
@@ -26,14 +31,15 @@ namespace Kotova.Test1.ClientSide
         public Form2()
         {
             InitializeComponent();
-            InitializeListBox();
-        }
-        private void InitializeListBox()
-        {
-            ListBoxNamesOfPeople.Items.Add("Тестовая опция 1");
         }
 
-        private void buttonCreateNotification_Click(object sender, EventArgs e)
+        public Form2(Form loginForm)
+        {
+            _loginForm = loginForm;
+            InitializeComponent();
+        }
+
+        private void buttonCreateNotification_Click(object sender, EventArgs e) //ЗДЕСЬ НАДО ПЕРЕПИСАТЬ В КОНЦЕ! ОЧЕНЬ ВАЖНО!!!!!
         {
             if (selectedFolderPath is null)
             {
@@ -84,7 +90,7 @@ namespace Kotova.Test1.ClientSide
                 }
 
                 // Use DatabaseManager to execute the constructed query with parameters
-                DatabaseManager.ExecuteQueryWithBuilder(builder); // Adjusted for compatibility
+                DatabaseManager.ExecuteQueryWithBuilder(builder); // ОГО, ЭТОГО ЗДЕСЬ НЕ ДОЛЖНО БЫТЬ! ИСПРАВЬ НА ОТПРАВКУ ЭТОЙ ФИГНИ НА СЕРВЕР, А ТОТ УЖЕ ОБРАБАТЫВАЕТ!
 
                 MessageBox.Show("Notification created successfully.");
             }
@@ -121,6 +127,8 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
@@ -160,6 +168,9 @@ namespace Kotova.Test1.ClientSide
 
                             // "file" parameter name should match the name of the parameter in the server action
                             content.Add(fileContent, "file", Path.GetFileName(filePath));
+
+                            string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                             // Post the file to the server
                             var response = await client.PostAsync(url, content);
@@ -204,8 +215,11 @@ namespace Kotova.Test1.ClientSide
 
             using (var client = new HttpClient())
             {
+
                 try
                 {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead); // Use ResponseHeadersRead to avoid buffering the entire file
 
                     if (response.IsSuccessStatusCode)
@@ -213,6 +227,7 @@ namespace Kotova.Test1.ClientSide
                         var contentDisposition = response.Content.Headers.ContentDisposition;
                         var filename = contentDisposition?.FileNameStar ?? contentDisposition?.FileName ?? "downloaded_file.xlsx";
                         var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), filename); // Save to My Documents or another appropriate location
+
 
                         using (var stream = await response.Content.ReadAsStreamAsync())
                         using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -237,6 +252,10 @@ namespace Kotova.Test1.ClientSide
             Download_file_excel.Enabled = true;
         }
 
+
+
+
+
         private async void syncExcelAndDB_Click(object sender, EventArgs e)
         {
             try
@@ -245,6 +264,8 @@ namespace Kotova.Test1.ClientSide
 
                 using (var httpClient = new HttpClient())
                 {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     // Assuming you're calling a GET method based on your ImportIntoDB action
                     var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/import-into-db");
 
@@ -280,6 +301,8 @@ namespace Kotova.Test1.ClientSide
 
                 using (var httpClient = new HttpClient())
                 {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     // Assuming you're calling a GET method based on your ImportIntoDB action
                     var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/sync-names-with-db");
 
@@ -326,6 +349,8 @@ namespace Kotova.Test1.ClientSide
 
                 using (var httpClient = new HttpClient())
                 {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     // Assuming you're calling a GET method based on your ImportIntoDB action
                     var response = await httpClient.GetAsync("https://localhost:7052/WeatherForecast/sync-instructions-with-db");
                     if (response.IsSuccessStatusCode)
@@ -388,6 +413,8 @@ namespace Kotova.Test1.ClientSide
             {
                 using (var httpClient = new HttpClient())
                 {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     // Set the URI of your server endpoint
                     var uri = new Uri("https://localhost:7052/WeatherForecast/send-instruction-and-names");
 

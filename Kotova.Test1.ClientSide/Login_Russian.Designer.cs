@@ -48,6 +48,7 @@
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
+            sucuredataButton = new Button();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
@@ -110,6 +111,7 @@
             // 
             // panel2
             // 
+            panel2.Controls.Add(sucuredataButton);
             panel2.Controls.Add(button1);
             panel2.Controls.Add(SupportEmail);
             panel2.Controls.Add(label4);
@@ -277,6 +279,16 @@
             label3.TabIndex = 0;
             label3.Text = "Войдите в свой аккаунт";
             // 
+            // sucuredataButton
+            // 
+            sucuredataButton.Location = new Point(447, 151);
+            sucuredataButton.Name = "sucuredataButton";
+            sucuredataButton.Size = new Size(111, 23);
+            sucuredataButton.TabIndex = 2;
+            sucuredataButton.Text = "TestAfterLogIn";
+            sucuredataButton.UseVisualStyleBackColor = true;
+            sucuredataButton.Click += securedataButton_Click;
+            // 
             // Login_Russian
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -323,5 +335,6 @@
         private PictureBox pictureBox4;
         private ToolTip toolTip1;
         private Button button1;
+        private Button sucuredataButton;
     }
 }
