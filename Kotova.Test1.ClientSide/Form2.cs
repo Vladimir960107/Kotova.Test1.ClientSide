@@ -360,7 +360,7 @@ namespace Kotova.Test1.ClientSide
                         {
                             throw new Exception("responseBody is empty"); //throw here better something
                         }
-                        List<Notification> result = JsonConvert.DeserializeObject<List<Notification>>(responseBody); //checked that is not null before!
+                        List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before!
 
                         string[] resultArray = result.Select(n => n.NameOfInstruction).ToArray(); //check that they are not null;
                         listOfInstructions.Items.AddRange(resultArray);

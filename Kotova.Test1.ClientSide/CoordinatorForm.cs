@@ -10,16 +10,20 @@ using System.Windows.Forms;
 
 namespace Kotova.Test1.ClientSide
 {
-    public partial class User : Form
+    public partial class CoordinatorForm : Form
     {
-        public User()
+        private Form? _loginForm;
+        private string? _userName;
+        public CoordinatorForm()
         {
             InitializeComponent();
         }
 
-        private void CheckForNewInstructions_Click(object sender, EventArgs e)
+        public CoordinatorForm(Form loginForm, string userName)
         {
-
+            _userName = userName;
+            _loginForm = loginForm;
+            InitializeComponent();
         }
     }
 }

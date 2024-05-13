@@ -15,6 +15,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Security.Cryptography;
 using System.Net.Http.Headers;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
 
 
 namespace Kotova.Test1.ClientSide
@@ -100,10 +103,30 @@ namespace Kotova.Test1.ClientSide
                         if (EncodeJWTToken(result.token))
                         {
                             MessageBox.Show("Login Successfull and JWT Token sucessfully encoded");
-                            Form2 FormMain = new Form2(this);
-                            FormMain.Location = this.Location;
-                            FormMain.Show();
-                            this.Hide();
+                            switch (GetRoleFromToken(result.token))
+                            {
+                                case "User":
+                                    UserForm userForm = new UserForm(this, GetUserNameFromToken(result.token)); // put here like UserForm(this)
+                                    userForm.Location = this.Location;
+                                    userForm.Show();
+                                    this.Hide();
+                                    break;
+                                case "Chief Of Department":
+                                    ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
+                                    chiefOfDepartmentForm.Location = this.Location;
+                                    chiefOfDepartmentForm.Show();
+                                    this.Hide();
+                                    break;
+                                case "Coordinator":
+                                    CoordinatorForm coordinatorForm = new CoordinatorForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
+                                    coordinatorForm.Location = this.Location;
+                                    coordinatorForm.Show();
+                                    this.Hide();
+                                    break;
+                                default:
+                                    MessageBox.Show("Oops, your role is invalid. Ask someone for help to resolve this issue :I");
+                                    break;
+                            }
                         }
                         else
                         {
@@ -143,6 +166,24 @@ namespace Kotova.Test1.ClientSide
                 return false;
             }
 
+        }
+        public string GetRoleFromToken(string jwtToken)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(jwtToken);
+            var tokenS = jsonToken as JwtSecurityToken;
+
+            var roleClaim = tokenS.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role);
+            return roleClaim?.Value;
+        }
+        public string GetUserNameFromToken(string jwtToken)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(jwtToken);
+            var tokenS = jsonToken as JwtSecurityToken;
+
+            var roleClaim = tokenS.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Name);
+            return roleClaim?.Value;
         }
 
         public class LoginResponse

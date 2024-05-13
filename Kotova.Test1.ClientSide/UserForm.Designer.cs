@@ -1,6 +1,6 @@
 ﻿namespace Kotova.Test1.ClientSide
 {
-    partial class User
+    partial class UserForm
     {
         /// <summary>
         /// Required designer variable.
@@ -30,7 +30,7 @@
         {
             CheckForNewInstructions = new Button();
             label1 = new Label();
-            label2 = new Label();
+            UserLabel = new Label();
             ListOfInstructions = new ListBox();
             label3 = new Label();
             button1 = new Button();
@@ -50,19 +50,20 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(28, 27);
+            label1.Location = new Point(15, 22);
             label1.Name = "label1";
             label1.Size = new Size(88, 15);
             label1.TabIndex = 22;
             label1.Text = "Вы вошли как:";
             // 
-            // label2
+            // UserLabel
             // 
-            label2.AutoSize = true;
-            label2.Location = new Point(122, 27);
-            label2.Name = "label2";
-            label2.Size = new Size(0, 15);
-            label2.TabIndex = 23;
+            UserLabel.AutoSize = true;
+            UserLabel.Location = new Point(109, 22);
+            UserLabel.Name = "UserLabel";
+            UserLabel.Size = new Size(81, 15);
+            UserLabel.TabIndex = 23;
+            UserLabel.Text = "UnknownUser";
             // 
             // ListOfInstructions
             // 
@@ -100,7 +101,7 @@
             PassInstruction.Size = new Size(244, 19);
             PassInstruction.TabIndex = 27;
             PassInstruction.TabStop = true;
-            PassInstruction.Text = "Подтверждаю, что интсруктаж пройден";
+            PassInstruction.Text = "Подтверждаю, что инструктаж пройден";
             PassInstruction.UseVisualStyleBackColor = true;
             // 
             // User
@@ -112,7 +113,7 @@
             Controls.Add(button1);
             Controls.Add(label3);
             Controls.Add(ListOfInstructions);
-            Controls.Add(label2);
+            Controls.Add(UserLabel);
             Controls.Add(label1);
             Controls.Add(CheckForNewInstructions);
             Name = "User";
@@ -125,7 +126,7 @@
 
         private Button CheckForNewInstructions;
         private Label label1;
-        private Label label2;
+        private Label UserLabel;
         private ListBox ListOfInstructions;
         private Label label3;
         private Button button1;

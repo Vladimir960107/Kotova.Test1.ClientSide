@@ -92,9 +92,9 @@
             label2.AutoSize = true;
             label2.Location = new Point(30, 108);
             label2.Name = "label2";
-            label2.Size = new Size(130, 15);
+            label2.Size = new Size(133, 15);
             label2.TabIndex = 5;
-            label2.Text = "Название инструкции:";
+            label2.Text = "Причина инструктажа:";
             // 
             // buttonChoosePathToInstruction
             // 
@@ -103,7 +103,7 @@
             buttonChoosePathToInstruction.Name = "buttonChoosePathToInstruction";
             buttonChoosePathToInstruction.Size = new Size(121, 50);
             buttonChoosePathToInstruction.TabIndex = 6;
-            buttonChoosePathToInstruction.Text = "Указать путь для инструктажа";
+            buttonChoosePathToInstruction.Text = "Указать папку для инструктажа";
             buttonChoosePathToInstruction.UseVisualStyleBackColor = true;
             buttonChoosePathToInstruction.Click += buttonChoosePathToInstruction_Click;
             // 
