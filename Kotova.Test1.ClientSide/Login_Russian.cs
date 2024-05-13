@@ -1,23 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
-using System;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Security.Cryptography;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 
 namespace Kotova.Test1.ClientSide
@@ -139,7 +126,8 @@ namespace Kotova.Test1.ClientSide
                 }
                 else
                 {
-                    MessageBox.Show($"Login failed: {response.ReasonPhrase}");
+                    var message = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Login failed: {message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
@@ -212,7 +200,7 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private async void securedataButton_Click(object sender, EventArgs e)
+        /*private async void securedata_TEST_Button_Click(object sender, EventArgs e) // YOU CAN DELETE THIS PART OF CODE, DEPRECATED. IF YOU WANT
         {
             try
             {
@@ -260,6 +248,6 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("OOOops, something went wrong (check securedataButton_Click)!");
                 return;
             }
-        }
+        }*/
     }
 }

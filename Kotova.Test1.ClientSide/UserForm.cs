@@ -9,6 +9,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static Kotova.Test1.ClientSide.Login_Russian;
+
+using System.Text.Json;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -51,8 +54,18 @@ namespace Kotova.Test1.ClientSide
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show(responseBody);
+                    
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
+                    foreach (Dictionary<string, object> temp in result)
+                    {
+                        foreach (KeyValuePair<string, object> kvp in temp)
+                        {
+                            var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
+                            MessageBox.Show($"Key = {kvp.Key}, Value = {tempValue}");
+                        }
+                    }
                 }
             }
             catch (HttpRequestException ex)
