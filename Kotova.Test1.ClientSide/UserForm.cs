@@ -17,6 +17,10 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class UserForm : Form
     {
+
+        public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
+        public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
+
         Form? _loginForm;
         string? _userName;
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_NOTIFICATION_URL_DEVELOPMENT + "/get_instructions_for_user";
@@ -29,7 +33,7 @@ namespace Kotova.Test1.ClientSide
         {
             InitializeComponent();
             _loginForm = loginForm;
-            _userName = userName;  
+            _userName = userName;
             UserLabel.Text = _userName;
 
         }
@@ -54,17 +58,18 @@ namespace Kotova.Test1.ClientSide
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
-                    
+
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
                     foreach (Dictionary<string, object> temp in result)
                     {
-                        foreach (KeyValuePair<string, object> kvp in temp)
+                        ListOfInstructions.Items.Add(temp[dB_pos_users_causeOfInstruction]);
+                        /*foreach (KeyValuePair<string, object> kvp in temp)
                         {
-                            var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
-                            MessageBox.Show($"Key = {kvp.Key}, Value = {tempValue}");
-                        }
+                           var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
+                            
+                        }*/
                     }
                 }
             }
@@ -74,6 +79,12 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Error: {ex.Message}");
             }
 
+        }
+
+        private void ListOfInstructions_SelectedValueChanged(object sender, EventArgs e)
+        {
+            HyperLinkForInstructionsFolder.Enabled = true;
+            PassInstruction.Enabled = true;
         }
     }
 }

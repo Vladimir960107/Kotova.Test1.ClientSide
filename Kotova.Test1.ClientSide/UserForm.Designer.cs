@@ -33,7 +33,7 @@
             UserLabel = new Label();
             ListOfInstructions = new ListBox();
             label3 = new Label();
-            button1 = new Button();
+            HyperLinkForInstructionsFolder = new Button();
             PassInstruction = new RadioButton();
             SuspendLayout();
             // 
@@ -73,6 +73,7 @@
             ListOfInstructions.Name = "ListOfInstructions";
             ListOfInstructions.Size = new Size(430, 229);
             ListOfInstructions.TabIndex = 24;
+            ListOfInstructions.SelectedValueChanged += ListOfInstructions_SelectedValueChanged;
             // 
             // label3
             // 
@@ -83,14 +84,15 @@
             label3.TabIndex = 25;
             label3.Text = "Лист непройденных инструктажей:";
             // 
-            // button1
+            // HyperLinkForInstructionsFolder
             // 
-            button1.Location = new Point(662, 170);
-            button1.Name = "button1";
-            button1.Size = new Size(111, 229);
-            button1.TabIndex = 26;
-            button1.Text = "Гиперссылка на инструктаж";
-            button1.UseVisualStyleBackColor = true;
+            HyperLinkForInstructionsFolder.Enabled = false;
+            HyperLinkForInstructionsFolder.Location = new Point(662, 170);
+            HyperLinkForInstructionsFolder.Name = "HyperLinkForInstructionsFolder";
+            HyperLinkForInstructionsFolder.Size = new Size(111, 229);
+            HyperLinkForInstructionsFolder.TabIndex = 26;
+            HyperLinkForInstructionsFolder.Text = "Гиперссылка на инструктаж";
+            HyperLinkForInstructionsFolder.UseVisualStyleBackColor = true;
             // 
             // PassInstruction
             // 
@@ -104,19 +106,19 @@
             PassInstruction.Text = "Подтверждаю, что инструктаж пройден";
             PassInstruction.UseVisualStyleBackColor = true;
             // 
-            // User
+            // UserForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
             Controls.Add(PassInstruction);
-            Controls.Add(button1);
+            Controls.Add(HyperLinkForInstructionsFolder);
             Controls.Add(label3);
             Controls.Add(ListOfInstructions);
             Controls.Add(UserLabel);
             Controls.Add(label1);
             Controls.Add(CheckForNewInstructions);
-            Name = "User";
+            Name = "UserForm";
             Text = "User";
             ResumeLayout(false);
             PerformLayout();
@@ -129,7 +131,7 @@
         private Label UserLabel;
         private ListBox ListOfInstructions;
         private Label label3;
-        private Button button1;
+        private Button HyperLinkForInstructionsFolder;
         private RadioButton PassInstruction;
     }
 }

@@ -25,7 +25,8 @@ namespace Kotova.Test1.ClientSide
         private const string tableName_sql_EndDate = "end_date";
         private const string tableName_sql_IsForDrivers = "is_for_drivers";
         private const string tableName_sql_PathToInstruction = "path_to_instruction";
-        private const string tableName_sql_NameOfInstrutcion = "name_of_instruction";
+        private const string tableName_sql_NameOfInstruction = "name_of_instruction";
+        private const string tableName_sql_typeOfInstruction = "type_of_instruction";
 
         static string? selectedFolderPath = null;
         public Form2()
@@ -66,6 +67,8 @@ namespace Kotova.Test1.ClientSide
 
             string nameOfInstruction = InstructionTextBox.Text;
 
+            int typeOfInstruction = 1; // Здесь нужно считавать тип инструкции вместо 1.
+
 
             // Validation for end date
 
@@ -75,13 +78,15 @@ namespace Kotova.Test1.ClientSide
                 { tableName_sql_EndDate, endDate },
                 { tableName_sql_IsForDrivers, bitValueIsForDrivers},
                 { tableName_sql_PathToInstruction, selectedFolderPath},
-                { tableName_sql_NameOfInstrutcion, nameOfInstruction}
+                { tableName_sql_NameOfInstruction, nameOfInstruction},
+                { tableName_sql_typeOfInstruction, typeOfInstruction }
+
             };
 
             try
             {
-                // Create a new instance of SqlInsertCommandBuilder for the Notifications table
-                var builder = new SqlInsertCommandBuilder("dbo.Notifications");
+                // Create a new instance of SqlInsertCommandBuilder for the Instruction table
+                var builder = new SqlInsertCommandBuilder("dbo.Instructions");
 
                 // Add column values
                 foreach (var parameter in parameters)
@@ -92,7 +97,7 @@ namespace Kotova.Test1.ClientSide
                 // Use DatabaseManager to execute the constructed query with parameters
                 DatabaseManager.ExecuteQueryWithBuilder(builder); // ОГО, ЭТОГО ЗДЕСЬ НЕ ДОЛЖНО БЫТЬ! ИСПРАВЬ НА ОТПРАВКУ ЭТОЙ ФИГНИ НА СЕРВЕР, А ТОТ УЖЕ ОБРАБАТЫВАЕТ!
 
-                MessageBox.Show("Notification created successfully.");
+                MessageBox.Show("Instruction created successfully.");
             }
             catch (Exception ex)
             {
