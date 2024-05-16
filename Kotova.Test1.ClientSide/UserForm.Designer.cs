@@ -34,7 +34,7 @@
             ListOfInstructions = new ListBox();
             label3 = new Label();
             HyperLinkForInstructionsFolder = new Button();
-            PassInstruction = new RadioButton();
+            PassInstruction = new CheckBox();
             SuspendLayout();
             // 
             // CheckForNewInstructions
@@ -93,18 +93,18 @@
             HyperLinkForInstructionsFolder.TabIndex = 26;
             HyperLinkForInstructionsFolder.Text = "Гиперссылка на инструктаж";
             HyperLinkForInstructionsFolder.UseVisualStyleBackColor = true;
+            HyperLinkForInstructionsFolder.Click += HyperLinkForInstructionsFolder_Click;
             // 
             // PassInstruction
             // 
             PassInstruction.AutoSize = true;
-            PassInstruction.Enabled = false;
             PassInstruction.Location = new Point(214, 419);
             PassInstruction.Name = "PassInstruction";
-            PassInstruction.Size = new Size(244, 19);
-            PassInstruction.TabIndex = 27;
-            PassInstruction.TabStop = true;
+            PassInstruction.Size = new Size(245, 19);
+            PassInstruction.TabIndex = 28;
             PassInstruction.Text = "Подтверждаю, что инструктаж пройден";
             PassInstruction.UseVisualStyleBackColor = true;
+            PassInstruction.CheckedChanged += PassInstruction_CheckedChanged;
             // 
             // UserForm
             // 
@@ -132,6 +132,6 @@
         private ListBox ListOfInstructions;
         private Label label3;
         private Button HyperLinkForInstructionsFolder;
-        private RadioButton PassInstruction;
+        private CheckBox PassInstruction;
     }
 }
