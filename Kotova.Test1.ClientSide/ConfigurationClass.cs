@@ -8,6 +8,6 @@ namespace Kotova.Test1.ClientSide
 {
     internal static class ConfigurationClass
     {
-        public const string BASE_NOTIFICATION_URL_DEVELOPMENT = "https://localhost:7052/Instructions";
+        public const string BASE_NOTIFICATION_URL_DEVELOPMENT = "https://192.168.100.71:7052/Instructions";
     }
 }

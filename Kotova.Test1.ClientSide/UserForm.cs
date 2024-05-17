@@ -202,9 +202,8 @@ namespace Kotova.Test1.ClientSide
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     string jsonData = JsonSerializer.Serialize(selectedDict);
-                    string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
 
-                    var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
                     HttpResponseMessage response = await client.PostAsync(url, content);
                     response.EnsureSuccessStatusCode();
