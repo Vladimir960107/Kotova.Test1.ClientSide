@@ -13,7 +13,7 @@ namespace Kotova.Test1.ClientSide
     {
 
         private static readonly HttpClient _httpClient = new HttpClient();
-        private const string _loginUrl = "https://192.168.100.71:7052/login"; //ADD IT TO THE 
+        private const string _loginUrl = ConfigurationClass.BASE_URL_DEVELOPMENT+"/login"; //ADD IT TO THE 
         static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         static string fileName = "encrypted_jwt.dat";
         string filePath = Path.Combine(documentsPath, fileName);
@@ -133,6 +133,7 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show($"Error: {ex.Message}");
                 MessageBox.Show(ex.ToString() );
+                textBox3.Text = ex.ToString();
             }
 
         }

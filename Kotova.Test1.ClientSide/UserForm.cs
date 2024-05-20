@@ -28,8 +28,8 @@ namespace Kotova.Test1.ClientSide
 
         Form? _loginForm;
         string? _userName;
-        const string DownloadInstructionForUserURL = ConfigurationClass.BASE_NOTIFICATION_URL_DEVELOPMENT + "/get_instructions_for_user";
-        const string SendInstructionIsPassedURL = ConfigurationClass.BASE_NOTIFICATION_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
+        const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
         public UserForm()
         {
             InitializeComponent();
