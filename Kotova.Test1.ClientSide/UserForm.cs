@@ -45,13 +45,17 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private void CheckForNewInstructions_Click(object sender, EventArgs e)
+        private async void CheckForNewInstructions_Click(object sender, EventArgs e)
         {
             ListOfInstructions.Items.Clear();
-            DownloadInstructionsForUserFromServer(_userName);
+            bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
+            if (IsEmpty == true)
+            {
+                MessageBox.Show("All the instructions passed!");
+            }
         }
 
-        private async void DownloadInstructionsForUserFromServer(string? userName)
+        private async Task<bool> DownloadInstructionsForUserFromServer(string? userName)
         {
             if (userName is null)
             {
@@ -70,6 +74,12 @@ namespace Kotova.Test1.ClientSide
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
+                    
+                    if (result.Count == 0)
+                    {
+                        return true;
+                    }
+                    
                     listOfInstructions_global = result;
                     foreach (Dictionary<string, object> temp in result)
                     {
@@ -80,13 +90,16 @@ namespace Kotova.Test1.ClientSide
                            var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
                             
                         }*/
+                        
                     }
+                    return false;
                 }
             }
             catch (HttpRequestException ex)
             {
                 // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
+                throw ex;
             }
 
         }

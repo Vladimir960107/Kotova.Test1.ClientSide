@@ -48,7 +48,6 @@
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
-            textBox3 = new TextBox();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
@@ -111,7 +110,6 @@
             // 
             // panel2
             // 
-            panel2.Controls.Add(textBox3);
             panel2.Controls.Add(button1);
             panel2.Controls.Add(SupportEmail);
             panel2.Controls.Add(label4);
@@ -279,13 +277,6 @@
             label3.TabIndex = 0;
             label3.Text = "Войдите в свой аккаунт";
             // 
-            // textBox3
-            // 
-            textBox3.Location = new Point(42, 77);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(100, 23);
-            textBox3.TabIndex = 8;
-            // 
             // Login_Russian
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -332,6 +323,5 @@
         private PictureBox pictureBox4;
         private ToolTip toolTip1;
         private Button button1;
-        private TextBox textBox3;
     }
 }

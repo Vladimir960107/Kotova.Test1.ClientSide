@@ -127,7 +127,7 @@ namespace Kotova.Test1.ClientSide
         }
         private async void buttonTest_Click(object sender, EventArgs e)
         {
-            string url = "https://localhost:7052/WeatherForecast/greeting";
+            string url = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/greeting";
             try
             {
                 using (HttpClient client = new HttpClient())

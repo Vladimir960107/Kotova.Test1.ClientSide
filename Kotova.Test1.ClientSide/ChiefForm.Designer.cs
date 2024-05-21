@@ -35,7 +35,8 @@
             ListBoxNamesOfPeople = new ListBox();
             checkBoxIsForDrivers = new CheckBox();
             tabPage2 = new TabPage();
-            label8 = new Label();
+            testButton = new Button();
+            PathToFolderOfInstruction = new Label();
             label7 = new Label();
             buttonChoosePathToInstruction = new Button();
             label2 = new Label();
@@ -115,7 +116,8 @@
             // 
             // tabPage2
             // 
-            tabPage2.Controls.Add(label8);
+            tabPage2.Controls.Add(testButton);
+            tabPage2.Controls.Add(PathToFolderOfInstruction);
             tabPage2.Controls.Add(label7);
             tabPage2.Controls.Add(buttonChoosePathToInstruction);
             tabPage2.Controls.Add(label2);
@@ -133,15 +135,25 @@
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
             // 
-            // label8
+            // testButton
             // 
-            label8.AutoSize = true;
-            label8.Location = new Point(364, 98);
-            label8.Name = "label8";
-            label8.Size = new Size(94, 15);
-            label8.TabIndex = 14;
-            label8.Text = "Путь не выбран";
-            toolTip1.SetToolTip(label8, "Путь не выбран");
+            testButton.Location = new Point(360, 45);
+            testButton.Name = "testButton";
+            testButton.Size = new Size(132, 39);
+            testButton.TabIndex = 15;
+            testButton.Text = "Test";
+            testButton.UseVisualStyleBackColor = true;
+            testButton.Click += testButton_Click;
+            // 
+            // PathToFolderOfInstruction
+            // 
+            PathToFolderOfInstruction.AutoSize = true;
+            PathToFolderOfInstruction.Location = new Point(364, 98);
+            PathToFolderOfInstruction.Name = "PathToFolderOfInstruction";
+            PathToFolderOfInstruction.Size = new Size(94, 15);
+            PathToFolderOfInstruction.TabIndex = 14;
+            PathToFolderOfInstruction.Text = "Путь не выбран";
+            toolTip1.SetToolTip(PathToFolderOfInstruction, "Путь не выбран");
             // 
             // label7
             // 
@@ -156,10 +168,11 @@
             buttonChoosePathToInstruction.Location = new Point(364, 138);
             buttonChoosePathToInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonChoosePathToInstruction.Name = "buttonChoosePathToInstruction";
-            buttonChoosePathToInstruction.Size = new Size(121, 50);
+            buttonChoosePathToInstruction.Size = new Size(172, 56);
             buttonChoosePathToInstruction.TabIndex = 12;
             buttonChoosePathToInstruction.Text = "Указать папку для инструктажа";
             buttonChoosePathToInstruction.UseVisualStyleBackColor = true;
+            buttonChoosePathToInstruction.Click += buttonChooseHyperLinkToInstruction_Click;
             // 
             // label2
             // 
@@ -338,13 +351,13 @@
             tabControl1.Size = new Size(693, 348);
             tabControl1.TabIndex = 33;
             // 
-            // ChiefOfDepartment
+            // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1085, 450);
             Controls.Add(tabControl1);
-            Name = "ChiefOfDepartment";
+            Name = "ChiefForm";
             Text = "ChiefOfDepartment";
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
@@ -379,8 +392,9 @@
         private Label label6;
         private DateTimePicker datePickerEnd;
         private Button button1;
-        private Label label8;
+        private Label PathToFolderOfInstruction;
         private Label label7;
         private ToolTip toolTip1;
+        private Button testButton;
     }
 }

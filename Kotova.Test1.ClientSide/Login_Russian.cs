@@ -54,12 +54,13 @@ namespace Kotova.Test1.ClientSide
 
         private async void LogInButton_Click(object sender, EventArgs e)
         {
-
+            LogInButton.Enabled = false;
 
 
             if (string.IsNullOrWhiteSpace(textBox1.Text) || string.IsNullOrWhiteSpace(textBox2.Text))
             {
                 MessageBox.Show("Пожалуйста, заполните Логин и Пароль", "Не указан Логин и/или Пароль", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                LogInButton.Enabled = true;
                 return;
             }
 
@@ -133,7 +134,10 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show($"Error: {ex.Message}");
                 MessageBox.Show(ex.ToString() );
-                textBox3.Text = ex.ToString();
+            }
+            finally
+            {
+                LogInButton.Enabled = true;
             }
 
         }
