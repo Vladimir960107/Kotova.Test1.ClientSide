@@ -209,7 +209,12 @@ namespace Kotova.Test1.ClientSide
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode) { MessageBox.Show("Everyting is fine"); }
+                    if (response.IsSuccessStatusCode) 
+                    { 
+                        MessageBox.Show("Everyting is fine, updating the listbox of instructions");
+                        ListOfInstructions.Items.Clear();
+                        DownloadInstructionsForUserFromServer(_userName);   
+                    }
                 }
             }
             catch (HttpRequestException ex)
@@ -236,6 +241,11 @@ namespace Kotova.Test1.ClientSide
             {
                 return false;
             }
+        }
+        private void UserForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            _loginForm.Dispose();
+            this.Dispose();
         }
     }
 }

@@ -120,6 +120,7 @@
             Controls.Add(CheckForNewInstructions);
             Name = "UserForm";
             Text = "User";
+            FormClosed += UserForm_FormClosed;
             ResumeLayout(false);
             PerformLayout();
         }
