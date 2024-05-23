@@ -34,7 +34,6 @@
             label1 = new Label();
             pictureBox1 = new PictureBox();
             panel2 = new Panel();
-            button1 = new Button();
             SupportEmail = new LinkLabel();
             label4 = new Label();
             ForgotPasswordLabel = new LinkLabel();
@@ -48,6 +47,7 @@
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
+            button1 = new Button();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
@@ -124,19 +124,6 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(614, 589);
             panel2.TabIndex = 1;
-            // 
-            // button1
-            // 
-            button1.BackColor = Color.White;
-            button1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            button1.ForeColor = Color.Black;
-            button1.Location = new Point(82, 419);
-            button1.Name = "button1";
-            button1.Size = new Size(520, 44);
-            button1.TabIndex = 7;
-            button1.Text = "Регистрация";
-            button1.UseVisualStyleBackColor = false;
-            button1.Click += button1_Click;
             // 
             // SupportEmail
             // 
@@ -276,6 +263,19 @@
             label3.Size = new Size(248, 29);
             label3.TabIndex = 0;
             label3.Text = "Войдите в свой аккаунт";
+            // 
+            // button1
+            // 
+            button1.BackColor = Color.White;
+            button1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            button1.ForeColor = Color.Black;
+            button1.Location = new Point(82, 419);
+            button1.Name = "button1";
+            button1.Size = new Size(520, 44);
+            button1.TabIndex = 7;
+            button1.Text = "Регистрация";
+            button1.UseVisualStyleBackColor = false;
+            button1.Click += button1_Click;
             // 
             // Login_Russian
             // 

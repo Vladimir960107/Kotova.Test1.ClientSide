@@ -37,21 +37,20 @@
             panel2 = new Panel();
             panel6 = new Panel();
             pictureBox5 = new PictureBox();
-            textBox4 = new TextBox();
+            PasswordTextBox = new TextBox();
             pictureBox6 = new PictureBox();
             panel5 = new Panel();
             pictureBox7 = new PictureBox();
-            textBox3 = new TextBox();
-            returnButton = new Button();
+            emailTextBox = new TextBox();
+            skipButton = new Button();
             SupportEmail = new LinkLabel();
             label4 = new Label();
             LogInButton = new Button();
             panel3 = new Panel();
-            textBox1 = new TextBox();
+            loginTextBox = new TextBox();
             pictureBox2 = new PictureBox();
             panel4 = new Panel();
-            pictureBox4 = new PictureBox();
-            textBox2 = new TextBox();
+            RepeatPasswordTextBox = new TextBox();
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
@@ -66,7 +65,6 @@
             panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             panel4.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox4).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
             SuspendLayout();
             // 
@@ -124,7 +122,7 @@
             // 
             panel2.Controls.Add(panel6);
             panel2.Controls.Add(panel5);
-            panel2.Controls.Add(returnButton);
+            panel2.Controls.Add(skipButton);
             panel2.Controls.Add(SupportEmail);
             panel2.Controls.Add(label4);
             panel2.Controls.Add(LogInButton);
@@ -142,9 +140,9 @@
             // 
             panel6.BackColor = SystemColors.Control;
             panel6.Controls.Add(pictureBox5);
-            panel6.Controls.Add(textBox4);
+            panel6.Controls.Add(PasswordTextBox);
             panel6.Controls.Add(pictureBox6);
-            panel6.Location = new Point(0, 267);
+            panel6.Location = new Point(6, 186);
             panel6.Name = "panel6";
             panel6.Size = new Size(614, 54);
             panel6.TabIndex = 9;
@@ -160,15 +158,17 @@
             pictureBox5.TabStop = false;
             toolTip1.SetToolTip(pictureBox5, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
             // 
-            // textBox4
+            // PasswordTextBox
             // 
-            textBox4.BackColor = SystemColors.Control;
-            textBox4.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            textBox4.Location = new Point(82, 12);
-            textBox4.Name = "textBox4";
-            textBox4.Size = new Size(520, 29);
-            textBox4.TabIndex = 2;
-            textBox4.Text = "Введите пароль";
+            PasswordTextBox.BackColor = SystemColors.Control;
+            PasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            PasswordTextBox.Location = new Point(82, 12);
+            PasswordTextBox.Name = "PasswordTextBox";
+            PasswordTextBox.Size = new Size(520, 29);
+            PasswordTextBox.TabIndex = 2;
+            PasswordTextBox.Text = "Введите новый пароль";
+            PasswordTextBox.TextChanged += PasswordTextBox_TextChanged;
+            PasswordTextBox.DoubleClick += PasswordTextBox_DoubleClick;
             // 
             // pictureBox6
             // 
@@ -186,8 +186,8 @@
             // 
             panel5.BackColor = SystemColors.Control;
             panel5.Controls.Add(pictureBox7);
-            panel5.Controls.Add(textBox3);
-            panel5.Location = new Point(0, 331);
+            panel5.Controls.Add(emailTextBox);
+            panel5.Location = new Point(6, 306);
             panel5.Name = "panel5";
             panel5.Size = new Size(614, 48);
             panel5.TabIndex = 8;
@@ -204,29 +204,29 @@
             pictureBox7.TabIndex = 3;
             pictureBox7.TabStop = false;
             // 
-            // textBox3
+            // emailTextBox
             // 
-            textBox3.BackColor = SystemColors.Control;
-            textBox3.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            textBox3.Location = new Point(82, 12);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(520, 29);
-            textBox3.TabIndex = 2;
-            textBox3.Text = "Введите почту (Необязательно)";
-            textBox3.Click += returnButton_Click;
+            emailTextBox.BackColor = SystemColors.Control;
+            emailTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            emailTextBox.Location = new Point(82, 12);
+            emailTextBox.Name = "emailTextBox";
+            emailTextBox.Size = new Size(520, 29);
+            emailTextBox.TabIndex = 2;
+            emailTextBox.Text = "Введите почту (Необязательно)";
+            emailTextBox.DoubleClick += emailTextBox_DoubleClick;
             // 
-            // returnButton
+            // skipButton
             // 
-            returnButton.BackColor = Color.White;
-            returnButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            returnButton.ForeColor = Color.Black;
-            returnButton.Location = new Point(82, 460);
-            returnButton.Name = "returnButton";
-            returnButton.Size = new Size(520, 44);
-            returnButton.TabIndex = 7;
-            returnButton.Text = "Обратно на страницу входа";
-            returnButton.UseVisualStyleBackColor = false;
-            returnButton.Click += returnButton_Click;
+            skipButton.BackColor = Color.White;
+            skipButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            skipButton.ForeColor = Color.Black;
+            skipButton.Location = new Point(82, 444);
+            skipButton.Name = "skipButton";
+            skipButton.Size = new Size(520, 44);
+            skipButton.TabIndex = 7;
+            skipButton.Text = "Пропустить регистрацию";
+            skipButton.UseVisualStyleBackColor = false;
+            skipButton.Click += skipButton_Click;
             // 
             // SupportEmail
             // 
@@ -255,35 +255,36 @@
             LogInButton.BackColor = Color.FromArgb(41, 128, 185);
             LogInButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
             LogInButton.ForeColor = Color.White;
-            LogInButton.Location = new Point(82, 410);
+            LogInButton.Location = new Point(82, 380);
             LogInButton.Name = "LogInButton";
             LogInButton.Size = new Size(520, 44);
             LogInButton.TabIndex = 4;
-            LogInButton.Text = "Зарегестрироваться";
+            LogInButton.Text = "Зарегестрировать новый Логин и Пароль";
             LogInButton.UseVisualStyleBackColor = false;
-            LogInButton.Click += RegistrationButton_Click;
+            LogInButton.Click += signUpButton_Click;
             // 
             // panel3
             // 
             panel3.BackColor = SystemColors.Control;
-            panel3.Controls.Add(textBox1);
+            panel3.Controls.Add(loginTextBox);
             panel3.Controls.Add(pictureBox2);
-            panel3.Location = new Point(0, 211);
+            panel3.Location = new Point(6, 126);
             panel3.Name = "panel3";
             panel3.Size = new Size(614, 54);
             panel3.TabIndex = 3;
             // 
-            // textBox1
+            // loginTextBox
             // 
-            textBox1.BackColor = SystemColors.Control;
-            textBox1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            textBox1.ForeColor = Color.FromArgb(0, 0, 0, 6);
-            textBox1.Location = new Point(82, 12);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new Size(520, 29);
-            textBox1.TabIndex = 1;
-            textBox1.Text = "Введите логин";
-            textBox1.Click += textBox1_Click;
+            loginTextBox.BackColor = SystemColors.Control;
+            loginTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            loginTextBox.ForeColor = Color.FromArgb(0, 0, 0, 6);
+            loginTextBox.Location = new Point(82, 12);
+            loginTextBox.Name = "loginTextBox";
+            loginTextBox.Size = new Size(520, 29);
+            loginTextBox.TabIndex = 1;
+            loginTextBox.Text = "Введите новый логин";
+            loginTextBox.Click += textBox1_Click;
+            loginTextBox.DoubleClick += loginTextBox_DoubleClick;
             // 
             // pictureBox2
             // 
@@ -300,37 +301,25 @@
             // panel4
             // 
             panel4.BackColor = SystemColors.Control;
-            panel4.Controls.Add(pictureBox4);
-            panel4.Controls.Add(textBox2);
+            panel4.Controls.Add(RepeatPasswordTextBox);
             panel4.Controls.Add(pictureBox3);
-            panel4.Location = new Point(0, 271);
+            panel4.Location = new Point(6, 246);
             panel4.Name = "panel4";
             panel4.Size = new Size(614, 54);
             panel4.TabIndex = 2;
             // 
-            // pictureBox4
+            // RepeatPasswordTextBox
             // 
-            pictureBox4.Image = Properties.Resources.eye;
-            pictureBox4.Location = new Point(46, 12);
-            pictureBox4.Name = "pictureBox4";
-            pictureBox4.Size = new Size(29, 29);
-            pictureBox4.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureBox4.TabIndex = 3;
-            pictureBox4.TabStop = false;
-            toolTip1.SetToolTip(pictureBox4, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
-            pictureBox4.MouseDown += lookPassword_MouseDown;
-            pictureBox4.MouseUp += pictureBox4_MouseUp;
-            // 
-            // textBox2
-            // 
-            textBox2.BackColor = SystemColors.Control;
-            textBox2.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            textBox2.Location = new Point(82, 12);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(520, 29);
-            textBox2.TabIndex = 2;
-            textBox2.UseSystemPasswordChar = true;
-            textBox2.Click += textBox2_Click;
+            RepeatPasswordTextBox.BackColor = SystemColors.Control;
+            RepeatPasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            RepeatPasswordTextBox.Location = new Point(82, 12);
+            RepeatPasswordTextBox.Name = "RepeatPasswordTextBox";
+            RepeatPasswordTextBox.Size = new Size(520, 29);
+            RepeatPasswordTextBox.TabIndex = 2;
+            RepeatPasswordTextBox.Text = "Повторите новый пароль";
+            RepeatPasswordTextBox.Click += textBox2_Click;
+            RepeatPasswordTextBox.TextChanged += RepeatPassswordTextBox_TextChanged;
+            RepeatPasswordTextBox.DoubleClick += RepeatPassswordTextBox_DoubleClick;
             // 
             // pictureBox3
             // 
@@ -349,11 +338,11 @@
             label3.AutoSize = true;
             label3.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
             label3.ForeColor = Color.FromArgb(41, 128, 185);
-            label3.Location = new Point(42, 151);
+            label3.Location = new Point(46, 25);
             label3.Name = "label3";
-            label3.Size = new Size(248, 29);
+            label3.Size = new Size(252, 29);
             label3.TabIndex = 0;
-            label3.Text = "Войдите в свой аккаунт";
+            label3.Text = "Смена логина и пароля";
             // 
             // SignUpForm
             // 
@@ -382,7 +371,6 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox4).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).EndInit();
             ResumeLayout(false);
         }
@@ -399,19 +387,18 @@
         private Panel panel4;
         private PictureBox pictureBox2;
         private PictureBox pictureBox3;
-        private TextBox textBox1;
-        private TextBox textBox2;
+        private TextBox loginTextBox;
+        private TextBox RepeatPasswordTextBox;
         private Button LogInButton;
         private Label label4;
         private LinkLabel SupportEmail;
-        private PictureBox pictureBox4;
         private ToolTip toolTip1;
-        private Button returnButton;
+        private Button skipButton;
         private Panel panel5;
-        private TextBox textBox3;
+        private TextBox emailTextBox;
         private Panel panel6;
         private PictureBox pictureBox5;
-        private TextBox textBox4;
+        private TextBox PasswordTextBox;
         private PictureBox pictureBox6;
         private PictureBox pictureBox7;
     }
