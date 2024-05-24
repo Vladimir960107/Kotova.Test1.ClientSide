@@ -95,8 +95,13 @@ namespace Kotova.Test1.ClientSide
                                 case "User":
                                     UserForm userForm = new UserForm(this, GetUserNameFromToken(result.token)); // put here like UserForm(this)
                                     userForm.Location = this.Location;
-                                    userForm.Show();
                                     this.Hide();
+                                    userForm.Show();
+                                    await Task.Delay(1000);
+                                    if (userForm._signUpForm is not null)
+                                    {
+                                        userForm._signUpForm.Show();
+                                    }
                                     break;
                                 case "Chief Of Department":
                                     ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)

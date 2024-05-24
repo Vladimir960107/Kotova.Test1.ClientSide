@@ -224,7 +224,7 @@
             skipButton.Name = "skipButton";
             skipButton.Size = new Size(520, 44);
             skipButton.TabIndex = 7;
-            skipButton.Text = "Пропустить регистрацию";
+            skipButton.Text = "Пропустить Смену (Не рекомендуется)";
             skipButton.UseVisualStyleBackColor = false;
             skipButton.Click += skipButton_Click;
             // 

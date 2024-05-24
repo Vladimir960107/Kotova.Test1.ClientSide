@@ -23,10 +23,11 @@ namespace Kotova.Test1.ClientSide
         public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
         public const string DB_pos_users_pathToInstruction = "path_to_instruction";
-        
+
         private List<Dictionary<string, object>> listOfInstructions_global;
 
-        Form? _loginForm;
+        public Login_Russian? _loginForm;
+        public SignUpForm _signUpForm;
         string? _userName;
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
@@ -35,7 +36,7 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
         }
 
-        public UserForm(Form loginForm, string userName)
+        public UserForm(Login_Russian loginForm, string userName)
         {
             InitializeComponent();
             _loginForm = loginForm;
@@ -43,6 +44,8 @@ namespace Kotova.Test1.ClientSide
             UserLabel.Text = _userName;
             PassInstruction.Enabled = false;
 
+            SignUpForm signUpForm = new SignUpForm(loginForm);
+            _signUpForm = signUpForm;
         }
 
         private async void CheckForNewInstructions_Click(object sender, EventArgs e)
@@ -74,12 +77,12 @@ namespace Kotova.Test1.ClientSide
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
-                    
+
                     if (result.Count == 0)
                     {
                         return true;
                     }
-                    
+
                     listOfInstructions_global = result;
                     foreach (Dictionary<string, object> temp in result)
                     {
@@ -90,7 +93,7 @@ namespace Kotova.Test1.ClientSide
                            var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
                             
                         }*/
-                        
+
                     }
                     return false;
                 }
@@ -201,7 +204,7 @@ namespace Kotova.Test1.ClientSide
                 PassInstruction.Checked = false;
                 return;
             }
-            
+
         }
 
         private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
@@ -222,17 +225,17 @@ namespace Kotova.Test1.ClientSide
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode) 
-                    { 
+                    if (response.IsSuccessStatusCode)
+                    {
                         MessageBox.Show("Everyting is fine, updating the listbox of instructions");
                         ListOfInstructions.Items.Clear();
-                        DownloadInstructionsForUserFromServer(_userName);   
+                        DownloadInstructionsForUserFromServer(_userName);
                     }
                 }
             }
             catch (HttpRequestException ex)
             {
-                
+
                 // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
             }
@@ -259,6 +262,19 @@ namespace Kotova.Test1.ClientSide
         {
             _loginForm.Dispose();
             this.Dispose();
+        }
+
+        private void SignOut_Click(object sender, EventArgs e)
+        {
+
+            if (_signUpForm != null)
+            {
+                _signUpForm.Dispose();
+                _signUpForm = null;
+            }
+
+            _loginForm.Show();
+            this.Dispose(true);
         }
     }
 }

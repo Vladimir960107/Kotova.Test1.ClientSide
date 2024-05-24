@@ -6,7 +6,9 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -14,7 +16,9 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class SignUpForm : Form
     {
-        private Login_Russian form1;
+        private const string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
+        private const string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
+        private Login_Russian? _login_form;
         const string defaultLoginText = "Введите новый логин";
         const string defaultPasswordText = "Введите новый пароль";
         const string defaultPasswordRepeatText = "Повторите новый пароль";
@@ -22,7 +26,8 @@ namespace Kotova.Test1.ClientSide
         public SignUpForm(Login_Russian form)
         {
             InitializeComponent();
-            form1 = form;
+            _login_form = form;
+            
         }
 
         private void textBox1_Click(object sender, EventArgs e)
@@ -89,8 +94,6 @@ namespace Kotova.Test1.ClientSide
 
         private void skipButton_Click(object sender, EventArgs e)
         {
-            form1.Location = this.Location;
-            form1.Show();
             this.Hide();
         }
 
@@ -99,6 +102,17 @@ namespace Kotova.Test1.ClientSide
             string login = loginTextBox.Text;
             string password = PasswordTextBox.Text;
             string email = emailTextBox.Text;
+            string repeatedPassword = RepeatPasswordTextBox.Text;
+
+            if (!CheckForValidation(login, password, repeatedPassword, email))
+            {
+                return;
+            }
+            if (await CheckIfLoginAlreadyTaken(login))
+            {
+                MessageBox.Show("login already taken, choose another one, please");
+                return;
+            }
 
             var userCredentials = new UserCredentials
             {
@@ -109,10 +123,65 @@ namespace Kotova.Test1.ClientSide
 
             string jsonPayload = JsonConvert.SerializeObject(userCredentials);
 
-            if (await isSuccesfullyUpdateCredentialsInDB(jsonPayload))
+            HttpContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            if (await Test.connectionToUrlPatch(_changeCredUrl, content) == HttpStatusCode.OK)
             {
                 MessageBox.Show("Вы успешно сменили логин и пароль!");
+
+                if (_login_form is not null)
+                {
+                    _login_form.Show();
+                    this.Dispose();
+                }
             }
+            else
+            {
+                MessageBox.Show("Что-то пошло не так :( Описание ошибки по идее на сервере.");
+
+            }
+
+            
+            
+        }
+
+        private async Task<bool> CheckIfLoginAlreadyTaken(string loginToCheck)
+        {
+            string url = ConfigurationClass.BASE_URL_DEVELOPMENT+$"check-username?username={loginToCheck}";
+            return await Test.connectionToUrlGet(url);
+        }
+
+        private bool CheckForValidation(string login, string password, string repeatedPassword string email)
+        {
+            const string LoginRegex = @"^[a-zA-Z0-9_]+$";
+
+            // Regex for validating password - at least one lowercase letter, one uppercase letter, one number, and is at least 8 characters long
+            const string PasswordRegex = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$";
+
+            // Regex for validating email. A common regex for email validation.
+            const string EmailRegex = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+
+            if (!Regex.IsMatch(login, LoginRegex) || string.IsNullOrWhiteSpace(login))
+            {
+                MessageBox.Show($"login:{login} is not valid");
+                return false; // false MEANS NOT GOOD RESPONSE
+            }
+            else if (!Regex.IsMatch(password, PasswordRegex) || string.IsNullOrWhiteSpace(password))
+            {
+                MessageBox.Show($"password is not valid.");
+                return false;
+            }
+            else if (!(password == repeatedPassword))
+            {
+                MessageBox.Show($"password is not equal to repeated password.");
+                return false;
+            }
+                
+            else if (string.IsNullOrEmpty(email) || Regex.IsMatch(email, EmailRegex))
+            {
+                MessageBox.Show($"email:{email} is not valid");
+                return false;
+            }
+            return true; //Means good response
         }
 
         private void loginTextBox_DoubleClick(object sender, EventArgs e)

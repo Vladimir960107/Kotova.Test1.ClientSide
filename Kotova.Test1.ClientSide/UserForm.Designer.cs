@@ -35,6 +35,7 @@
             label3 = new Label();
             HyperLinkForInstructionsFolder = new Button();
             PassInstruction = new CheckBox();
+            SignOut = new Button();
             SuspendLayout();
             // 
             // CheckForNewInstructions
@@ -106,11 +107,22 @@
             PassInstruction.UseVisualStyleBackColor = true;
             PassInstruction.CheckedChanged += PassInstruction_CheckedChanged;
             // 
+            // SignOut
+            // 
+            SignOut.Location = new Point(678, 12);
+            SignOut.Name = "SignOut";
+            SignOut.Size = new Size(110, 39);
+            SignOut.TabIndex = 29;
+            SignOut.Text = "Выйти из учётной записи";
+            SignOut.UseVisualStyleBackColor = true;
+            SignOut.Click += SignOut_Click;
+            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(SignOut);
             Controls.Add(PassInstruction);
             Controls.Add(HyperLinkForInstructionsFolder);
             Controls.Add(label3);
@@ -134,5 +146,6 @@
         private Label label3;
         private Button HyperLinkForInstructionsFolder;
         private CheckBox PassInstruction;
+        private Button SignOut;
     }
 }
