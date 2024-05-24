@@ -47,7 +47,6 @@
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
-            button1 = new Button();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
@@ -110,7 +109,6 @@
             // 
             // panel2
             // 
-            panel2.Controls.Add(button1);
             panel2.Controls.Add(SupportEmail);
             panel2.Controls.Add(label4);
             panel2.Controls.Add(ForgotPasswordLabel);
@@ -264,19 +262,6 @@
             label3.TabIndex = 0;
             label3.Text = "Войдите в свой аккаунт";
             // 
-            // button1
-            // 
-            button1.BackColor = Color.White;
-            button1.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            button1.ForeColor = Color.Black;
-            button1.Location = new Point(82, 419);
-            button1.Name = "button1";
-            button1.Size = new Size(520, 44);
-            button1.TabIndex = 7;
-            button1.Text = "Регистрация";
-            button1.UseVisualStyleBackColor = false;
-            button1.Click += button1_Click;
-            // 
             // Login_Russian
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -322,6 +307,5 @@
         private LinkLabel SupportEmail;
         private PictureBox pictureBox4;
         private ToolTip toolTip1;
-        private Button button1;
     }
 }

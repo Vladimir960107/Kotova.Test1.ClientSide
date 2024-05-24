@@ -44,7 +44,7 @@ namespace Kotova.Test1.ClientSide
             UserLabel.Text = _userName;
             PassInstruction.Enabled = false;
 
-            SignUpForm signUpForm = new SignUpForm(loginForm);
+            SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
         }
 

@@ -19,14 +19,16 @@ namespace Kotova.Test1.ClientSide
         private const string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
         private const string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
         private Login_Russian? _login_form;
+        private UserForm? _userForm;
         const string defaultLoginText = "Введите новый логин";
         const string defaultPasswordText = "Введите новый пароль";
         const string defaultPasswordRepeatText = "Повторите новый пароль";
         const string defaultEmailText = "Введите почту (Необязательно)";
-        public SignUpForm(Login_Russian form)
+        public SignUpForm(Login_Russian form, UserForm userForm)
         {
             InitializeComponent();
             _login_form = form;
+            _userForm = userForm;
             
         }
 
@@ -108,11 +110,6 @@ namespace Kotova.Test1.ClientSide
             {
                 return;
             }
-            if (await CheckIfLoginAlreadyTaken(login))
-            {
-                MessageBox.Show("login already taken, choose another one, please");
-                return;
-            }
 
             var userCredentials = new UserCredentials
             {
@@ -124,18 +121,25 @@ namespace Kotova.Test1.ClientSide
             string jsonPayload = JsonConvert.SerializeObject(userCredentials);
 
             HttpContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-            if (await Test.connectionToUrlPatch(_changeCredUrl, content) == HttpStatusCode.OK)
+            var response = await Test.connectionToUrlPatch(_changeCredUrl, content);
+            if (response == HttpStatusCode.OK)
             {
                 MessageBox.Show("Вы успешно сменили логин и пароль!");
 
                 if (_login_form is not null)
                 {
+                    if (_userForm is not null)
+                    {
+                        _userForm.Dispose();
+                    }
                     _login_form.Show();
+
                     this.Dispose();
                 }
             }
             else
             {
+
                 MessageBox.Show("Что-то пошло не так :( Описание ошибки по идее на сервере.");
 
             }
@@ -144,13 +148,8 @@ namespace Kotova.Test1.ClientSide
             
         }
 
-        private async Task<bool> CheckIfLoginAlreadyTaken(string loginToCheck)
-        {
-            string url = ConfigurationClass.BASE_URL_DEVELOPMENT+$"check-username?username={loginToCheck}";
-            return await Test.connectionToUrlGet(url);
-        }
 
-        private bool CheckForValidation(string login, string password, string repeatedPassword string email)
+        private bool CheckForValidation(string login, string password, string repeatedPassword, string email)
         {
             const string LoginRegex = @"^[a-zA-Z0-9_]+$";
 
@@ -176,7 +175,7 @@ namespace Kotova.Test1.ClientSide
                 return false;
             }
                 
-            else if (string.IsNullOrEmpty(email) || Regex.IsMatch(email, EmailRegex))
+            else if (string.IsNullOrWhiteSpace(email) || !Regex.IsMatch(email, EmailRegex))
             {
                 MessageBox.Show($"email:{email} is not valid");
                 return false;

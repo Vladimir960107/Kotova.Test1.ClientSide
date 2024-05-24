@@ -200,7 +200,7 @@ namespace Kotova.Test1.ClientSide
             return;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        /*private void button1_Click(object sender, EventArgs e) //НЕ НУЖНО БОЛЬШЕ, МОЖНО СТЕРЕТЬ!
         {
             SignUpForm signUpForm = new SignUpForm(this);
             signUpForm.Location = this.Location;
@@ -208,7 +208,7 @@ namespace Kotova.Test1.ClientSide
             this.Hide();
 
 
-        }
+        }*/
 
         /*private async void securedata_TEST_Button_Click(object sender, EventArgs e) // YOU CAN DELETE THIS PART OF CODE, DEPRECATED. IF YOU WANT
         {

@@ -49,11 +49,25 @@ namespace Kotova.Test1.ClientSide
                     };
 
                     HttpResponseMessage response = await client.SendAsync(request);
-                    response.EnsureSuccessStatusCode(); // Throws an exception if the HTTP response status is an error code.
+                    try
+                    {
+                        // Attempt to use the response.
+                        response.EnsureSuccessStatusCode(); // This will throw an exception for non-success status codes.
 
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show(responseBody); // Consider handling the GUI components differently if not in a GUI context.
-                    return response.StatusCode;
+                        // If response is successful, read and show the response body.
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show(responseBody);
+                        return response.StatusCode;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        // Read the response content which contains the detailed error message.
+                        var errorResponse = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Server returned a failure response: {errorResponse}");
+
+                        // You may want to parse this message if it's JSON or structured differently
+                        return response.StatusCode;
+                    }
                 }
             }
             catch (HttpRequestException ex)
