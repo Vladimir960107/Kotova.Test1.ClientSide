@@ -367,7 +367,7 @@ namespace Kotova.Test1.ClientSide
                         }
                         List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before!
 
-                        string[] resultArray = result.Select(n => n.CauseOfInstruction).ToArray(); //check that they are not null;
+                        string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
                         listOfInstructions.Items.AddRange(resultArray);
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }

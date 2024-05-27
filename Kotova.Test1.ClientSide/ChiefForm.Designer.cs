@@ -57,6 +57,7 @@
             UploadFileToServer = new Button();
             tabControl1 = new TabControl();
             toolTip1 = new ToolTip(components);
+            button1 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -352,11 +353,22 @@
             tabControl1.Size = new Size(693, 348);
             tabControl1.TabIndex = 33;
             // 
+            // button1
+            // 
+            button1.Location = new Point(739, 36);
+            button1.Name = "button1";
+            button1.Size = new Size(120, 43);
+            button1.TabIndex = 34;
+            button1.Text = "Выйти из учётной записи";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += SignUp_Click;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1085, 450);
+            Controls.Add(button1);
             Controls.Add(tabControl1);
             Name = "ChiefForm";
             Text = "ChiefOfDepartment";
@@ -397,5 +409,6 @@
         private Label label7;
         private ToolTip toolTip1;
         private Button testButton;
+        private Button button1;
     }
 }

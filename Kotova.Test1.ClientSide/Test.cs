@@ -34,7 +34,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        public static async Task<HttpStatusCode> connectionToUrlPost(string url, HttpContent content)
+        public static async Task<HttpStatusCode> connectionToUrlPost(string url, HttpContent content, string responseIfOk)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace Kotova.Test1.ClientSide
                         response.EnsureSuccessStatusCode(); 
 
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show(responseBody);
+                        MessageBox.Show(responseIfOk);
                         return response.StatusCode;
                     }
                     catch (HttpRequestException)

@@ -90,6 +90,7 @@ namespace Kotova.Test1.ClientSide
                         if (EncodeJWTToken(result.token))
                         {
                             MessageBox.Show("Login Successfull and JWT Token sucessfully encoded");
+                            textBox2.Text = "";
                             switch (GetRoleFromToken(result.token))
                             {
                                 case "User":

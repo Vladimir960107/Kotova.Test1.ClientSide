@@ -55,18 +55,28 @@ namespace Kotova.Test1.ClientSide
 
         private async void buttonCreateInstruction_Click(object sender, EventArgs e)
         {
+            buttonCreateInstruction.Enabled = false;
             if (selectedFolderPath is null)
             {
                 MessageBox.Show("Путь до инструктажа не выбран!");
+                buttonCreateInstruction.Enabled = true;
                 return;
             }
             DateTime startTime = DateTime.Now;
             DateTime endDate = datePickerEnd.Value.Date;
             if (endDate <= startTime)
             {
-                MessageBox.Show("End date must be after start date.");
+                MessageBox.Show("До какой даты должно быть больше текущего времени!");
+                buttonCreateInstruction.Enabled = true;
                 return;
             }
+            if (typeOfInstructionListBox.SelectedIndex == -1)
+            {
+                buttonCreateInstruction.Enabled = true;
+                MessageBox.Show("Не выбран тип инструктажа!");
+                return;
+            }
+
             bool isForDrivers = checkBoxIsForDrivers.Checked;
             int bitValueIsForDrivers = isForDrivers ? 1 : 0;
             string causeOfInstruction = InstructionTextBox.Text;
@@ -74,7 +84,19 @@ namespace Kotova.Test1.ClientSide
             Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
             string json = JsonConvert.SerializeObject(instruction);
             HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
-            await Test.connectionToUrlPost(urlCreateInstruction, content);
+            await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.");
+            buttonCreateInstruction.Enabled = true;
+            InstructionTextBox.Text = "";
+            typeOfInstructionListBox.SelectedIndex = -1;
+            selectedFolderPath = null;
+            PathToFolderOfInstruction.Text = "Путь не выбран";
+        }
+
+        private void SignUp_Click(object sender, EventArgs e)
+        {
+
+            _loginForm.Show();
+            this.Dispose(true);
         }
     }
 }
