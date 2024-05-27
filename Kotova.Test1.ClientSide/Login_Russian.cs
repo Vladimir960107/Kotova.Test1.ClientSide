@@ -103,7 +103,7 @@ namespace Kotova.Test1.ClientSide
                                         userForm._signUpForm.Show();
                                     }
                                     break;
-                                case "Chief Of Department":
+                                case "ChiefOfDepartment":
                                     ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
                                     chiefOfDepartmentForm.Location = this.Location;
                                     chiefOfDepartmentForm.Show();

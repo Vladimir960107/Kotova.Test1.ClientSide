@@ -43,9 +43,9 @@
             InstructionTextBox = new TextBox();
             label6 = new Label();
             datePickerEnd = new DateTimePicker();
-            button1 = new Button();
+            buttonCreateInstruction = new Button();
             label1 = new Label();
-            listBox1 = new ListBox();
+            typeOfInstructionListBox = new ListBox();
             tabPage1 = new TabPage();
             buttonSyncManualyInstrWithDB = new Button();
             label5 = new Label();
@@ -124,9 +124,9 @@
             tabPage2.Controls.Add(InstructionTextBox);
             tabPage2.Controls.Add(label6);
             tabPage2.Controls.Add(datePickerEnd);
-            tabPage2.Controls.Add(button1);
+            tabPage2.Controls.Add(buttonCreateInstruction);
             tabPage2.Controls.Add(label1);
-            tabPage2.Controls.Add(listBox1);
+            tabPage2.Controls.Add(typeOfInstructionListBox);
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
@@ -210,15 +210,16 @@
             datePickerEnd.Size = new Size(219, 23);
             datePickerEnd.TabIndex = 8;
             // 
-            // button1
+            // buttonCreateInstruction
             // 
-            button1.Location = new Point(317, 228);
-            button1.Margin = new Padding(3, 2, 3, 2);
-            button1.Name = "button1";
-            button1.Size = new Size(219, 40);
-            button1.TabIndex = 7;
-            button1.Text = "Внести новый инструткаж";
-            button1.UseVisualStyleBackColor = true;
+            buttonCreateInstruction.Location = new Point(317, 228);
+            buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
+            buttonCreateInstruction.Name = "buttonCreateInstruction";
+            buttonCreateInstruction.Size = new Size(219, 40);
+            buttonCreateInstruction.TabIndex = 7;
+            buttonCreateInstruction.Text = "Внести новый инструткаж";
+            buttonCreateInstruction.UseVisualStyleBackColor = true;
+            buttonCreateInstruction.Click += buttonCreateInstruction_Click;
             // 
             // label1
             // 
@@ -229,15 +230,15 @@
             label1.TabIndex = 1;
             label1.Text = "Выбор типа инструктажа:";
             // 
-            // listBox1
+            // typeOfInstructionListBox
             // 
-            listBox1.FormattingEnabled = true;
-            listBox1.ItemHeight = 15;
-            listBox1.Items.AddRange(new object[] { "Целевой;", "Первичный;", "Повторный;" });
-            listBox1.Location = new Point(47, 49);
-            listBox1.Name = "listBox1";
-            listBox1.Size = new Size(120, 49);
-            listBox1.TabIndex = 0;
+            typeOfInstructionListBox.FormattingEnabled = true;
+            typeOfInstructionListBox.ItemHeight = 15;
+            typeOfInstructionListBox.Items.AddRange(new object[] { "Первичный;", "Повторный;", "Целевой;" });
+            typeOfInstructionListBox.Location = new Point(47, 49);
+            typeOfInstructionListBox.Name = "typeOfInstructionListBox";
+            typeOfInstructionListBox.Size = new Size(120, 49);
+            typeOfInstructionListBox.TabIndex = 0;
             // 
             // tabPage1
             // 
@@ -375,7 +376,7 @@
         private CheckBox checkBoxIsForDrivers;
         private TabPage tabPage2;
         private Label label1;
-        private ListBox listBox1;
+        private ListBox typeOfInstructionListBox;
         private TabPage tabPage1;
         private Button buttonSyncManualyInstrWithDB;
         private Label label5;
@@ -391,7 +392,7 @@
         private TextBox InstructionTextBox;
         private Label label6;
         private DateTimePicker datePickerEnd;
-        private Button button1;
+        private Button buttonCreateInstruction;
         private Label PathToFolderOfInstruction;
         private Label label7;
         private ToolTip toolTip1;

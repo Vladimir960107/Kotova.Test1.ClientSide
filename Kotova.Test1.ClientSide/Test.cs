@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -32,6 +33,47 @@ namespace Kotova.Test1.ClientSide
                 return false; //Bad response
             }
         }
+
+        public static async Task<HttpStatusCode> connectionToUrlPost(string url, HttpContent content)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
+                    {
+                        Content = content
+                    };
+
+                    HttpResponseMessage response = await client.SendAsync(request);
+                    try
+                    {
+                        response.EnsureSuccessStatusCode(); 
+
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show(responseBody);
+                        return response.StatusCode;
+                    }
+                    catch (HttpRequestException)
+                    {
+                        var errorResponse = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Error: {response.StatusCode}, Server returned a failure response: {errorResponse}");
+
+                        return response.StatusCode;
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+                return HttpStatusCode.BadRequest;
+            }
+        }
+
+
         public static async Task<HttpStatusCode> connectionToUrlPatch(string url, HttpContent content)
         {
             try
