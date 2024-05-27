@@ -13,7 +13,7 @@ namespace Kotova.Test1.ClientSide
     {
 
         private static readonly HttpClient _httpClient = new HttpClient();
-        private const string _loginUrl = ConfigurationClass.BASE_URL_DEVELOPMENT+"/login"; //ADD IT TO THE 
+        private const string _loginUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/login"; //ADD IT TO THE 
         static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         static string fileName = "encrypted_jwt.dat";
         string filePath = Path.Combine(documentsPath, fileName);
@@ -124,7 +124,7 @@ namespace Kotova.Test1.ClientSide
                         else
                         {
                             MessageBox.Show("Login sucessfull, but JWT token was not saved and encoded!");
-                            
+
                         }
 
                     }
@@ -139,7 +139,7 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"Error: {ex.Message}");
-                MessageBox.Show(ex.ToString() );
+                MessageBox.Show(ex.ToString());
             }
             finally
             {
@@ -201,15 +201,14 @@ namespace Kotova.Test1.ClientSide
             return;
         }
 
-        /*private void button1_Click(object sender, EventArgs e) //НЕ НУЖНО БОЛЬШЕ, МОЖНО СТЕРЕТЬ!
+        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
         {
-            SignUpForm signUpForm = new SignUpForm(this);
-            signUpForm.Location = this.Location;
-            signUpForm.Show();
-            this.Hide();
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                LogInButton_Click(sender, e);
+            }
+        }
 
-
-        }*/
 
         /*private async void securedata_TEST_Button_Click(object sender, EventArgs e) // YOU CAN DELETE THIS PART OF CODE, DEPRECATED. IF YOU WANT
         {

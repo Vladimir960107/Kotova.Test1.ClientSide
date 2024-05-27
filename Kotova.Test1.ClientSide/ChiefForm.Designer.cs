@@ -273,6 +273,7 @@
             buttonSyncManualyInstrWithDB.TabIndex = 32;
             buttonSyncManualyInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
             buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
+            buttonSyncManualyInstrWithDB.Click += buttonSyncManualyInstrWithDB_Click;
             // 
             // label5
             // 
@@ -372,6 +373,7 @@
             Controls.Add(tabControl1);
             Name = "ChiefForm";
             Text = "ChiefOfDepartment";
+            FormClosed += ChiefForm_FormClosed;
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
             tabPage1.ResumeLayout(false);

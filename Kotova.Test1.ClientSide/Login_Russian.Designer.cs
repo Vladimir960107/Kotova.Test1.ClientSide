@@ -238,6 +238,7 @@
             textBox2.TabIndex = 2;
             textBox2.UseSystemPasswordChar = true;
             textBox2.Click += textBox2_Click;
+            textBox2.KeyPress += textBox2_KeyPress;
             // 
             // pictureBox3
             // 
