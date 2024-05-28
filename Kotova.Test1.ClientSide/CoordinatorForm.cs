@@ -9,7 +9,8 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 
 namespace Kotova.Test1.ClientSide
@@ -46,13 +47,14 @@ namespace Kotova.Test1.ClientSide
                 {
                     MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
                 }
-                
+
             }
         }
 
         private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer)
         {
             string url = DownloadDepartmentsForUserURL;
+            DepartmentForNewcomer.Items.Clear();
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -64,26 +66,9 @@ namespace Kotova.Test1.ClientSide
 
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
-
-                    if (result.Count == 0)
-                    {
-                        return true;
-                    }
-
-                    listOfInstructions_global = result;
-                    foreach (Dictionary<string, object> temp in result)
-                    {
-                        ListOfInstructions.Items.Add(temp[dB_pos_users_causeOfInstruction]);
-
-                        /*foreach (KeyValuePair<string, object> kvp in temp)
-                        {
-                           var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
-                            
-                        }*/
-
-                    }
-                    return false;
+                    List<string> result = JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
+                    DepartmentForNewcomer.Items.AddRange(result.ToArray());
+                    return true;
                 }
             }
             catch (HttpRequestException ex)
@@ -92,6 +77,74 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Error: {ex.Message}");
                 return false;
             }
+        }
+
+        private void uploadNewcommer_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(employeeFullNameTextBox.Text))
+            {
+                MessageBox.Show("ФИО не заплнено.");
+                return;
+            }
+            if (!IsValidRussianFullName(employeeFullNameTextBox.Text))
+            {
+                MessageBox.Show("Недействительные ФИО. Пожалуйста, вводите только русские буквы и дефисы.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(employeesPositionTextBox.Text))
+            {
+                MessageBox.Show("Должность не заполнена.");
+                return;
+            }
+            if (DepartmentForNewcomer.SelectedIndex == -1)
+            {
+                MessageBox.Show("Отдел не выбран.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(personnelNumberTextBox.Text))
+            {
+                MessageBox.Show("Табельный номер не заполнен.");
+                return;
+            }
+            if (!IsValidPersonnelNumber(personnelNumberTextBox.Text))
+            {
+                MessageBox.Show("Неверный табельный номер. Он должен состоять ровно из 10 цифр.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(WorkplaceNumberTextBox.Text))
+            {
+                MessageBox.Show("Номер рабочего места не заполнен.");
+                return;
+            }
+            if (!IsValidDateOfBirth(dateOfBirthTextBox.Text))
+            {
+                MessageBox.Show("Неверная дата рождения. Введите действительную дату и убедитесь, что возрастной критерий соответствует.");
+                return;
+            }
+            
+        }
+
+        private bool IsValidDateOfBirth(string dobText)
+        {
+            DateTime dob;
+            // Attempt to parse the date
+            if (DateTime.TryParse(dobText, out dob))
+            {
+                // Check if date is within a reasonable range, e.g., at least 18 years ago
+                if (dob <= DateTime.Now.AddYears(-18))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private static bool IsValidRussianFullName(string name)
+        {
+            return Regex.IsMatch(name, @"^[А-ЯЁа-яё]+(-[А-ЯЁа-яё]+)*$");
+        }
+        private static bool IsValidPersonnelNumber(string number)
+        {
+            return Regex.IsMatch(number, @"^\d{10}$");
         }
     }
 }
