@@ -72,6 +72,7 @@
             submitInstructionToPeople.TabIndex = 28;
             submitInstructionToPeople.Text = "Отправить выбранным людям уведомление об инструктаже";
             submitInstructionToPeople.UseVisualStyleBackColor = true;
+            submitInstructionToPeople.Click += submitInstructionToPeople_Click;
             // 
             // label3
             // 
@@ -91,6 +92,7 @@
             SyncNamesWithDB.TabIndex = 26;
             SyncNamesWithDB.Text = "Синхр. ФИО с Базой Данных";
             SyncNamesWithDB.UseVisualStyleBackColor = true;
+            SyncNamesWithDB.Click += SyncNamesWithDB_Click;
             // 
             // ListBoxNamesOfPeople
             // 

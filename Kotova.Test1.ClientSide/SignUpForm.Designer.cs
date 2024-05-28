@@ -45,7 +45,7 @@
             skipButton = new Button();
             SupportEmail = new LinkLabel();
             label4 = new Label();
-            LogInButton = new Button();
+            signUpButton = new Button();
             panel3 = new Panel();
             loginTextBox = new TextBox();
             pictureBox2 = new PictureBox();
@@ -125,7 +125,7 @@
             panel2.Controls.Add(skipButton);
             panel2.Controls.Add(SupportEmail);
             panel2.Controls.Add(label4);
-            panel2.Controls.Add(LogInButton);
+            panel2.Controls.Add(signUpButton);
             panel2.Controls.Add(panel3);
             panel2.Controls.Add(panel4);
             panel2.Controls.Add(label3);
@@ -250,18 +250,18 @@
             label4.TabIndex = 2;
             label4.Text = "Если у вас есть какие-то вопросы по данному\r\nприложению - отправьте свой вопрос/предложение\r\nчерез указанную ниже почту:\r\n\r\n ";
             // 
-            // LogInButton
+            // signUpButton
             // 
-            LogInButton.BackColor = Color.FromArgb(41, 128, 185);
-            LogInButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            LogInButton.ForeColor = Color.White;
-            LogInButton.Location = new Point(82, 380);
-            LogInButton.Name = "LogInButton";
-            LogInButton.Size = new Size(520, 44);
-            LogInButton.TabIndex = 4;
-            LogInButton.Text = "Зарегестрировать новый Логин и Пароль";
-            LogInButton.UseVisualStyleBackColor = false;
-            LogInButton.Click += signUpButton_Click;
+            signUpButton.BackColor = Color.FromArgb(41, 128, 185);
+            signUpButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            signUpButton.ForeColor = Color.White;
+            signUpButton.Location = new Point(82, 380);
+            signUpButton.Name = "signUpButton";
+            signUpButton.Size = new Size(520, 44);
+            signUpButton.TabIndex = 4;
+            signUpButton.Text = "Зарегестрировать новый Логин и Пароль";
+            signUpButton.UseVisualStyleBackColor = false;
+            signUpButton.Click += signUpButton_Click;
             // 
             // panel3
             // 
@@ -389,7 +389,7 @@
         private PictureBox pictureBox3;
         private TextBox loginTextBox;
         private TextBox RepeatPasswordTextBox;
-        private Button LogInButton;
+        private Button signUpButton;
         private Label label4;
         private LinkLabel SupportEmail;
         private ToolTip toolTip1;

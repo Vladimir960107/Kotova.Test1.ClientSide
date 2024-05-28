@@ -101,6 +101,7 @@ namespace Kotova.Test1.ClientSide
 
         private async void signUpButton_Click(object sender, EventArgs e)
         {
+            signUpButton.Enabled = false;
             string login = loginTextBox.Text;
             string password = PasswordTextBox.Text;
             string email = emailTextBox.Text;
@@ -108,6 +109,7 @@ namespace Kotova.Test1.ClientSide
 
             if (!CheckForValidation(login, password, repeatedPassword, email))
             {
+                signUpButton.Enabled = true;
                 return;
             }
 
@@ -139,13 +141,11 @@ namespace Kotova.Test1.ClientSide
             }
             else
             {
-
+                signUpButton.Enabled = true;
                 MessageBox.Show("Что-то пошло не так :( Описание ошибки по идее на сервере.");
 
             }
-
-            
-            
+            signUpButton.Enabled = true;
         }
 
 

@@ -1,7 +1,10 @@
 ﻿using Kotova.CommonClasses;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using System;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -11,6 +14,7 @@ namespace Kotova.Test1.ClientSide
         const string urlTest = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/greeting";
         const string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
         const string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
+        const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-and-names";
 
         static string? selectedFolderPath = null;
         private Form? _loginForm;
@@ -147,7 +151,7 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                syncExcelAndDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
+                SyncNamesWithDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
                 ListBoxNamesOfPeople.Items.Clear();
 
                 using (var httpClient = new HttpClient())
@@ -187,7 +191,101 @@ namespace Kotova.Test1.ClientSide
             }
             finally
             {
-                syncExcelAndDB.Enabled = true; // Re-enable the button after the operation completes
+                SyncNamesWithDB.Enabled = true; // Re-enable the button after the operation completes
+            }
+        }
+
+
+        private async void submitInstructionToPeople_Click(object sender, EventArgs e)
+        {
+            submitInstructionToPeople.Enabled = false;
+            var listOfNames = ListBoxNamesOfPeople.SelectedItems;
+            List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
+            if (listOfNames.Count == 0)
+            {
+                MessageBox.Show("People not selected!");
+                submitInstructionToPeople.Enabled = true;
+                return;
+            }
+            var selectedInstruction = listOfInstructions.SelectedItem;
+            if (selectedInstruction is null)
+            {
+                MessageBox.Show("Instruction not selected!");
+                submitInstructionToPeople.Enabled = true;
+                return;
+            }
+            try
+            {
+                foreach (var item in listOfNames)
+                {
+                    listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                }
+                string instructionNameString = selectedInstruction.ToString();
+                InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
+                string jsonData = JsonConvert.SerializeObject(package);
+                string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                try
+                {
+                    using (var httpClient = new HttpClient())
+                    {
+                        string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                        // Set the URI of your server endpoint
+                        var uri = new Uri(urlSubmitInstructionToPeople);
+
+                        // Prepare the content to send
+                        var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+
+                        // Send a POST request with the serialized JSON content
+                        var response = await httpClient.PostAsync(uri, content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            MessageBox.Show("Data successfully sent to the server and Instructions added to User.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            var errorMessage = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred while sending data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    submitInstructionToPeople.Enabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Some error occurred during Submit:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                submitInstructionToPeople.Enabled = true;
+            }
+        }
+
+        private Tuple<string, string> DeconstructNameAndBirthDate(string? nameWithBirthDate)
+        {
+            string pattern = @"^(.+?)\s\((\d{4}-\d{2}-\d{2})\)$"; //Эта строка соответсвует birthDate_format в Server side
+            if (nameWithBirthDate == null) { throw new ArgumentException("nameWithBirthDate is null! in DeconstructNameAndBirthDate"); }
+            Regex regex = new Regex(pattern);
+            Match match = regex.Match(nameWithBirthDate);
+
+            if (match.Success)
+            {
+                string fullName = match.Groups[1].Value;  // ФИО
+                string birthDate = match.Groups[2].Value; // BirthDate
+                return Tuple.Create(fullName, birthDate);
+            }
+            else
+            {
+                throw new ArgumentException("nameWithBirthDate doesn't match the pattern! in DeconstructNameAndBirthDate");
             }
         }
 
