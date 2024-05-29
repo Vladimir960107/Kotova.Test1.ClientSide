@@ -81,7 +81,7 @@
             WorkplaceNumberTextBox = new TextBox();
             personnelNumberTextBox = new TextBox();
             label5 = new Label();
-            dateOfBirthTextBox = new DateTimePicker();
+            dateOfBirthDateTimePicker = new DateTimePicker();
             employeesPositionTextBox = new TextBox();
             employeeFullNameTextBox = new TextBox();
             tabPage5 = new TabPage();
@@ -97,12 +97,17 @@
             dateTimePicker4 = new DateTimePicker();
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
+            panel2 = new Panel();
+            label25 = new Label();
+            button9 = new Button();
+            button10 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage4.SuspendLayout();
             tabPage3.SuspendLayout();
             tabPage5.SuspendLayout();
+            panel2.SuspendLayout();
             SuspendLayout();
             // 
             // tabPage2
@@ -475,6 +480,7 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(panel2);
             tabPage3.Controls.Add(label23);
             tabPage3.Controls.Add(label22);
             tabPage3.Controls.Add(label21);
@@ -489,7 +495,7 @@
             tabPage3.Controls.Add(WorkplaceNumberTextBox);
             tabPage3.Controls.Add(personnelNumberTextBox);
             tabPage3.Controls.Add(label5);
-            tabPage3.Controls.Add(dateOfBirthTextBox);
+            tabPage3.Controls.Add(dateOfBirthDateTimePicker);
             tabPage3.Controls.Add(employeesPositionTextBox);
             tabPage3.Controls.Add(employeeFullNameTextBox);
             tabPage3.Location = new Point(4, 24);
@@ -619,13 +625,13 @@
             label5.TabIndex = 10;
             label5.Text = "Дата рождения:";
             // 
-            // dateOfBirthTextBox
+            // dateOfBirthDateTimePicker
             // 
-            dateOfBirthTextBox.Location = new Point(306, 174);
-            dateOfBirthTextBox.Margin = new Padding(3, 2, 3, 2);
-            dateOfBirthTextBox.Name = "dateOfBirthTextBox";
-            dateOfBirthTextBox.Size = new Size(219, 23);
-            dateOfBirthTextBox.TabIndex = 9;
+            dateOfBirthDateTimePicker.Location = new Point(306, 174);
+            dateOfBirthDateTimePicker.Margin = new Padding(3, 2, 3, 2);
+            dateOfBirthDateTimePicker.Name = "dateOfBirthDateTimePicker";
+            dateOfBirthDateTimePicker.Size = new Size(219, 23);
+            dateOfBirthDateTimePicker.TabIndex = 9;
             // 
             // employeesPositionTextBox
             // 
@@ -634,10 +640,10 @@
             employeesPositionTextBox.Size = new Size(209, 23);
             employeesPositionTextBox.TabIndex = 1;
             // 
-            // employeeFullName
+            // employeeFullNameTextBox
             // 
             employeeFullNameTextBox.Location = new Point(24, 38);
-            employeeFullNameTextBox.Name = "employeeFullName";
+            employeeFullNameTextBox.Name = "employeeFullNameTextBox";
             employeeFullNameTextBox.Size = new Size(209, 23);
             employeeFullNameTextBox.TabIndex = 0;
             // 
@@ -765,6 +771,44 @@
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
+            // panel2
+            // 
+            panel2.Controls.Add(label25);
+            panel2.Controls.Add(button9);
+            panel2.Controls.Add(button10);
+            panel2.Location = new Point(698, 230);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(221, 143);
+            panel2.TabIndex = 24;
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(17, 16);
+            label25.Name = "label25";
+            label25.RightToLeft = RightToLeft.Yes;
+            label25.Size = new Size(183, 15);
+            label25.TabIndex = 13;
+            label25.Text = "(перемести на администратора!";
+            // 
+            // button9
+            // 
+            button9.Location = new Point(17, 75);
+            button9.Name = "button9";
+            button9.Size = new Size(192, 53);
+            button9.TabIndex = 12;
+            button9.Text = "Синхронизация последнего файла с сервером";
+            button9.UseVisualStyleBackColor = true;
+            // 
+            // button10
+            // 
+            button10.Location = new Point(17, 34);
+            button10.Name = "button10";
+            button10.Size = new Size(192, 35);
+            button10.TabIndex = 11;
+            button10.Text = "Загрузка excel на сервер";
+            button10.UseVisualStyleBackColor = true;
+            // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -784,6 +828,8 @@
             tabPage3.PerformLayout();
             tabPage5.ResumeLayout(false);
             tabPage5.PerformLayout();
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -802,7 +848,7 @@
         private TextBox WorkplaceNumberTextBox;
         private TextBox personnelNumberTextBox;
         private Label label5;
-        private DateTimePicker dateOfBirthTextBox;
+        private DateTimePicker dateOfBirthDateTimePicker;
         private Label label1;
         public ListBox typeOfInstructionListBox;
         private TextBox textBox9;
@@ -857,5 +903,9 @@
         private Label label20;
         private Label label23;
         private Label label22;
+        private Panel panel2;
+        private Label label25;
+        private Button button9;
+        private Button button10;
     }
 }

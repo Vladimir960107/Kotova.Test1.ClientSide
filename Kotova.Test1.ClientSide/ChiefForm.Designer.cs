@@ -52,15 +52,19 @@
             listOfInstructions = new ListBox();
             label4 = new Label();
             Download_file_excel = new Button();
-            syncExcelAndDB = new Button();
             buttonTest = new Button();
-            UploadFileToServer = new Button();
             tabControl1 = new TabControl();
             toolTip1 = new ToolTip(components);
             button1 = new Button();
+            tabPage3 = new TabPage();
+            PassInstruction = new CheckBox();
+            HyperLinkForInstructionsFolder = new Button();
+            label8 = new Label();
+            listBox1 = new ListBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
+            tabPage3.SuspendLayout();
             SuspendLayout();
             // 
             // submitInstructionToPeople
@@ -133,7 +137,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(685, 320);
+            tabPage2.Size = new Size(685, 340);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
@@ -255,13 +259,11 @@
             tabPage1.Controls.Add(label4);
             tabPage1.Controls.Add(Download_file_excel);
             tabPage1.Controls.Add(checkBoxIsForDrivers);
-            tabPage1.Controls.Add(syncExcelAndDB);
             tabPage1.Controls.Add(buttonTest);
-            tabPage1.Controls.Add(UploadFileToServer);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(685, 320);
+            tabPage1.Size = new Size(685, 340);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Обработка инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
@@ -308,23 +310,13 @@
             // 
             // Download_file_excel
             // 
-            Download_file_excel.Location = new Point(20, 271);
+            Download_file_excel.Location = new Point(20, 223);
             Download_file_excel.Margin = new Padding(3, 2, 3, 2);
             Download_file_excel.Name = "Download_file_excel";
             Download_file_excel.Size = new Size(216, 44);
             Download_file_excel.TabIndex = 24;
-            Download_file_excel.Text = "Загрузить последний Excel файл с сервера";
+            Download_file_excel.Text = "Загрузить Excel выписку для отдела";
             Download_file_excel.UseVisualStyleBackColor = true;
-            // 
-            // syncExcelAndDB
-            // 
-            syncExcelAndDB.Location = new Point(20, 218);
-            syncExcelAndDB.Margin = new Padding(3, 2, 3, 2);
-            syncExcelAndDB.Name = "syncExcelAndDB";
-            syncExcelAndDB.Size = new Size(216, 49);
-            syncExcelAndDB.TabIndex = 25;
-            syncExcelAndDB.Text = "Синхр. последнего загруженного файла Excel с Базой данных";
-            syncExcelAndDB.UseVisualStyleBackColor = true;
             // 
             // buttonTest
             // 
@@ -336,24 +328,15 @@
             buttonTest.Text = "Тест сервера";
             buttonTest.UseVisualStyleBackColor = true;
             // 
-            // UploadFileToServer
-            // 
-            UploadFileToServer.Location = new Point(20, 192);
-            UploadFileToServer.Margin = new Padding(3, 2, 3, 2);
-            UploadFileToServer.Name = "UploadFileToServer";
-            UploadFileToServer.Size = new Size(192, 22);
-            UploadFileToServer.TabIndex = 23;
-            UploadFileToServer.Text = "Загрузить Excel файл на сервер";
-            UploadFileToServer.UseVisualStyleBackColor = true;
-            // 
             // tabControl1
             // 
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(tabPage3);
             tabControl1.Location = new Point(12, 12);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(693, 348);
+            tabControl1.Size = new Size(693, 368);
             tabControl1.TabIndex = 33;
             // 
             // button1
@@ -365,6 +348,58 @@
             button1.Text = "Выйти из учётной записи";
             button1.UseVisualStyleBackColor = true;
             button1.Click += SignUp_Click;
+            // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(PassInstruction);
+            tabPage3.Controls.Add(listBox1);
+            tabPage3.Controls.Add(HyperLinkForInstructionsFolder);
+            tabPage3.Controls.Add(label8);
+            tabPage3.Location = new Point(4, 24);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new Padding(3);
+            tabPage3.Size = new Size(685, 340);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Прохождение инструктажей";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // PassInstruction
+            // 
+            PassInstruction.AutoSize = true;
+            PassInstruction.Location = new Point(45, 309);
+            PassInstruction.Name = "PassInstruction";
+            PassInstruction.Size = new Size(245, 19);
+            PassInstruction.TabIndex = 38;
+            PassInstruction.Text = "Подтверждаю, что инструктаж пройден";
+            PassInstruction.UseVisualStyleBackColor = true;
+            // 
+            // HyperLinkForInstructionsFolder
+            // 
+            HyperLinkForInstructionsFolder.Enabled = false;
+            HyperLinkForInstructionsFolder.Location = new Point(493, 60);
+            HyperLinkForInstructionsFolder.Name = "HyperLinkForInstructionsFolder";
+            HyperLinkForInstructionsFolder.Size = new Size(111, 229);
+            HyperLinkForInstructionsFolder.TabIndex = 37;
+            HyperLinkForInstructionsFolder.Text = "Гиперссылка на инструктаж";
+            HyperLinkForInstructionsFolder.UseVisualStyleBackColor = true;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(45, 17);
+            label8.Name = "label8";
+            label8.Size = new Size(201, 15);
+            label8.TabIndex = 36;
+            label8.Text = "Лист непройденных инструктажей:";
+            // 
+            // listBox1
+            // 
+            listBox1.FormattingEnabled = true;
+            listBox1.ItemHeight = 15;
+            listBox1.Location = new Point(45, 60);
+            listBox1.Name = "listBox1";
+            listBox1.Size = new Size(430, 229);
+            listBox1.TabIndex = 35;
             // 
             // ChiefForm
             // 
@@ -381,6 +416,8 @@
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
             tabControl1.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
+            tabPage3.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -399,9 +436,7 @@
         private ListBox listOfInstructions;
         private Label label4;
         private Button Download_file_excel;
-        private Button syncExcelAndDB;
         private Button buttonTest;
-        private Button UploadFileToServer;
         private TabControl tabControl1;
         private Button buttonChoosePathToInstruction;
         private Label label2;
@@ -414,5 +449,10 @@
         private ToolTip toolTip1;
         private Button testButton;
         private Button button1;
+        private TabPage tabPage3;
+        private CheckBox PassInstruction;
+        private ListBox listBox1;
+        private Button HyperLinkForInstructionsFolder;
+        private Label label8;
     }
 }
