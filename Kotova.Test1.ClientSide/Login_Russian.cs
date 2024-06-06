@@ -5,6 +5,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
 
 
 namespace Kotova.Test1.ClientSide
@@ -99,10 +101,14 @@ namespace Kotova.Test1.ClientSide
                                     this.Hide();
                                     userForm.Show();
                                     await Task.Delay(1000);
-                                    if (userForm._signUpForm is not null)
+                                    if (isDefaultUsername(GetUserNameFromToken(result.token)))
                                     {
-                                        userForm._signUpForm.Show();
+                                        if (userForm._signUpForm is not null)
+                                        {
+                                            userForm._signUpForm.Show();
+                                        }
                                     }
+                                    
                                     break;
                                 case "ChiefOfDepartment":
                                     ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
@@ -146,6 +152,18 @@ namespace Kotova.Test1.ClientSide
                 LogInButton.Enabled = true;
             }
 
+        }
+
+
+        private bool isDefaultUsername(string v)
+        {
+            string pattern = @"^User\d+$";
+            Regex regex = new Regex(pattern);
+            if (regex.IsMatch(v))
+            {
+                return true;
+            }
+            return false;
         }
 
         private bool EncodeJWTToken(string token)

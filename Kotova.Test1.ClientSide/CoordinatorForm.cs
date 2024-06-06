@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Kotova.CommonClasses;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 
 namespace Kotova.Test1.ClientSide
@@ -21,6 +22,7 @@ namespace Kotova.Test1.ClientSide
     {
         private const string DownloadDepartmentsForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-departments";
         private const string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
+        private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_login_password";
         private Form? _loginForm;
         private string? _userName;
         public CoordinatorForm()
@@ -141,12 +143,36 @@ namespace Kotova.Test1.ClientSide
                 if (response.IsSuccessStatusCode)
                 {
                     MessageBox.Show("Employee inserted into DB", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    try
+                    {
+                        response = await GetLoginPassword(newEmployee, token);
+                        if (response.IsSuccessStatusCode)
+                        {
+
+                            var jsonResponse = await response.Content.ReadAsStringAsync();
+                            var login_and_password = System.Text.Json.JsonSerializer.Deserialize<(string, string)>(jsonResponse);
+                            loginTextBox.Text = login_and_password.Item1;
+                            PasswordTextBox.Text = login_and_password.Item2;
+                        }
+                        else
+                        {
+                            string errorText = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Error getting login/password: {errorText}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"some error occured while getting login/password: {ex}");
+                    }
                 }
                 else
                 {
                     string errorText = await response.Content.ReadAsStringAsync();
                     MessageBox.Show($"Error inserting employee: {errorText}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+                
+
+                
             }
             catch (Exception ex)
             {
@@ -154,6 +180,21 @@ namespace Kotova.Test1.ClientSide
             }
 
         }
+
+        private async Task<HttpResponseMessage> GetLoginPassword(Employee tempEmployee, string token)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                string url = GetLoginPasswordUrl; // Replace with your actual API URL
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                var json = JsonConvert.SerializeObject(tempEmployee);
+                var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(url, data);
+                return response;
+            }
+        }
+
         private async Task<HttpResponseMessage> InsertNewEmployeeAsync(Employee employee, string token)
         {
             using (HttpClient client = new HttpClient())

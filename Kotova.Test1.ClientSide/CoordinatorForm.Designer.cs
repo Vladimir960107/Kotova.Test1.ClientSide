@@ -67,14 +67,18 @@
             textBox12 = new TextBox();
             label10 = new Label();
             tabPage3 = new TabPage();
+            panel2 = new Panel();
+            label25 = new Label();
+            button9 = new Button();
+            button10 = new Button();
             label23 = new Label();
             label22 = new Label();
             label21 = new Label();
             label20 = new Label();
             label19 = new Label();
             label18 = new Label();
-            textBox16 = new TextBox();
-            textBox3 = new TextBox();
+            PasswordTextBox = new TextBox();
+            loginTextBox = new TextBox();
             label17 = new Label();
             DepartmentForNewcomer = new ListBox();
             uploadNewcommer = new Button();
@@ -97,17 +101,13 @@
             dateTimePicker4 = new DateTimePicker();
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
-            panel2 = new Panel();
-            label25 = new Label();
-            button9 = new Button();
-            button10 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage4.SuspendLayout();
             tabPage3.SuspendLayout();
-            tabPage5.SuspendLayout();
             panel2.SuspendLayout();
+            tabPage5.SuspendLayout();
             SuspendLayout();
             // 
             // tabPage2
@@ -487,8 +487,8 @@
             tabPage3.Controls.Add(label20);
             tabPage3.Controls.Add(label19);
             tabPage3.Controls.Add(label18);
-            tabPage3.Controls.Add(textBox16);
-            tabPage3.Controls.Add(textBox3);
+            tabPage3.Controls.Add(PasswordTextBox);
+            tabPage3.Controls.Add(loginTextBox);
             tabPage3.Controls.Add(label17);
             tabPage3.Controls.Add(DepartmentForNewcomer);
             tabPage3.Controls.Add(uploadNewcommer);
@@ -505,6 +505,44 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Данные сотрудника";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // panel2
+            // 
+            panel2.Controls.Add(label25);
+            panel2.Controls.Add(button9);
+            panel2.Controls.Add(button10);
+            panel2.Location = new Point(698, 230);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(221, 143);
+            panel2.TabIndex = 24;
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(17, 16);
+            label25.Name = "label25";
+            label25.RightToLeft = RightToLeft.Yes;
+            label25.Size = new Size(183, 15);
+            label25.TabIndex = 13;
+            label25.Text = "(перемести на администратора!";
+            // 
+            // button9
+            // 
+            button9.Location = new Point(17, 75);
+            button9.Name = "button9";
+            button9.Size = new Size(192, 53);
+            button9.TabIndex = 12;
+            button9.Text = "Синхронизация последнего файла с сервером";
+            button9.UseVisualStyleBackColor = true;
+            // 
+            // button10
+            // 
+            button10.Location = new Point(17, 34);
+            button10.Name = "button10";
+            button10.Size = new Size(192, 35);
+            button10.TabIndex = 11;
+            button10.Text = "Загрузка excel на сервер";
+            button10.UseVisualStyleBackColor = true;
             // 
             // label23
             // 
@@ -560,19 +598,19 @@
             label18.TabIndex = 18;
             label18.Text = "Логин сотрудника";
             // 
-            // textBox16
+            // PasswordTextBox
             // 
-            textBox16.Location = new Point(698, 161);
-            textBox16.Name = "textBox16";
-            textBox16.Size = new Size(248, 23);
-            textBox16.TabIndex = 17;
+            PasswordTextBox.Location = new Point(698, 161);
+            PasswordTextBox.Name = "PasswordTextBox";
+            PasswordTextBox.Size = new Size(248, 23);
+            PasswordTextBox.TabIndex = 17;
             // 
-            // textBox3
+            // loginTextBox
             // 
-            textBox3.Location = new Point(698, 84);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(248, 23);
-            textBox3.TabIndex = 16;
+            loginTextBox.Location = new Point(698, 84);
+            loginTextBox.Name = "loginTextBox";
+            loginTextBox.Size = new Size(248, 23);
+            loginTextBox.TabIndex = 16;
             // 
             // label17
             // 
@@ -771,44 +809,6 @@
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
-            // panel2
-            // 
-            panel2.Controls.Add(label25);
-            panel2.Controls.Add(button9);
-            panel2.Controls.Add(button10);
-            panel2.Location = new Point(698, 230);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(221, 143);
-            panel2.TabIndex = 24;
-            // 
-            // label25
-            // 
-            label25.AutoSize = true;
-            label25.Location = new Point(17, 16);
-            label25.Name = "label25";
-            label25.RightToLeft = RightToLeft.Yes;
-            label25.Size = new Size(183, 15);
-            label25.TabIndex = 13;
-            label25.Text = "(перемести на администратора!";
-            // 
-            // button9
-            // 
-            button9.Location = new Point(17, 75);
-            button9.Name = "button9";
-            button9.Size = new Size(192, 53);
-            button9.TabIndex = 12;
-            button9.Text = "Синхронизация последнего файла с сервером";
-            button9.UseVisualStyleBackColor = true;
-            // 
-            // button10
-            // 
-            button10.Location = new Point(17, 34);
-            button10.Name = "button10";
-            button10.Size = new Size(192, 35);
-            button10.TabIndex = 11;
-            button10.Text = "Загрузка excel на сервер";
-            button10.UseVisualStyleBackColor = true;
-            // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -826,10 +826,10 @@
             tabPage4.PerformLayout();
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
-            tabPage5.ResumeLayout(false);
-            tabPage5.PerformLayout();
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
+            tabPage5.ResumeLayout(false);
+            tabPage5.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -897,8 +897,8 @@
         private ListBox DepartmentForNewcomer;
         private Label label19;
         private Label label18;
-        private TextBox textBox16;
-        private TextBox textBox3;
+        private TextBox PasswordTextBox;
+        private TextBox loginTextBox;
         private Label label21;
         private Label label20;
         private Label label23;

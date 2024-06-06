@@ -5,6 +5,10 @@ using System;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using System.Text.Json;
+using System.Diagnostics;
+using Kotova.CommonClasses;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -15,6 +19,14 @@ namespace Kotova.Test1.ClientSide
         const string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
         const string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
         const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-and-names";
+
+        const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
+
+        const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+
+
+
+        private List<Dictionary<string, object>> listOfInstructions_global;
 
         static string? selectedFolderPath = null;
         private Form? _loginForm;
@@ -102,8 +114,8 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                buttonSyncManualyInstrWithDB.Enabled = false; 
-                listOfInstructions.Items.Clear();
+                buttonSyncManualyInstrWithDB.Enabled = false;
+                ListOfInstructions.Items.Clear();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -121,7 +133,7 @@ namespace Kotova.Test1.ClientSide
                         List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before!
 
                         string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
-                        listOfInstructions.Items.AddRange(resultArray);
+                        ListOfInstructions.Items.AddRange(resultArray);
                         MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
@@ -207,7 +219,7 @@ namespace Kotova.Test1.ClientSide
                 submitInstructionToPeople.Enabled = true;
                 return;
             }
-            var selectedInstruction = listOfInstructions.SelectedItem;
+            var selectedInstruction = ListOfInstructions.SelectedItem;
             if (selectedInstruction is null)
             {
                 MessageBox.Show("Instruction not selected!");
@@ -280,7 +292,7 @@ namespace Kotova.Test1.ClientSide
             if (match.Success)
             {
                 string fullName = match.Groups[1].Value;  // ФИО
-                string birthDate = match.Groups[2].Value; // BirthDate
+                string birthDate = match.Groups[2].Value; // BirthDate (Дата рождения)
                 return Tuple.Create(fullName, birthDate);
             }
             else
@@ -289,23 +301,230 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-
-
-
-
-
-
-
-        private void SignUp_Click(object sender, EventArgs e)
+        private void LoginForm_Click(object sender, EventArgs e)
         {
 
             _loginForm.Show();
             this.Dispose(true);
         }
-        private void ChiefForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
         {
+
             _loginForm.Dispose();
-            this.Dispose();
+            this.Dispose(true);
+        }
+
+        private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (ChiefTabControl.SelectedIndex == 2)
+            {
+                listOfInstructions.Items.Clear();
+                bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
+                if (IsEmpty == true)
+                {
+                    MessageBox.Show("All the instructions passed!");
+                }
+
+            }
+        }
+
+        private async Task<bool> DownloadInstructionsForUserFromServer(string? userName)
+        {
+            if (userName is null)
+            {
+                throw new ArgumentNullException(nameof(userName));
+            }
+            string url = DownloadInstructionForUserURL;
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var result = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
+
+                    if (result.Count == 0)
+                    {
+                        return true;
+                    }
+
+                    listOfInstructions_global = result;
+                    foreach (Dictionary<string, object> temp in result)
+                    {
+                        listOfInstructions.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
+
+                        /*foreach (KeyValuePair<string, object> kvp in temp)
+                        {
+                           var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
+                            
+                        }*/
+
+                    }
+                    return false;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+                throw ex;
+            }
+        }
+
+        private void InstructionsToPass_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            HyperLinkForInstructionsFolder.Enabled = true;
+            PassInstruction.Enabled = true;
+        }
+
+        private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
+        {
+            HyperLinkForInstructionsFolder.Enabled = false;
+            if (listOfInstructions.SelectedItem == null)
+            {
+                MessageBox.Show("You haven't select the Instruction.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(listOfInstructions.SelectedItem.ToString()); //most likely suppress it, cause its not null.
+            string? pathStr = selectedDict[DataBaseNames.tableName_sql_pathToInstruction].ToString();
+
+            if (pathStr is null || pathStr.Length == 0)
+            {
+                MessageBox.Show("Path is null or empty.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+            string path = Path.GetFullPath(pathStr);
+            OpenFolderInExplorer(path);
+
+        }
+
+        private void OpenFolderInExplorer(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                MessageBox.Show("Provided path is null or empty.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+
+            // Get the full path and check if it exists
+            string fullPath = Path.GetFullPath(path);
+            if (!Directory.Exists(fullPath))
+            {
+                MessageBox.Show($"The path '{fullPath}' does not exist.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+
+            // Open the folder in Windows Explorer
+            try
+            {
+                Process.Start("explorer.exe", fullPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open the folder: {ex.Message}");
+                PassInstruction.Enabled = false;
+            }
+        }
+
+        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedItemStr)
+        {
+
+            foreach (Dictionary<string, object> tempD in listOfInstructions_global)
+            {
+                Dictionary<string, object> selectedDictionary = listOfInstructions_global.FirstOrDefault(tempD => tempD[DataBaseNames.tableName_sql_INSTRUCTIONS_cause].ToString() == selectedItemStr);
+                if (selectedDictionary != null)
+                {
+                    return selectedDictionary; // HERE WE DIDN't CHECK  THAT названия инструктажей не повторяется, а просто вернули первое попавшееся. Проверку бы!
+                }
+            }
+            throw new Exception("Corresponding Dictionary not found!");
+
+        }
+
+        private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!PassInstruction.Checked) { return; }
+            if (ConfirmAction())
+            {
+                MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                PassInstruction.Enabled = false;
+                if (listOfInstructions.SelectedItem == null)
+                {
+                    MessageBox.Show("You haven't select the Instruction.");
+                    PassInstruction.Enabled = false;
+                    return;
+                }
+                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(listOfInstructions.SelectedItem.ToString());
+                await SendInstructionIsPassedToDB(selectedDict);
+                //После этого отправить запрос на выбранный Database через сервер что инструктаж пройден. And uncheck the checkbox.
+            }
+            else
+            {
+                MessageBox.Show("You did not agree with the action.", "Action Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                PassInstruction.Checked = false;
+                return;
+            }
+        }
+
+        private bool ConfirmAction()
+        {
+            var result = MessageBox.Show("Do you agree with the action?", "Confirm Action", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
+        {
+            string url = SendInstructionIsPassedURL;
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    string jsonData = System.Text.Json.JsonSerializer.Serialize(selectedDict);
+
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                    HttpResponseMessage response = await client.PostAsync(url, content);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Everyting is fine, updating the listbox of instructions");
+                        listOfInstructions.Items.Clear();
+                        DownloadInstructionsForUserFromServer(_userName);
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+            finally
+            {
+                PassInstruction.Checked = false;
+            }
         }
     }
 }
