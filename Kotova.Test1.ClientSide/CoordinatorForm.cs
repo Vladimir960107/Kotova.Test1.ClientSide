@@ -25,6 +25,7 @@ namespace Kotova.Test1.ClientSide
         private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_login_password";
         private Form? _loginForm;
         private string? _userName;
+        private string? selectedFolderPath;
         public CoordinatorForm()
         {
             InitializeComponent();
@@ -69,7 +70,7 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-                        
+
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
                     DepartmentForNewcomer.Items.AddRange(result.ToArray());
@@ -137,7 +138,7 @@ namespace Kotova.Test1.ClientSide
 
             try
             {
-                string token = Decryption_stuff.DecryptedJWTToken(); 
+                string token = Decryption_stuff.DecryptedJWTToken();
                 var response = await InsertNewEmployeeAsync(newEmployee, token);
 
                 if (response.IsSuccessStatusCode)
@@ -145,12 +146,12 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("Employee inserted into DB", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     try
                     {
-                        response = await GetLoginPassword(newEmployee, token);
+                        response = await GetLoginPassword(new Tuple<string, string, string>(newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text), token);
                         if (response.IsSuccessStatusCode)
                         {
 
                             var jsonResponse = await response.Content.ReadAsStringAsync();
-                            var login_and_password = System.Text.Json.JsonSerializer.Deserialize<(string, string)>(jsonResponse);
+                            var login_and_password = System.Text.Json.JsonSerializer.Deserialize<Tuple<string, string>>(jsonResponse);
                             loginTextBox.Text = login_and_password.Item1;
                             PasswordTextBox.Text = login_and_password.Item2;
                         }
@@ -170,9 +171,9 @@ namespace Kotova.Test1.ClientSide
                     string errorText = await response.Content.ReadAsStringAsync();
                     MessageBox.Show($"Error inserting employee: {errorText}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                
 
-                
+
+
             }
             catch (Exception ex)
             {
@@ -181,13 +182,13 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private async Task<HttpResponseMessage> GetLoginPassword(Employee tempEmployee, string token)
+        private async Task<HttpResponseMessage> GetLoginPassword(Tuple<string, string, string> dataAboutUser, string token)
         {
             using (HttpClient client = new HttpClient())
             {
                 string url = GetLoginPasswordUrl; // Replace with your actual API URL
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                var json = JsonConvert.SerializeObject(tempEmployee);
+                var json = JsonConvert.SerializeObject(dataAboutUser);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await client.PostAsync(url, data);
@@ -207,7 +208,7 @@ namespace Kotova.Test1.ClientSide
                 var response = await client.PostAsync(url, data);
                 return response;
             }
-                
+
         }
 
         private bool IsValidDateOfBirth(string dobText)
@@ -226,11 +227,68 @@ namespace Kotova.Test1.ClientSide
         }
         private static bool IsValidRussianFullName(string name)
         {
-            return Regex.IsMatch(name, @"^[А-ЯЁа-яё]+(-[А-ЯЁа-яё]+)*$");
+            return Regex.IsMatch(name, @"^[А-ЯЁа-яё]+([ -][А-ЯЁа-яё]+)*$");
         }
         private static bool IsValidPersonnelNumber(string number)
         {
             return Regex.IsMatch(number, @"^\d{10}$");
+        }
+
+        private void InitialInstructionButton_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            {
+                folderBrowserDialog.SelectedPath = ConfigurationClass.DEFAULT_PATH_TO_INITIAL_INSTRUCTIONS;
+
+                DialogResult result = folderBrowserDialog.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                {
+                    selectedFolderPath = folderBrowserDialog.SelectedPath;
+
+                    InitialInstructionPathLabel.Text = selectedFolderPath;
+
+
+                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
+
+                }
+            }
+            uploadNewcommer.Enabled = true;
+              // Добавить последующий код в функцию! ОНО ВООБЩЕ ДОЛЖНО БЫТЬ ЗДЕСЬ?
+            /*buttonCreateInstruction.Enabled = false;
+            if (selectedFolderPath is null)
+            {
+                MessageBox.Show("Путь до инструктажа не выбран!");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+            DateTime startTime = DateTime.Now;
+            DateTime endDate = datePickerEnd.Value.Date;
+            if (endDate <= startTime)
+            {
+                MessageBox.Show("До какой даты должно быть больше текущего времени!");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+            if (typeOfInstructionListBox.SelectedIndex == -1)
+            {
+                buttonCreateInstruction.Enabled = true;
+                MessageBox.Show("Не выбран тип инструктажа!");
+                return;
+            }
+
+            string causeOfInstruction = "Вводный инструктаж";
+            Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox!
+            Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
+            string json = JsonConvert.SerializeObject(instruction);
+            HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
+            await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.");
+            buttonCreateInstruction.Enabled = true;
+            InstructionTextBox.Text = "";
+            typeOfInstructionListBox.SelectedIndex = -1;
+            selectedFolderPath = null;
+            PathToFolderOfInstruction.Text = "Путь не выбран";*/
+
         }
     }
 }

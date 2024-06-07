@@ -67,6 +67,8 @@
             textBox12 = new TextBox();
             label10 = new Label();
             tabPage3 = new TabPage();
+            InitialInstructionButton = new Button();
+            InitialInstructionPathLabel = new Label();
             panel2 = new Panel();
             label25 = new Label();
             button9 = new Button();
@@ -101,6 +103,7 @@
             dateTimePicker4 = new DateTimePicker();
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
+            label24 = new Label();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -480,6 +483,9 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(label24);
+            tabPage3.Controls.Add(InitialInstructionButton);
+            tabPage3.Controls.Add(InitialInstructionPathLabel);
             tabPage3.Controls.Add(panel2);
             tabPage3.Controls.Add(label23);
             tabPage3.Controls.Add(label22);
@@ -505,6 +511,24 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Данные сотрудника";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // InitialInstructionButton
+            // 
+            InitialInstructionButton.Location = new Point(24, 240);
+            InitialInstructionButton.Name = "InitialInstructionButton";
+            InitialInstructionButton.Size = new Size(210, 53);
+            InitialInstructionButton.TabIndex = 26;
+            InitialInstructionButton.Text = "Выбрать папку для вводного инструктажа";
+            InitialInstructionButton.UseVisualStyleBackColor = true;
+            InitialInstructionButton.Click += InitialInstructionButton_Click;
+            // 
+            // InitialInstructionPathLabel
+            // 
+            InitialInstructionPathLabel.AutoSize = true;
+            InitialInstructionPathLabel.Location = new Point(24, 358);
+            InitialInstructionPathLabel.Name = "InitialInstructionPathLabel";
+            InitialInstructionPathLabel.Size = new Size(0, 15);
+            InitialInstructionPathLabel.TabIndex = 25;
             // 
             // panel2
             // 
@@ -632,6 +656,7 @@
             // 
             // uploadNewcommer
             // 
+            uploadNewcommer.Enabled = false;
             uploadNewcommer.Location = new Point(302, 230);
             uploadNewcommer.Name = "uploadNewcommer";
             uploadNewcommer.Size = new Size(285, 57);
@@ -809,6 +834,15 @@
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
+            // label24
+            // 
+            label24.AutoSize = true;
+            label24.Location = new Point(24, 324);
+            label24.Name = "label24";
+            label24.Size = new Size(163, 15);
+            label24.TabIndex = 27;
+            label24.Text = "Путь вводного инструктажа:";
+            // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -907,5 +941,8 @@
         private Label label25;
         private Button button9;
         private Button button10;
+        private Button InitialInstructionButton;
+        private Label InitialInstructionPathLabel;
+        private Label label24;
     }
 }
