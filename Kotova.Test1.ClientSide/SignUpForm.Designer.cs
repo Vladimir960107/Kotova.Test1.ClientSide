@@ -36,7 +36,7 @@
             pictureBox1 = new PictureBox();
             panel2 = new Panel();
             panel6 = new Panel();
-            pictureBox5 = new PictureBox();
+            showPasswordPicture = new PictureBox();
             PasswordTextBox = new TextBox();
             pictureBox6 = new PictureBox();
             panel5 = new Panel();
@@ -58,7 +58,7 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
             panel6.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox5).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)showPasswordPicture).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox6).BeginInit();
             panel5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox7).BeginInit();
@@ -139,7 +139,7 @@
             // panel6
             // 
             panel6.BackColor = SystemColors.Control;
-            panel6.Controls.Add(pictureBox5);
+            panel6.Controls.Add(showPasswordPicture);
             panel6.Controls.Add(PasswordTextBox);
             panel6.Controls.Add(pictureBox6);
             panel6.Location = new Point(6, 186);
@@ -147,16 +147,18 @@
             panel6.Size = new Size(614, 54);
             panel6.TabIndex = 9;
             // 
-            // pictureBox5
+            // showPasswordPicture
             // 
-            pictureBox5.Image = Properties.Resources.eye;
-            pictureBox5.Location = new Point(46, 12);
-            pictureBox5.Name = "pictureBox5";
-            pictureBox5.Size = new Size(29, 29);
-            pictureBox5.SizeMode = PictureBoxSizeMode.Zoom;
-            pictureBox5.TabIndex = 3;
-            pictureBox5.TabStop = false;
-            toolTip1.SetToolTip(pictureBox5, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
+            showPasswordPicture.Image = Properties.Resources.eye;
+            showPasswordPicture.Location = new Point(46, 12);
+            showPasswordPicture.Name = "showPasswordPicture";
+            showPasswordPicture.Size = new Size(29, 29);
+            showPasswordPicture.SizeMode = PictureBoxSizeMode.Zoom;
+            showPasswordPicture.TabIndex = 3;
+            showPasswordPicture.TabStop = false;
+            toolTip1.SetToolTip(showPasswordPicture, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
+            showPasswordPicture.MouseDown += showPasswordPicture_MouseDown;
+            showPasswordPicture.MouseUp += showPasswordPicture_MouseUp;
             // 
             // PasswordTextBox
             // 
@@ -361,7 +363,7 @@
             panel2.PerformLayout();
             panel6.ResumeLayout(false);
             panel6.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox5).EndInit();
+            ((System.ComponentModel.ISupportInitialize)showPasswordPicture).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox6).EndInit();
             panel5.ResumeLayout(false);
             panel5.PerformLayout();
@@ -397,7 +399,7 @@
         private Panel panel5;
         private TextBox emailTextBox;
         private Panel panel6;
-        private PictureBox pictureBox5;
+        private PictureBox showPasswordPicture;
         private TextBox PasswordTextBox;
         private PictureBox pictureBox6;
         private PictureBox pictureBox7;

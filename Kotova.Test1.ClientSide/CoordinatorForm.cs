@@ -186,7 +186,7 @@ namespace Kotova.Test1.ClientSide
         {
             using (HttpClient client = new HttpClient())
             {
-                string url = GetLoginPasswordUrl; // Replace with your actual API URL
+                string url = GetLoginPasswordUrl;
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var json = JsonConvert.SerializeObject(dataAboutUser);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
@@ -254,7 +254,7 @@ namespace Kotova.Test1.ClientSide
                 }
             }
             uploadNewcommer.Enabled = true;
-              // Добавить последующий код в функцию! ОНО ВООБЩЕ ДОЛЖНО БЫТЬ ЗДЕСЬ?
+            // Добавить последующий код в функцию! ОНО ВООБЩЕ ДОЛЖНО БЫТЬ ЗДЕСЬ?
             /*buttonCreateInstruction.Enabled = false;
             if (selectedFolderPath is null)
             {
@@ -289,6 +289,21 @@ namespace Kotova.Test1.ClientSide
             selectedFolderPath = null;
             PathToFolderOfInstruction.Text = "Путь не выбран";*/
 
+        }
+
+        private void CoordinatorForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (_loginForm is not null)
+            {
+                _loginForm.Dispose();
+            }
+            this.Dispose(true);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            _loginForm.Show();
+            this.Dispose(true);
         }
     }
 }

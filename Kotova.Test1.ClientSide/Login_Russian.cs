@@ -28,30 +28,30 @@ namespace Kotova.Test1.ClientSide
 
         private void textBox1_Click(object sender, EventArgs e)
         {
-            textBox1.BackColor = Color.White;
-            textBox2.BackColor = SystemColors.Control;
+            LoginTextBox.BackColor = Color.White;
+            PasswordTextBox.BackColor = SystemColors.Control;
 
         }
         private void textBox2_Click(object sender, EventArgs e)
         {
-            textBox2.BackColor = Color.White;
-            textBox1.BackColor = SystemColors.Control;
+            PasswordTextBox.BackColor = Color.White;
+            LoginTextBox.BackColor = SystemColors.Control;
         }
 
         private void changeColorsOfTextBoxesToControl(object sender, MouseEventArgs e)
         {
-            textBox1.BackColor = SystemColors.Control;
-            textBox2.BackColor = SystemColors.Control;
+            LoginTextBox.BackColor = SystemColors.Control;
+            PasswordTextBox.BackColor = SystemColors.Control;
         }
 
         private void lookPassword_MouseDown(object sender, MouseEventArgs e)
         {
-            textBox2.UseSystemPasswordChar = false;
+            PasswordTextBox.UseSystemPasswordChar = false;
         }
 
-        private void pictureBox4_MouseUp(object sender, MouseEventArgs e)
+        private void lookPassword_MouseUp(object sender, MouseEventArgs e)
         {
-            textBox2.UseSystemPasswordChar = true;
+            PasswordTextBox.UseSystemPasswordChar = true;
         }
 
         private async void LogInButton_Click(object sender, EventArgs e)
@@ -59,15 +59,15 @@ namespace Kotova.Test1.ClientSide
             LogInButton.Enabled = false;
 
 
-            if (string.IsNullOrWhiteSpace(textBox1.Text) || string.IsNullOrWhiteSpace(textBox2.Text))
+            if (string.IsNullOrWhiteSpace(LoginTextBox.Text) || string.IsNullOrWhiteSpace(PasswordTextBox.Text))
             {
                 MessageBox.Show("Пожалуйста, заполните Логин и Пароль", "Не указан Логин и/или Пароль", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 LogInButton.Enabled = true;
                 return;
             }
 
-            var username = textBox1.Text;
-            var password = textBox2.Text;
+            var username = LoginTextBox.Text;
+            var password = PasswordTextBox.Text;
             var loginModel = new
             {
                 username = username,
@@ -92,7 +92,7 @@ namespace Kotova.Test1.ClientSide
                         if (EncodeJWTToken(result.token))
                         {
                             MessageBox.Show("Login Successfull and JWT Token sucessfully encoded");
-                            textBox2.Text = "";
+                            PasswordTextBox.Text = "";
                             switch (GetRoleFromToken(result.token))
                             {
                                 case "User":

@@ -29,7 +29,7 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
             _login_form = form;
             _userForm = userForm;
-            
+
         }
 
         private void textBox1_Click(object sender, EventArgs e)
@@ -174,7 +174,7 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"password is not equal to repeated password.");
                 return false;
             }
-                
+
             else if (string.IsNullOrWhiteSpace(email) || !Regex.IsMatch(email, EmailRegex))
             {
                 MessageBox.Show($"email:{email} is not valid");
@@ -224,6 +224,16 @@ namespace Kotova.Test1.ClientSide
             {
                 emailTextBox.Text = "";
             }
+        }
+
+        private void showPasswordPicture_MouseDown(object sender, MouseEventArgs e)
+        {
+            PasswordTextBox.UseSystemPasswordChar = false;
+        }
+
+        private void showPasswordPicture_MouseUp(object sender, MouseEventArgs e)
+        {
+            PasswordTextBox.UseSystemPasswordChar = true;
         }
     }
 }

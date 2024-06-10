@@ -67,6 +67,7 @@
             textBox12 = new TextBox();
             label10 = new Label();
             tabPage3 = new TabPage();
+            label24 = new Label();
             InitialInstructionButton = new Button();
             InitialInstructionPathLabel = new Label();
             panel2 = new Panel();
@@ -103,7 +104,7 @@
             dateTimePicker4 = new DateTimePicker();
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
-            label24 = new Label();
+            button1 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -512,6 +513,15 @@
             tabPage3.Text = "Данные сотрудника";
             tabPage3.UseVisualStyleBackColor = true;
             // 
+            // label24
+            // 
+            label24.AutoSize = true;
+            label24.Location = new Point(24, 324);
+            label24.Name = "label24";
+            label24.Size = new Size(163, 15);
+            label24.TabIndex = 27;
+            label24.Text = "Путь вводного инструктажа:";
+            // 
             // InitialInstructionButton
             // 
             InitialInstructionButton.Location = new Point(24, 240);
@@ -834,23 +844,26 @@
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new Size(61, 4);
             // 
-            // label24
+            // button1
             // 
-            label24.AutoSize = true;
-            label24.Location = new Point(24, 324);
-            label24.Name = "label24";
-            label24.Size = new Size(163, 15);
-            label24.TabIndex = 27;
-            label24.Text = "Путь вводного инструктажа:";
+            button1.Location = new Point(1058, 36);
+            button1.Name = "button1";
+            button1.Size = new Size(120, 43);
+            button1.TabIndex = 35;
+            button1.Text = "Выйти из учётной записи";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1056, 450);
+            ClientSize = new Size(1190, 543);
+            Controls.Add(button1);
             Controls.Add(tabControl1);
             Name = "CoordinatorForm";
             Text = "Coordinator";
+            FormClosed += CoordinatorForm_FormClosed;
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
             tabPage1.ResumeLayout(false);
@@ -944,5 +957,6 @@
         private Button InitialInstructionButton;
         private Label InitialInstructionPathLabel;
         private Label label24;
+        private Button button1;
     }
 }
