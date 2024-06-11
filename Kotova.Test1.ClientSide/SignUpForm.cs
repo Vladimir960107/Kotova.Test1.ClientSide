@@ -32,25 +32,91 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private void textBox1_Click(object sender, EventArgs e)
+        private void loginTextBox_Click(object sender, EventArgs e)
         {
-            if (loginTextBox.Text == "Введите логин")
+            if (loginTextBox.Text == defaultLoginText)
             {
                 loginTextBox.Text = "";
             }
+            changeAllToSytemColors();
+            CheckForEmptyStringAndTypeReminders(sender);
             loginTextBox.BackColor = Color.White;
-            RepeatPasswordTextBox.BackColor = SystemColors.Control;
 
         }
-        private void textBox2_Click(object sender, EventArgs e)
+
+        private void PasswordTextBox_Click(object sender, EventArgs e)
         {
-            if (RepeatPasswordTextBox.Text == "Введите пароль")
+            if (PasswordTextBox.Text == defaultPasswordText)
+            {
+                PasswordTextBox.Text = "";
+            }
+            changeAllToSytemColors();
+            CheckForEmptyStringAndTypeReminders(sender);
+            PasswordTextBox.BackColor = Color.White;
+        }
+        private void RepeatPasswordTextBox_Click(object sender, EventArgs e)
+        {
+            if (RepeatPasswordTextBox.Text == defaultPasswordRepeatText)
             {
                 RepeatPasswordTextBox.Text = "";
             }
+            if (string.IsNullOrWhiteSpace(loginTextBox.Text))
+
+            changeAllToSytemColors();
+            CheckForEmptyStringAndTypeReminders(sender);
             RepeatPasswordTextBox.BackColor = Color.White;
-            loginTextBox.BackColor = SystemColors.Control;
         }
+
+        private void emailTextBox_Click(object sender, EventArgs e)
+        {
+            if (emailTextBox.Text == defaultEmailText)
+            {
+                emailTextBox.Text = "";
+            }
+            changeAllToSytemColors();
+            CheckForEmptyStringAndTypeReminders(sender);
+            emailTextBox.BackColor = Color.White;
+            
+        }
+        private void changeAllToSytemColors()
+        {
+            RepeatPasswordTextBox.BackColor = SystemColors.Control;
+            loginTextBox.BackColor = SystemColors.Control;
+            PasswordTextBox.BackColor = SystemColors.Control;
+            emailTextBox.BackColor = SystemColors.Control;
+        }
+        private void CheckForEmptyStringAndTypeReminders(object sender)
+        {
+            List<TextBox> listOfObjects = new List<TextBox>(); // ИСПРАВЬ ТУТ 2 ЛИСТА на Dictionary ИЛИ ЧТО-ТО ПОХОЖЕЕ.
+            listOfObjects.Add(loginTextBox);
+            listOfObjects.Add(PasswordTextBox);
+            listOfObjects.Add(RepeatPasswordTextBox);
+            listOfObjects.Add(emailTextBox);
+
+            List<string> listOfDefaultReminder = new List<string>();
+            listOfDefaultReminder.Add(defaultLoginText);
+            listOfDefaultReminder.Add(defaultPasswordText);
+            listOfDefaultReminder.Add(defaultPasswordRepeatText);
+            listOfDefaultReminder.Add(defaultEmailText);
+
+            for (int i = 0; i < listOfObjects.Count; i++)
+            {
+                if (listOfObjects[i] != sender)
+                { 
+                    if (string.IsNullOrWhiteSpace(listOfObjects[i].Text))
+                    {
+                        if (i != 1 && i != 2) //Если не пароль и не повторение пароля короче. Иначе там баг и сложно! Разберись если хочешь
+                        {
+                            listOfObjects[i].Text = listOfDefaultReminder[i];
+                        }
+                        
+                    }
+                    
+                }
+            }
+
+        }
+        
 
         private void changeColorsOfTextBoxesToControl(object sender, MouseEventArgs e)
         {
@@ -104,20 +170,19 @@ namespace Kotova.Test1.ClientSide
             signUpButton.Enabled = false;
             string login = loginTextBox.Text;
             string password = PasswordTextBox.Text;
-            string email = emailTextBox.Text;
+            string? email = emailTextBox.Text;
             string repeatedPassword = RepeatPasswordTextBox.Text;
 
-            if (!CheckForValidation(login, password, repeatedPassword, email))
+            if (!CheckForValidation(login, password, repeatedPassword, ref email))
             {
                 signUpButton.Enabled = true;
                 return;
             }
-
             var userCredentials = new UserCredentials
             {
-                Login = loginTextBox.Text,
-                Password = PasswordTextBox.Text,
-                Email = emailTextBox.Text
+                Login = login,
+                Password = password,
+                Email = email
             };
 
             string jsonPayload = JsonConvert.SerializeObject(userCredentials);
@@ -149,20 +214,20 @@ namespace Kotova.Test1.ClientSide
         }
 
 
-        private bool CheckForValidation(string login, string password, string repeatedPassword, string email)
+        private bool CheckForValidation(string login, string password, string repeatedPassword, ref string? email)
         {
             const string LoginRegex = @"^[a-zA-Z0-9_]+$";
 
             // Regex for validating password - at least one lowercase letter, one uppercase letter, one number, and is at least 8 characters long
             const string PasswordRegex = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$";
 
-            // Regex for validating email. A common regex for email validation.
+            // A common regex for email validation.
             const string EmailRegex = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
 
             if (!Regex.IsMatch(login, LoginRegex) || string.IsNullOrWhiteSpace(login))
             {
                 MessageBox.Show($"login:{login} is not valid");
-                return false; // false MEANS NOT GOOD RESPONSE
+                return false;
             }
             else if (!Regex.IsMatch(password, PasswordRegex) || string.IsNullOrWhiteSpace(password))
             {
@@ -174,13 +239,35 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"password is not equal to repeated password.");
                 return false;
             }
-
-            else if (string.IsNullOrWhiteSpace(email) || !Regex.IsMatch(email, EmailRegex))
+            else if (string.IsNullOrWhiteSpace(email) || email == defaultEmailText)
             {
-                MessageBox.Show($"email:{email} is not valid");
+                if (ConfirmAction("You have not entered email, are you sure?"))
+                {
+                    email = null;
+                    return true;
+                }
+                return false;
+            }
+            else if (!Regex.IsMatch(email, EmailRegex))
+            {
+                MessageBox.Show("email is not valid, try again.");
                 return false;
             }
             return true; //Means good response
+        }
+
+        private bool ConfirmAction(string confirmMessage)
+        {
+            var result = MessageBox.Show(confirmMessage, "Confirm action", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private void loginTextBox_DoubleClick(object sender, EventArgs e)
@@ -235,5 +322,17 @@ namespace Kotova.Test1.ClientSide
         {
             PasswordTextBox.UseSystemPasswordChar = true;
         }
+
+        private void showrepeatedPasswordPicture_MouseDown(object sender, MouseEventArgs e)
+        {
+            RepeatPasswordTextBox.UseSystemPasswordChar = false;
+        }
+
+        private void showRepeatedPasswordPicture_MouseUp(object sender, MouseEventArgs e)
+        {
+            RepeatPasswordTextBox.UseSystemPasswordChar = true;
+        }
+
+
     }
 }

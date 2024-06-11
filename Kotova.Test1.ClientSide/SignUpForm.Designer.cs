@@ -50,10 +50,12 @@
             loginTextBox = new TextBox();
             pictureBox2 = new PictureBox();
             panel4 = new Panel();
+            showRepeatedPasswordPicture = new PictureBox();
             RepeatPasswordTextBox = new TextBox();
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
+            toolTip2 = new ToolTip(components);
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             panel2.SuspendLayout();
@@ -65,6 +67,7 @@
             panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             panel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)showRepeatedPasswordPicture).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
             SuspendLayout();
             // 
@@ -156,7 +159,7 @@
             showPasswordPicture.SizeMode = PictureBoxSizeMode.Zoom;
             showPasswordPicture.TabIndex = 3;
             showPasswordPicture.TabStop = false;
-            toolTip1.SetToolTip(showPasswordPicture, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
+            toolTip1.SetToolTip(showPasswordPicture, "Вы можете посмотреть новый \r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
             showPasswordPicture.MouseDown += showPasswordPicture_MouseDown;
             showPasswordPicture.MouseUp += showPasswordPicture_MouseUp;
             // 
@@ -169,6 +172,7 @@
             PasswordTextBox.Size = new Size(520, 29);
             PasswordTextBox.TabIndex = 2;
             PasswordTextBox.Text = "Введите новый пароль";
+            PasswordTextBox.Click += PasswordTextBox_Click;
             PasswordTextBox.TextChanged += PasswordTextBox_TextChanged;
             PasswordTextBox.DoubleClick += PasswordTextBox_DoubleClick;
             // 
@@ -215,6 +219,7 @@
             emailTextBox.Size = new Size(520, 29);
             emailTextBox.TabIndex = 2;
             emailTextBox.Text = "Введите почту (Необязательно)";
+            emailTextBox.Click += emailTextBox_Click;
             emailTextBox.DoubleClick += emailTextBox_DoubleClick;
             // 
             // skipButton
@@ -285,7 +290,7 @@
             loginTextBox.Size = new Size(520, 29);
             loginTextBox.TabIndex = 1;
             loginTextBox.Text = "Введите новый логин";
-            loginTextBox.Click += textBox1_Click;
+            loginTextBox.Click += loginTextBox_Click;
             loginTextBox.DoubleClick += loginTextBox_DoubleClick;
             // 
             // pictureBox2
@@ -303,12 +308,26 @@
             // panel4
             // 
             panel4.BackColor = SystemColors.Control;
+            panel4.Controls.Add(showRepeatedPasswordPicture);
             panel4.Controls.Add(RepeatPasswordTextBox);
             panel4.Controls.Add(pictureBox3);
             panel4.Location = new Point(6, 246);
             panel4.Name = "panel4";
             panel4.Size = new Size(614, 54);
             panel4.TabIndex = 2;
+            // 
+            // showRepeatedPasswordPicture
+            // 
+            showRepeatedPasswordPicture.Image = Properties.Resources.eye;
+            showRepeatedPasswordPicture.Location = new Point(47, 12);
+            showRepeatedPasswordPicture.Name = "showRepeatedPasswordPicture";
+            showRepeatedPasswordPicture.Size = new Size(29, 29);
+            showRepeatedPasswordPicture.SizeMode = PictureBoxSizeMode.Zoom;
+            showRepeatedPasswordPicture.TabIndex = 4;
+            showRepeatedPasswordPicture.TabStop = false;
+            toolTip2.SetToolTip(showRepeatedPasswordPicture, "Введите пароль ещё раз и кликните на глаз для его просмотра");
+            showRepeatedPasswordPicture.MouseDown += showrepeatedPasswordPicture_MouseDown;
+            showRepeatedPasswordPicture.MouseUp += showRepeatedPasswordPicture_MouseUp;
             // 
             // RepeatPasswordTextBox
             // 
@@ -319,7 +338,7 @@
             RepeatPasswordTextBox.Size = new Size(520, 29);
             RepeatPasswordTextBox.TabIndex = 2;
             RepeatPasswordTextBox.Text = "Повторите новый пароль";
-            RepeatPasswordTextBox.Click += textBox2_Click;
+            RepeatPasswordTextBox.Click += RepeatPasswordTextBox_Click;
             RepeatPasswordTextBox.TextChanged += RepeatPassswordTextBox_TextChanged;
             RepeatPasswordTextBox.DoubleClick += RepeatPassswordTextBox_DoubleClick;
             // 
@@ -373,6 +392,7 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)showRepeatedPasswordPicture).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).EndInit();
             ResumeLayout(false);
         }
@@ -403,5 +423,7 @@
         private TextBox PasswordTextBox;
         private PictureBox pictureBox6;
         private PictureBox pictureBox7;
+        private PictureBox showRepeatedPasswordPicture;
+        private ToolTip toolTip2;
     }
 }

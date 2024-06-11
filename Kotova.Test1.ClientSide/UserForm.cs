@@ -270,7 +270,6 @@ namespace Kotova.Test1.ClientSide
             if (_signUpForm != null)
             {
                 _signUpForm.Dispose();
-                _signUpForm = null;
             }
 
             _loginForm.Show();
