@@ -57,9 +57,10 @@ namespace Kotova.Test1.ClientSide
 
                     PathToFolderOfInstruction.Text = selectedFolderPath;
 
-
+                    buttonCreateInstruction.Enabled = true;
                     // Use the selectedFolderPath variable as needed in your code
                     MessageBox.Show($"Selected Folder: {selectedFolderPath}");
+
 
                 }
             }

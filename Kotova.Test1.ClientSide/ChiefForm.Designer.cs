@@ -218,6 +218,7 @@
             // 
             // buttonCreateInstruction
             // 
+            buttonCreateInstruction.Enabled = false;
             buttonCreateInstruction.Location = new Point(317, 228);
             buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonCreateInstruction.Name = "buttonCreateInstruction";

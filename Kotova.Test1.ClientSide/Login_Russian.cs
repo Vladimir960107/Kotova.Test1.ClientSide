@@ -108,7 +108,7 @@ namespace Kotova.Test1.ClientSide
                                             userForm._signUpForm.Show();
                                         }
                                     }
-                                    
+
                                     break;
                                 case "ChiefOfDepartment":
                                     ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
@@ -226,6 +226,10 @@ namespace Kotova.Test1.ClientSide
                 LogInButton_Click(sender, e);
             }
         }
+
+
+
+
 
 
         /*private async void securedata_TEST_Button_Click(object sender, EventArgs e) // YOU CAN DELETE THIS PART OF CODE, DEPRECATED. IF YOU WANT

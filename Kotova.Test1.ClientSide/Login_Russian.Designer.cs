@@ -39,11 +39,11 @@
             ForgotPasswordLabel = new LinkLabel();
             LogInButton = new Button();
             panel3 = new Panel();
-            LoginTextBox = new TextBox();
             pictureBox2 = new PictureBox();
+            LoginTextBox = new TextBox();
             panel4 = new Panel();
-            pictureBox4 = new PictureBox();
             PasswordTextBox = new TextBox();
+            pictureBox4 = new PictureBox();
             pictureBox3 = new PictureBox();
             label3 = new Label();
             toolTip1 = new ToolTip(components);
@@ -174,23 +174,12 @@
             // panel3
             // 
             panel3.BackColor = SystemColors.Control;
-            panel3.Controls.Add(LoginTextBox);
             panel3.Controls.Add(pictureBox2);
+            panel3.Controls.Add(LoginTextBox);
             panel3.Location = new Point(0, 211);
             panel3.Name = "panel3";
             panel3.Size = new Size(614, 54);
             panel3.TabIndex = 3;
-            // 
-            // textBox1
-            // 
-            LoginTextBox.BackColor = SystemColors.Control;
-            LoginTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            LoginTextBox.ForeColor = Color.FromArgb(0, 0, 0, 6);
-            LoginTextBox.Location = new Point(82, 12);
-            LoginTextBox.Name = "textBox1";
-            LoginTextBox.Size = new Size(520, 29);
-            LoginTextBox.TabIndex = 1;
-            LoginTextBox.Click += textBox1_Click;
             // 
             // pictureBox2
             // 
@@ -204,16 +193,38 @@
             pictureBox2.TabIndex = 0;
             pictureBox2.TabStop = false;
             // 
+            // LoginTextBox
+            // 
+            LoginTextBox.BackColor = SystemColors.Control;
+            LoginTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            LoginTextBox.Location = new Point(81, 14);
+            LoginTextBox.Name = "LoginTextBox";
+            LoginTextBox.Size = new Size(520, 29);
+            LoginTextBox.TabIndex = 2;
+            LoginTextBox.Click += textBox1_Click;
+            // 
             // panel4
             // 
             panel4.BackColor = SystemColors.Control;
-            panel4.Controls.Add(pictureBox4);
             panel4.Controls.Add(PasswordTextBox);
+            panel4.Controls.Add(pictureBox4);
             panel4.Controls.Add(pictureBox3);
             panel4.Location = new Point(0, 271);
             panel4.Name = "panel4";
             panel4.Size = new Size(614, 54);
             panel4.TabIndex = 2;
+            // 
+            // PasswordTextBox
+            // 
+            PasswordTextBox.BackColor = SystemColors.Control;
+            PasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            PasswordTextBox.Location = new Point(81, 12);
+            PasswordTextBox.Name = "PasswordTextBox";
+            PasswordTextBox.Size = new Size(520, 29);
+            PasswordTextBox.TabIndex = 7;
+            PasswordTextBox.UseSystemPasswordChar = true;
+            PasswordTextBox.Click += textBox2_Click;
+            PasswordTextBox.KeyPress += textBox2_KeyPress;
             // 
             // pictureBox4
             // 
@@ -227,18 +238,6 @@
             toolTip1.SetToolTip(pictureBox4, "Вы можете посмотреть\r\nвведеный пароль кликнув здесь\r\n(на глаз)\r\n\r\n");
             pictureBox4.MouseDown += lookPassword_MouseDown;
             pictureBox4.MouseUp += lookPassword_MouseUp;
-            // 
-            // textBox2
-            // 
-            PasswordTextBox.BackColor = SystemColors.Control;
-            PasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            PasswordTextBox.Location = new Point(82, 12);
-            PasswordTextBox.Name = "textBox2";
-            PasswordTextBox.Size = new Size(520, 29);
-            PasswordTextBox.TabIndex = 2;
-            PasswordTextBox.UseSystemPasswordChar = true;
-            PasswordTextBox.Click += textBox2_Click;
-            PasswordTextBox.KeyPress += textBox2_KeyPress;
             // 
             // pictureBox3
             // 
@@ -301,12 +300,12 @@
         private PictureBox pictureBox2;
         private PictureBox pictureBox3;
         private TextBox LoginTextBox;
-        private TextBox PasswordTextBox;
         private Button LogInButton;
         private Label label4;
         private LinkLabel ForgotPasswordLabel;
         private LinkLabel SupportEmail;
         private PictureBox pictureBox4;
         private ToolTip toolTip1;
+        private TextBox PasswordTextBox;
     }
 }
