@@ -31,7 +31,7 @@
             CheckForNewInstructions = new Button();
             label1 = new Label();
             UserLabel = new Label();
-            ListOfInstructions = new ListBox();
+            ListOfInstructionsForUser = new ListBox();
             label3 = new Label();
             HyperLinkForInstructionsFolder = new Button();
             PassInstruction = new CheckBox();
@@ -66,15 +66,15 @@
             UserLabel.TabIndex = 23;
             UserLabel.Text = "UnknownUser";
             // 
-            // ListOfInstructions
+            // ListOfInstructionsForUser
             // 
-            ListOfInstructions.FormattingEnabled = true;
-            ListOfInstructions.ItemHeight = 15;
-            ListOfInstructions.Location = new Point(214, 170);
-            ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(430, 229);
-            ListOfInstructions.TabIndex = 24;
-            ListOfInstructions.SelectedValueChanged += ListOfInstructions_SelectedValueChanged;
+            ListOfInstructionsForUser.FormattingEnabled = true;
+            ListOfInstructionsForUser.ItemHeight = 15;
+            ListOfInstructionsForUser.Location = new Point(214, 170);
+            ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
+            ListOfInstructionsForUser.Size = new Size(430, 229);
+            ListOfInstructionsForUser.TabIndex = 24;
+            ListOfInstructionsForUser.SelectedValueChanged += ListOfInstructions_SelectedValueChanged;
             // 
             // label3
             // 
@@ -126,7 +126,7 @@
             Controls.Add(PassInstruction);
             Controls.Add(HyperLinkForInstructionsFolder);
             Controls.Add(label3);
-            Controls.Add(ListOfInstructions);
+            Controls.Add(ListOfInstructionsForUser);
             Controls.Add(UserLabel);
             Controls.Add(label1);
             Controls.Add(CheckForNewInstructions);
@@ -142,7 +142,7 @@
         private Button CheckForNewInstructions;
         private Label label1;
         private Label UserLabel;
-        private ListBox ListOfInstructions;
+        private ListBox ListOfInstructionsForUser;
         private Label label3;
         private Button HyperLinkForInstructionsFolder;
         private CheckBox PassInstruction;

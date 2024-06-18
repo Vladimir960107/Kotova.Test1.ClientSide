@@ -22,10 +22,12 @@ namespace Kotova.Test1.ClientSide
     {
         private const string DownloadDepartmentsForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-departments";
         private const string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
-        private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_login_password";
+        private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-login-and-password-for-newcommer";
+        private const string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
         private Form? _loginForm;
         private string? _userName;
         private string? selectedFolderPath;
+        List<string>? rolesOfUsers = new List<string>();
         public CoordinatorForm()
         {
             InitializeComponent();
@@ -42,10 +44,18 @@ namespace Kotova.Test1.ClientSide
         {
             if (tabControl1.SelectedIndex == 3)
             {
-                DepartmentForNewcomer.Items.Clear();
                 if (await refreshDepartmentsFromDB(DepartmentForNewcomer))
                 {
-                    MessageBox.Show("Отделы обновились успешно.");
+                    if (await refreshRolesFromDB(RoleOfNewcomerListBox))
+                    {
+                        MessageBox.Show("Отделы и роли обновились успешно.");
+                        return;
+
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Отделы обновились, но роли нет! Что-то не так. Проверь tabControl1_SelectedIndexChanged");
+                    }
                     return;
 
                 }
@@ -60,7 +70,7 @@ namespace Kotova.Test1.ClientSide
         private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer)
         {
             string url = DownloadDepartmentsForUserURL;
-            DepartmentForNewcomer.Items.Clear();
+            departmentForNewcomer.Items.Clear();
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -73,7 +83,39 @@ namespace Kotova.Test1.ClientSide
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
-                    DepartmentForNewcomer.Items.AddRange(result.ToArray());
+                    departmentForNewcomer.Items.AddRange(result.ToArray());
+                    return true;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> refreshRolesFromDB(ListBox listBoxRoles) // THE SAME FUNCTION AS refreshDepartmentsFromDB. just url changed and listbox, that's all. Oh, and List<string> have different names additionally.
+        {
+            string url = DownloadRolesForUsersUrl;
+            listBoxRoles.Items.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    rolesOfUsers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
+                    if (rolesOfUsers == null || rolesOfUsers.Count == 0)
+                    {
+                        return false;
+                    }
+                    listBoxRoles.Items.AddRange(rolesOfUsers.ToArray());
                     return true;
                 }
             }
@@ -127,6 +169,10 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("Неверная дата рождения. Введите действительную дату и убедитесь, что возрастной критерий(>=18 лет) соответствует.");
                 return;
             }
+            if (!IsValidRole(RoleOfNewcomerListBox.SelectedIndex))
+            {
+                MessageBox.Show("Не выбрана или выбрана неверная роль сотрудника.");
+            }
             Employee newEmployee = new Employee();
             newEmployee.personnel_number = personnelNumberTextBox.Text;
             newEmployee.full_name = employeeFullNameTextBox.Text;
@@ -135,6 +181,8 @@ namespace Kotova.Test1.ClientSide
             newEmployee.group = null;
             newEmployee.birth_date = dateOfBirthDateTimePicker.Value;
             newEmployee.gender = 3;
+
+            string roleName = RoleOfNewcomerListBox.SelectedItem.ToString();
 
             try
             {
@@ -146,7 +194,7 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("Employee inserted into DB", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     try
                     {
-                        response = await GetLoginPassword(new Tuple<string, string, string>(newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text), token);
+                        response = await GetLoginPassword(new List<string> { newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text, roleName }, token);
                         if (response.IsSuccessStatusCode)
                         {
 
@@ -182,7 +230,20 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private async Task<HttpResponseMessage> GetLoginPassword(Tuple<string, string, string> dataAboutUser, string token)
+        private bool IsValidRole(int selectedIndex)
+        {
+            List<int> validRoles = new List<int> { 0, 1, 3 };
+            if (validRoles.Contains(selectedIndex))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private async Task<HttpResponseMessage> GetLoginPassword(List<string> dataAboutUser, string token)
         {
             using (HttpClient client = new HttpClient())
             {
@@ -225,6 +286,7 @@ namespace Kotova.Test1.ClientSide
             }
             return false;
         }
+        //TODO: is valid number
         private static bool IsValidRussianFullName(string name)
         {
             return Regex.IsMatch(name, @"^[А-ЯЁа-яё]+([ -][А-ЯЁа-яё]+)*$");

@@ -70,10 +70,6 @@
             label24 = new Label();
             InitialInstructionButton = new Button();
             InitialInstructionPathLabel = new Label();
-            panel2 = new Panel();
-            label25 = new Label();
-            button9 = new Button();
-            button10 = new Button();
             label23 = new Label();
             label22 = new Label();
             label21 = new Label();
@@ -105,12 +101,13 @@
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
             button1 = new Button();
+            RoleOfNewcomerListBox = new ListBox();
+            label25 = new Label();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage4.SuspendLayout();
             tabPage3.SuspendLayout();
-            panel2.SuspendLayout();
             tabPage5.SuspendLayout();
             SuspendLayout();
             // 
@@ -484,10 +481,11 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(label25);
+            tabPage3.Controls.Add(RoleOfNewcomerListBox);
             tabPage3.Controls.Add(label24);
             tabPage3.Controls.Add(InitialInstructionButton);
             tabPage3.Controls.Add(InitialInstructionPathLabel);
-            tabPage3.Controls.Add(panel2);
             tabPage3.Controls.Add(label23);
             tabPage3.Controls.Add(label22);
             tabPage3.Controls.Add(label21);
@@ -539,44 +537,6 @@
             InitialInstructionPathLabel.Name = "InitialInstructionPathLabel";
             InitialInstructionPathLabel.Size = new Size(0, 15);
             InitialInstructionPathLabel.TabIndex = 25;
-            // 
-            // panel2
-            // 
-            panel2.Controls.Add(label25);
-            panel2.Controls.Add(button9);
-            panel2.Controls.Add(button10);
-            panel2.Location = new Point(698, 230);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(221, 143);
-            panel2.TabIndex = 24;
-            // 
-            // label25
-            // 
-            label25.AutoSize = true;
-            label25.Location = new Point(17, 16);
-            label25.Name = "label25";
-            label25.RightToLeft = RightToLeft.Yes;
-            label25.Size = new Size(183, 15);
-            label25.TabIndex = 13;
-            label25.Text = "(перемести на администратора!";
-            // 
-            // button9
-            // 
-            button9.Location = new Point(17, 75);
-            button9.Name = "button9";
-            button9.Size = new Size(192, 53);
-            button9.TabIndex = 12;
-            button9.Text = "Синхронизация последнего файла с сервером";
-            button9.UseVisualStyleBackColor = true;
-            // 
-            // button10
-            // 
-            button10.Location = new Point(17, 34);
-            button10.Name = "button10";
-            button10.Size = new Size(192, 35);
-            button10.TabIndex = 11;
-            button10.Text = "Загрузка excel на сервер";
-            button10.UseVisualStyleBackColor = true;
             // 
             // label23
             // 
@@ -667,7 +627,7 @@
             // uploadNewcommer
             // 
             uploadNewcommer.Enabled = false;
-            uploadNewcommer.Location = new Point(302, 230);
+            uploadNewcommer.Location = new Point(306, 316);
             uploadNewcommer.Name = "uploadNewcommer";
             uploadNewcommer.Size = new Size(285, 57);
             uploadNewcommer.TabIndex = 13;
@@ -854,6 +814,24 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
             // 
+            // RoleOfNewcomerListBox
+            // 
+            RoleOfNewcomerListBox.FormattingEnabled = true;
+            RoleOfNewcomerListBox.ItemHeight = 15;
+            RoleOfNewcomerListBox.Location = new Point(306, 233);
+            RoleOfNewcomerListBox.Name = "RoleOfNewcomerListBox";
+            RoleOfNewcomerListBox.Size = new Size(281, 64);
+            RoleOfNewcomerListBox.TabIndex = 28;
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(306, 208);
+            label25.Name = "label25";
+            label25.Size = new Size(195, 15);
+            label25.TabIndex = 29;
+            label25.Text = "Выбрать роль нового сотрудника:";
+            // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -873,8 +851,6 @@
             tabPage4.PerformLayout();
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
-            panel2.ResumeLayout(false);
-            panel2.PerformLayout();
             tabPage5.ResumeLayout(false);
             tabPage5.PerformLayout();
             ResumeLayout(false);
@@ -950,13 +926,11 @@
         private Label label20;
         private Label label23;
         private Label label22;
-        private Panel panel2;
-        private Label label25;
-        private Button button9;
-        private Button button10;
         private Button InitialInstructionButton;
         private Label InitialInstructionPathLabel;
         private Label label24;
         private Button button1;
+        private Label label25;
+        private ListBox RoleOfNewcomerListBox;
     }
 }

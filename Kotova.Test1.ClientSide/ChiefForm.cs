@@ -319,7 +319,7 @@ namespace Kotova.Test1.ClientSide
         {
             if (ChiefTabControl.SelectedIndex == 2)
             {
-                listOfInstructions.Items.Clear();
+                ListOfInstructions.Items.Clear();
                 bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
                 if (IsEmpty == true)
                 {
@@ -329,7 +329,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async Task<bool> DownloadInstructionsForUserFromServer(string? userName)
+        private async Task<bool> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в User.cs в совершенно отдельном файле.
         {
             if (userName is null)
             {
@@ -357,7 +357,7 @@ namespace Kotova.Test1.ClientSide
                     listOfInstructions_global = result;
                     foreach (Dictionary<string, object> temp in result)
                     {
-                        listOfInstructions.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
+                        ListOfInstructions.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
 
                         /*foreach (KeyValuePair<string, object> kvp in temp)
                         {
@@ -386,13 +386,13 @@ namespace Kotova.Test1.ClientSide
         private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
         {
             HyperLinkForInstructionsFolder.Enabled = false;
-            if (listOfInstructions.SelectedItem == null)
+            if (ListOfInstructions.SelectedItem == null)
             {
                 MessageBox.Show("You haven't select the Instruction.");
                 PassInstruction.Enabled = false;
                 return;
             }
-            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(listOfInstructions.SelectedItem.ToString()); //most likely suppress it, cause its not null.
+            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructions.SelectedItem.ToString()); //most likely suppress it, cause its not null.
             string? pathStr = selectedDict[DataBaseNames.tableName_sql_pathToInstruction].ToString();
 
             if (pathStr is null || pathStr.Length == 0)
@@ -458,13 +458,13 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
-                if (listOfInstructions.SelectedItem == null)
+                if (ListOfInstructions.SelectedItem == null)
                 {
                     MessageBox.Show("You haven't select the Instruction.");
                     PassInstruction.Enabled = false;
                     return;
                 }
-                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(listOfInstructions.SelectedItem.ToString());
+                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructions.SelectedItem.ToString());
                 await SendInstructionIsPassedToDB(selectedDict);
                 //После этого отправить запрос на выбранный Database через сервер что инструктаж пройден. And uncheck the checkbox.
             }
@@ -511,7 +511,7 @@ namespace Kotova.Test1.ClientSide
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Everyting is fine, updating the listbox of instructions");
-                        listOfInstructions.Items.Clear();
+                        ListOfInstructions.Items.Clear();
                         DownloadInstructionsForUserFromServer(_userName);
                     }
                 }

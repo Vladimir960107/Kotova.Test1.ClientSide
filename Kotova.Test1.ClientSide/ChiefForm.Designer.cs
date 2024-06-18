@@ -52,7 +52,7 @@
             label4 = new Label();
             Download_file_excel = new Button();
             buttonTest = new Button();
-            listOfInstructions = new ListBox();
+            ListOfInstructionsForUser = new ListBox();
             ChiefTabControl = new TabControl();
             tabPage3 = new TabPage();
             PassInstruction = new CheckBox();
@@ -60,6 +60,7 @@
             label8 = new Label();
             toolTip1 = new ToolTip(components);
             button1 = new Button();
+            ListOfInstructions = new ListBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -249,6 +250,7 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(ListOfInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
             tabPage1.Controls.Add(submitInstructionToPeople);
             tabPage1.Controls.Add(label5);
@@ -316,24 +318,24 @@
             buttonTest.Text = "Тест сервера";
             buttonTest.UseVisualStyleBackColor = true;
             // 
-            // listOfInstructions
+            // ListOfInstructionsForUser
             // 
-            listOfInstructions.FormattingEnabled = true;
-            listOfInstructions.ItemHeight = 15;
-            listOfInstructions.Items.AddRange(new object[] { "Инструктажи" });
-            listOfInstructions.Location = new Point(20, 59);
-            listOfInstructions.Margin = new Padding(3, 2, 3, 2);
-            listOfInstructions.Name = "listOfInstructions";
-            listOfInstructions.Size = new Size(467, 229);
-            listOfInstructions.TabIndex = 29;
-            listOfInstructions.SelectedValueChanged += InstructionsToPass_SelectedIndexChanged;
+            ListOfInstructionsForUser.FormattingEnabled = true;
+            ListOfInstructionsForUser.ItemHeight = 15;
+            ListOfInstructionsForUser.Items.AddRange(new object[] { "Инструктажи" });
+            ListOfInstructionsForUser.Location = new Point(20, 59);
+            ListOfInstructionsForUser.Margin = new Padding(3, 2, 3, 2);
+            ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
+            ListOfInstructionsForUser.Size = new Size(467, 229);
+            ListOfInstructionsForUser.TabIndex = 29;
+            ListOfInstructionsForUser.SelectedValueChanged += InstructionsToPass_SelectedIndexChanged;
             // 
             // ChiefTabControl
             // 
             ChiefTabControl.Controls.Add(tabPage1);
             ChiefTabControl.Controls.Add(tabPage2);
             ChiefTabControl.Controls.Add(tabPage3);
-            ChiefTabControl.Location = new Point(12, 12);
+            ChiefTabControl.Location = new Point(12, 23);
             ChiefTabControl.Name = "ChiefTabControl";
             ChiefTabControl.SelectedIndex = 0;
             ChiefTabControl.Size = new Size(693, 368);
@@ -343,7 +345,7 @@
             // tabPage3
             // 
             tabPage3.Controls.Add(PassInstruction);
-            tabPage3.Controls.Add(listOfInstructions);
+            tabPage3.Controls.Add(ListOfInstructionsForUser);
             tabPage3.Controls.Add(HyperLinkForInstructionsFolder);
             tabPage3.Controls.Add(label8);
             tabPage3.Location = new Point(4, 24);
@@ -396,6 +398,15 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += LoginForm_Click;
             // 
+            // ListOfInstructions
+            // 
+            ListOfInstructions.FormattingEnabled = true;
+            ListOfInstructions.ItemHeight = 15;
+            ListOfInstructions.Location = new Point(20, 57);
+            ListOfInstructions.Name = "ListOfInstructions";
+            ListOfInstructions.Size = new Size(232, 79);
+            ListOfInstructions.TabIndex = 33;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -428,7 +439,7 @@
         private TabPage tabPage1;
         private Button buttonSyncManualyInstrWithDB;
         private Label label5;
-        private ListBox listOfInstructions;
+        private ListBox ListOfInstructionsForUser;
         private Label label4;
         private Button Download_file_excel;
         private Button buttonTest;
@@ -446,8 +457,8 @@
         private Button button1;
         private TabPage tabPage3;
         private CheckBox PassInstruction;
-        private ListBox ListOfInstructions;
         private Button HyperLinkForInstructionsFolder;
         private Label label8;
+        private ListBox ListOfInstructions;
     }
 }
