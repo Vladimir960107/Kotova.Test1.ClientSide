@@ -47,6 +47,7 @@
             label1 = new Label();
             typeOfInstructionListBox = new ListBox();
             tabPage1 = new TabPage();
+            ListOfInstructions = new ListBox();
             buttonSyncManualyInstrWithDB = new Button();
             label5 = new Label();
             label4 = new Label();
@@ -60,7 +61,6 @@
             label8 = new Label();
             toolTip1 = new ToolTip(components);
             button1 = new Button();
-            ListOfInstructions = new ListBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -69,7 +69,7 @@
             // 
             // submitInstructionToPeople
             // 
-            submitInstructionToPeople.Location = new Point(304, 196);
+            submitInstructionToPeople.Location = new Point(398, 226);
             submitInstructionToPeople.Margin = new Padding(3, 2, 3, 2);
             submitInstructionToPeople.Name = "submitInstructionToPeople";
             submitInstructionToPeople.Size = new Size(216, 71);
@@ -137,7 +137,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(685, 340);
+            tabPage2.Size = new Size(667, 374);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
@@ -264,10 +264,19 @@
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(685, 340);
+            tabPage1.Size = new Size(667, 374);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Обработка инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // ListOfInstructions
+            // 
+            ListOfInstructions.FormattingEnabled = true;
+            ListOfInstructions.ItemHeight = 15;
+            ListOfInstructions.Location = new Point(20, 57);
+            ListOfInstructions.Name = "ListOfInstructions";
+            ListOfInstructions.Size = new Size(232, 79);
+            ListOfInstructions.TabIndex = 33;
             // 
             // buttonSyncManualyInstrWithDB
             // 
@@ -300,10 +309,10 @@
             // 
             // Download_file_excel
             // 
-            Download_file_excel.Location = new Point(20, 223);
+            Download_file_excel.Location = new Point(20, 226);
             Download_file_excel.Margin = new Padding(3, 2, 3, 2);
             Download_file_excel.Name = "Download_file_excel";
-            Download_file_excel.Size = new Size(216, 44);
+            Download_file_excel.Size = new Size(216, 71);
             Download_file_excel.TabIndex = 24;
             Download_file_excel.Text = "Загрузить Excel выписку для отдела";
             Download_file_excel.UseVisualStyleBackColor = true;
@@ -322,7 +331,6 @@
             // 
             ListOfInstructionsForUser.FormattingEnabled = true;
             ListOfInstructionsForUser.ItemHeight = 15;
-            ListOfInstructionsForUser.Items.AddRange(new object[] { "Инструктажи" });
             ListOfInstructionsForUser.Location = new Point(20, 59);
             ListOfInstructionsForUser.Margin = new Padding(3, 2, 3, 2);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
@@ -338,7 +346,7 @@
             ChiefTabControl.Location = new Point(12, 23);
             ChiefTabControl.Name = "ChiefTabControl";
             ChiefTabControl.SelectedIndex = 0;
-            ChiefTabControl.Size = new Size(693, 368);
+            ChiefTabControl.Size = new Size(675, 402);
             ChiefTabControl.TabIndex = 33;
             ChiefTabControl.SelectedIndexChanged += ChiefTabControl_SelectedIndexChanged;
             // 
@@ -351,7 +359,7 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(685, 340);
+            tabPage3.Size = new Size(704, 340);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Прохождение инструктажей";
             tabPage3.UseVisualStyleBackColor = true;
@@ -390,22 +398,13 @@
             // 
             // button1
             // 
-            button1.Location = new Point(739, 36);
+            button1.Location = new Point(928, 47);
             button1.Name = "button1";
             button1.Size = new Size(120, 43);
             button1.TabIndex = 34;
             button1.Text = "Выйти из учётной записи";
             button1.UseVisualStyleBackColor = true;
             button1.Click += LoginForm_Click;
-            // 
-            // ListOfInstructions
-            // 
-            ListOfInstructions.FormattingEnabled = true;
-            ListOfInstructions.ItemHeight = 15;
-            ListOfInstructions.Location = new Point(20, 57);
-            ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(232, 79);
-            ListOfInstructions.TabIndex = 33;
             // 
             // ChiefForm
             // 

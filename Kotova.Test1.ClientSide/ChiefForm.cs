@@ -19,10 +19,11 @@ namespace Kotova.Test1.ClientSide
         const string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
         const string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
         const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-and-names";
-
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
-
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        const string PingToServerURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/ping_to_server";
+
+        System.Windows.Forms.Timer myTimer = new System.Windows.Forms.Timer();
 
 
 
@@ -34,13 +35,47 @@ namespace Kotova.Test1.ClientSide
         public ChiefForm()
         {
             InitializeComponent();
+
+            myTimer.Interval = 30000;  // 30 seconds
+            myTimer.Tick += new EventHandler(TimerEventProcessor);
+            myTimer.Start();
         }
         public ChiefForm(Form loginForm, string userName)
         {
             _loginForm = loginForm;
             _userName = userName;
             InitializeComponent();
+
+            myTimer.Interval = 30000;  // 30 seconds
+            myTimer.Tick += new EventHandler(TimerEventProcessor);
+            myTimer.Start();
         }
+
+        private void TimerEventProcessor(Object myObject, EventArgs myEventArgs)
+        {
+            myTimer.Stop();
+            PingServer();  
+            myTimer.Start();
+        }
+
+        private void PingServer()
+        {
+            using (var client = new System.Net.Http.HttpClient())
+            {
+                // Replace 'your_server_endpoint' with your actual server URL
+                var response = client.GetAsync(PingToServerURL).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("Ping successful.");
+                }
+                else
+                {
+                    Console.WriteLine("Ping failed.");
+                }
+            }
+        }
+
+
         private void buttonChooseHyperLinkToInstruction_Click(object sender, EventArgs e)
         {
             using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
@@ -326,6 +361,7 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("All the instructions passed!");
                 }
 
+
             }
         }
 
@@ -355,9 +391,10 @@ namespace Kotova.Test1.ClientSide
                     }
 
                     listOfInstructions_global = result;
+                    ListOfInstructionsForUser.Items.Clear();
                     foreach (Dictionary<string, object> temp in result)
                     {
-                        ListOfInstructions.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
+                        ListOfInstructionsForUser.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
 
                         /*foreach (KeyValuePair<string, object> kvp in temp)
                         {
@@ -386,13 +423,13 @@ namespace Kotova.Test1.ClientSide
         private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
         {
             HyperLinkForInstructionsFolder.Enabled = false;
-            if (ListOfInstructions.SelectedItem == null)
+            if (ListOfInstructionsForUser.SelectedItem == null)
             {
                 MessageBox.Show("You haven't select the Instruction.");
                 PassInstruction.Enabled = false;
                 return;
             }
-            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructions.SelectedItem.ToString()); //most likely suppress it, cause its not null.
+            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString()); //most likely suppress it, cause its not null.
             string? pathStr = selectedDict[DataBaseNames.tableName_sql_pathToInstruction].ToString();
 
             if (pathStr is null || pathStr.Length == 0)
@@ -458,13 +495,13 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
-                if (ListOfInstructions.SelectedItem == null)
+                if (ListOfInstructionsForUser.SelectedItem == null)
                 {
                     MessageBox.Show("You haven't select the Instruction.");
                     PassInstruction.Enabled = false;
                     return;
                 }
-                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructions.SelectedItem.ToString());
+                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
                 await SendInstructionIsPassedToDB(selectedDict);
                 //После этого отправить запрос на выбранный Database через сервер что инструктаж пройден. And uncheck the checkbox.
             }
@@ -511,7 +548,7 @@ namespace Kotova.Test1.ClientSide
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Everyting is fine, updating the listbox of instructions");
-                        ListOfInstructions.Items.Clear();
+                        ListOfInstructionsForUser.Items.Clear();
                         DownloadInstructionsForUserFromServer(_userName);
                     }
                 }
