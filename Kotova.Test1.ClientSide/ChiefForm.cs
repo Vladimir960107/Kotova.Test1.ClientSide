@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Text.Json;
 using System.Diagnostics;
 using Kotova.CommonClasses;
+using System.Net.Http;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -21,11 +22,13 @@ namespace Kotova.Test1.ClientSide
         const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-and-names";
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
-        const string PingToServerURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/ping_to_server";
+        const string PingToServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping";
+        const string CheckStatusOfChiefOnServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/status";
+        const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
 
         System.Windows.Forms.Timer myTimer = new System.Windows.Forms.Timer();
 
-
+        private static readonly HttpClient _client = new HttpClient();
 
         private List<Dictionary<string, object>> listOfInstructions_global;
 
@@ -36,6 +39,7 @@ namespace Kotova.Test1.ClientSide
         {
             InitializeComponent();
 
+            PingServer();
             myTimer.Interval = 30000;  // 30 seconds
             myTimer.Tick += new EventHandler(TimerEventProcessor);
             myTimer.Start();
@@ -46,32 +50,57 @@ namespace Kotova.Test1.ClientSide
             _userName = userName;
             InitializeComponent();
 
+            PingServer();
             myTimer.Interval = 30000;  // 30 seconds
             myTimer.Tick += new EventHandler(TimerEventProcessor);
             myTimer.Start();
         }
 
-        private void TimerEventProcessor(Object myObject, EventArgs myEventArgs)
+        private async void TimerEventProcessor(Object myObject, EventArgs myEventArgs)
         {
             myTimer.Stop();
-            PingServer();  
+            if (!(await PingServer()))
+            {
+                LoginForm_Click(myObject, myEventArgs);
+            }
+
             myTimer.Start();
         }
 
-        private void PingServer()
+        private async Task<bool> PingServer()
         {
-            using (var client = new System.Net.Http.HttpClient())
+            try
             {
-                // Replace 'your_server_endpoint' with your actual server URL
-                var response = client.GetAsync(PingToServerURL).Result;
+                string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await _client.GetAsync($"{GetDepartmentIdByUserName}/{Uri.EscapeDataString(_userName)}");
                 if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine("Ping successful.");
+                    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    int departmentId = Int32.Parse(await response.Content.ReadAsStringAsync());
+                    response =await _client.GetAsync($"{PingToServerURL}/{departmentId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("pinged successfully");
+                        return true;
+                    }
+                    MessageBox.Show("got DepartmentId, but ping failed. Status code:" + $"{response.StatusCode}");
+                    return false;
                 }
                 else
                 {
-                    Console.WriteLine("Ping failed.");
+                    //Console.WriteLine("Ping failed.");
+                    MessageBox.Show("Ping failed. Server is not working? Status code:"+$"{response.StatusCode}");
+                    
+                    return false;
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error occurred while pinging: {ex.Message}");
+                return false;
             }
         }
 
@@ -166,7 +195,7 @@ namespace Kotova.Test1.ClientSide
                         {
                             throw new Exception("responseBody is empty"); //throw here better something
                         }
-                        List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before!
+                        List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before! so warning maybe suppressed
 
                         string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
                         ListOfInstructions.Items.AddRange(resultArray);
@@ -341,13 +370,17 @@ namespace Kotova.Test1.ClientSide
         {
 
             _loginForm.Show();
-            this.Dispose(true);
+            myTimer.Stop();
+            myTimer.Tick -= new EventHandler(TimerEventProcessor);
+            this.Dispose();
         }
         private void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
         {
 
             _loginForm.Dispose();
-            this.Dispose(true);
+            myTimer.Stop();
+            myTimer.Tick -= new EventHandler(TimerEventProcessor);
+            this.Dispose();
         }
 
         private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
