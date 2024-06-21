@@ -80,7 +80,7 @@ namespace Kotova.Test1.ClientSide
                     _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     int departmentId = Int32.Parse(await response.Content.ReadAsStringAsync());
-                    response =await _client.GetAsync($"{PingToServerURL}/{departmentId}");
+                    response = await _client.GetAsync($"{PingToServerURL}/{departmentId}");
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("pinged successfully");
