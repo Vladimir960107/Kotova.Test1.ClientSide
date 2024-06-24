@@ -61,6 +61,7 @@
             label8 = new Label();
             toolTip1 = new ToolTip(components);
             button1 = new Button();
+            consoleTextBox = new TextBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -359,7 +360,7 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(704, 340);
+            tabPage3.Size = new Size(667, 374);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Прохождение инструктажей";
             tabPage3.UseVisualStyleBackColor = true;
@@ -406,11 +407,22 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += LoginForm_Click;
             // 
+            // consoleTextBox
+            // 
+            consoleTextBox.Location = new Point(708, 106);
+            consoleTextBox.Multiline = true;
+            consoleTextBox.Name = "consoleTextBox";
+            consoleTextBox.ReadOnly = true;
+            consoleTextBox.ScrollBars = ScrollBars.Both;
+            consoleTextBox.Size = new Size(340, 305);
+            consoleTextBox.TabIndex = 35;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1085, 450);
+            Controls.Add(consoleTextBox);
             Controls.Add(button1);
             Controls.Add(ChiefTabControl);
             Name = "ChiefForm";
@@ -424,6 +436,7 @@
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -459,5 +472,6 @@
         private Button HyperLinkForInstructionsFolder;
         private Label label8;
         private ListBox ListOfInstructions;
+        private TextBox consoleTextBox;
     }
 }

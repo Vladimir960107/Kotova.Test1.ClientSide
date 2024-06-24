@@ -22,7 +22,8 @@ namespace Kotova.Test1.ClientSide
         const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-and-names";
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
-        const string PingToServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping";
+        const string PingToServerIsOnlineURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping-is-online";
+        const string PingToServerIsOfflineURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping-is-offline";
         const string CheckStatusOfChiefOnServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/status";
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
 
@@ -35,15 +36,6 @@ namespace Kotova.Test1.ClientSide
         static string? selectedFolderPath = null;
         private Form? _loginForm;
         string? _userName;
-        public ChiefForm()
-        {
-            InitializeComponent();
-
-            PingServer();
-            myTimer.Interval = 30000;  // 30 seconds
-            myTimer.Tick += new EventHandler(TimerEventProcessor);
-            myTimer.Start();
-        }
         public ChiefForm(Form loginForm, string userName)
         {
             _loginForm = loginForm;
@@ -80,20 +72,21 @@ namespace Kotova.Test1.ClientSide
                     _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     int departmentId = Int32.Parse(await response.Content.ReadAsStringAsync());
-                    response = await _client.GetAsync($"{PingToServerURL}/{departmentId}");
+                    response = await _client.GetAsync($"{PingToServerIsOnlineURL}/{departmentId}"); // посмотри чтобы возвращалось время апдейта в БД. чтобы не дай бог в будущем в разных часовых поясах не путать.
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("pinged successfully");
+                        consoleTextBox.AppendText("pinged successfully"); // вместо message box сделать чтобы в консоль писалась или textbox или подобном. 
+                        consoleTextBox.AppendText(Environment.NewLine);
                         return true;
                     }
-                    MessageBox.Show("got DepartmentId, but ping failed. Status code:" + $"{response.StatusCode}");
-                    return false;
+                    consoleTextBox.AppendText("got DepartmentId, but ping failed. Status code:" + $"{response.StatusCode}");
+                    consoleTextBox.AppendText(Environment.NewLine);
+                    return true;
                 }
                 else
                 {
                     //Console.WriteLine("Ping failed.");
                     MessageBox.Show("Ping failed. Server is not working? Status code:"+$"{response.StatusCode}");
-                    
                     return false;
                 }
             }
@@ -104,6 +97,43 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        private async Task<bool> PingToServerThatChiefIsOffline()
+        {
+
+            try
+            {
+                string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await _client.GetAsync($"{GetDepartmentIdByUserName}/{Uri.EscapeDataString(_userName)}");
+                if (response.IsSuccessStatusCode)
+                {
+                    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    int departmentId = Int32.Parse(await response.Content.ReadAsStringAsync());
+                    response = await _client.GetAsync($"{PingToServerIsOfflineURL}/{departmentId}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Response about closing send successfully");
+                        consoleTextBox.AppendText(Environment.NewLine);
+                        return true;
+                    }
+                    consoleTextBox.AppendText("got DepartmentId, but didn't get response about closing form. Status code:" + $"{response.StatusCode}");
+                    consoleTextBox.AppendText(Environment.NewLine);
+                    return true;
+                }
+                else
+                {
+                    MessageBox.Show("Pinging about closing form failed. Server is not working? Status code:" + $"{response.StatusCode}"); 
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error occurred while pinging about offline: {ex.Message}");
+                return false;
+            }
+        }
 
         private void buttonChooseHyperLinkToInstruction_Click(object sender, EventArgs e)
         {
@@ -366,22 +396,27 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private void LoginForm_Click(object sender, EventArgs e)
+        private async void LoginForm_Click(object sender, EventArgs e)
         {
 
             _loginForm.Show();
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
+            await PingToServerThatChiefIsOffline();
             this.Dispose();
         }
-        private void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
+
+        private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
         {
 
             _loginForm.Dispose();
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
+            await PingToServerThatChiefIsOffline();
             this.Dispose();
         }
+
+        
 
         private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
