@@ -28,19 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            button1 = new Button();
+            EncryptByBCrypt = new Button();
             textBox1 = new TextBox();
+            button1 = new Button();
             SuspendLayout();
             // 
-            // button1
+            // EncryptByBCrypt
             // 
-            button1.Location = new Point(233, 202);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 0;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            EncryptByBCrypt.Location = new Point(40, 251);
+            EncryptByBCrypt.Name = "EncryptByBCrypt";
+            EncryptByBCrypt.Size = new Size(170, 23);
+            EncryptByBCrypt.TabIndex = 0;
+            EncryptByBCrypt.Text = "Encrypt by Bcrypt";
+            EncryptByBCrypt.UseVisualStyleBackColor = true;
+            EncryptByBCrypt.Click += button1_Click;
             // 
             // textBox1
             // 
@@ -49,13 +50,24 @@
             textBox1.Size = new Size(735, 23);
             textBox1.TabIndex = 1;
             // 
+            // button1
+            // 
+            button1.Location = new Point(51, 54);
+            button1.Name = "button1";
+            button1.Size = new Size(159, 62);
+            button1.TabIndex = 2;
+            button1.Text = "test button for folder selection";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click_1;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(textBox1);
             Controls.Add(button1);
+            Controls.Add(textBox1);
+            Controls.Add(EncryptByBCrypt);
             Name = "Form1";
             Text = "Form1";
             ResumeLayout(false);
@@ -64,7 +76,8 @@
 
         #endregion
 
-        private Button button1;
+        private Button EncryptByBCrypt;
         private TextBox textBox1;
+        private Button button1;
     }
 }

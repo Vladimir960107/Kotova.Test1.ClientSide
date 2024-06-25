@@ -12,9 +12,20 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class AdminForm : Form
     {
-        public AdminForm()
+
+        private Form? _loginForm;
+        string? _userName;
+        public AdminForm(Form loginForm, string userName)
         {
+            _loginForm = loginForm;
+            _userName = userName;
             InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            _loginForm.Show();
+            this.Dispose();
         }
     }
 }

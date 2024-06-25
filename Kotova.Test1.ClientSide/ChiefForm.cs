@@ -53,7 +53,7 @@ namespace Kotova.Test1.ClientSide
             myTimer.Stop();
             if (!(await PingServer()))
             {
-                LoginForm_Click(myObject, myEventArgs);
+                LogOutForm_Click(myObject, myEventArgs);
             }
 
             myTimer.Start();
@@ -396,7 +396,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async void LoginForm_Click(object sender, EventArgs e)
+        private async void LogOutForm_Click(object sender, EventArgs e)
         {
 
             _loginForm.Show();

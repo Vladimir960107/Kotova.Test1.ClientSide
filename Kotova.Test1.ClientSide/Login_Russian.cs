@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using Kotova.CommonClasses;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -135,6 +136,12 @@ namespace Kotova.Test1.ClientSide
 
                     }
 
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(jsonResponse);
+                    MessageBox.Show($"Login failed, most likely because current department already have Chief Authenticated. Ask him to close application and then (after 1 minute max) - open your application. {errorResponse.Message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {

@@ -60,7 +60,7 @@
             HyperLinkForInstructionsFolder = new Button();
             label8 = new Label();
             toolTip1 = new ToolTip(components);
-            button1 = new Button();
+            LogOutButton = new Button();
             consoleTextBox = new TextBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -90,12 +90,12 @@
             // 
             // SyncNamesWithDB
             // 
-            SyncNamesWithDB.Location = new Point(363, 59);
+            SyncNamesWithDB.Location = new Point(349, 59);
             SyncNamesWithDB.Margin = new Padding(3, 2, 3, 2);
             SyncNamesWithDB.Name = "SyncNamesWithDB";
-            SyncNamesWithDB.Size = new Size(216, 22);
+            SyncNamesWithDB.Size = new Size(265, 22);
             SyncNamesWithDB.TabIndex = 26;
-            SyncNamesWithDB.Text = "Синхр. ФИО с Базой Данных";
+            SyncNamesWithDB.Text = "Синхронизировать ФИО с Базой Данных";
             SyncNamesWithDB.UseVisualStyleBackColor = true;
             SyncNamesWithDB.Click += SyncNamesWithDB_Click;
             // 
@@ -147,16 +147,16 @@
             // 
             testButton.Location = new Point(360, 45);
             testButton.Name = "testButton";
-            testButton.Size = new Size(132, 39);
+            testButton.Size = new Size(176, 39);
             testButton.TabIndex = 15;
-            testButton.Text = "Test";
+            testButton.Text = "Test (Получить ответ с сервера)";
             testButton.UseVisualStyleBackColor = true;
             testButton.Click += testButton_Click;
             // 
             // PathToFolderOfInstruction
             // 
             PathToFolderOfInstruction.AutoSize = true;
-            PathToFolderOfInstruction.Location = new Point(364, 98);
+            PathToFolderOfInstruction.Location = new Point(364, 104);
             PathToFolderOfInstruction.Name = "PathToFolderOfInstruction";
             PathToFolderOfInstruction.Size = new Size(94, 15);
             PathToFolderOfInstruction.TabIndex = 14;
@@ -206,9 +206,9 @@
             label6.AutoSize = true;
             label6.Location = new Point(47, 121);
             label6.Name = "label6";
-            label6.Size = new Size(175, 15);
+            label6.Size = new Size(183, 15);
             label6.TabIndex = 9;
-            label6.Text = "До какой даты включительно?";
+            label6.Text = "До какой даты? (включительно)";
             // 
             // datePickerEnd
             // 
@@ -221,7 +221,7 @@
             // buttonCreateInstruction
             // 
             buttonCreateInstruction.Enabled = false;
-            buttonCreateInstruction.Location = new Point(317, 228);
+            buttonCreateInstruction.Location = new Point(342, 228);
             buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonCreateInstruction.Name = "buttonCreateInstruction";
             buttonCreateInstruction.Size = new Size(219, 40);
@@ -281,12 +281,12 @@
             // 
             // buttonSyncManualyInstrWithDB
             // 
-            buttonSyncManualyInstrWithDB.Location = new Point(20, 21);
+            buttonSyncManualyInstrWithDB.Location = new Point(27, 10);
             buttonSyncManualyInstrWithDB.Margin = new Padding(3, 2, 3, 2);
             buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrWithDB";
-            buttonSyncManualyInstrWithDB.Size = new Size(216, 22);
+            buttonSyncManualyInstrWithDB.Size = new Size(216, 38);
             buttonSyncManualyInstrWithDB.TabIndex = 32;
-            buttonSyncManualyInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
+            buttonSyncManualyInstrWithDB.Text = "Синхронизировать инструктажи с Базой Данных";
             buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
             buttonSyncManualyInstrWithDB.Click += buttonSyncManualyInstrWithDB_Click;
             // 
@@ -315,7 +315,7 @@
             Download_file_excel.Name = "Download_file_excel";
             Download_file_excel.Size = new Size(216, 71);
             Download_file_excel.TabIndex = 24;
-            Download_file_excel.Text = "Загрузить Excel выписку для отдела";
+            Download_file_excel.Text = "Скачать Excel файл для отдела";
             Download_file_excel.UseVisualStyleBackColor = true;
             // 
             // buttonTest
@@ -397,15 +397,15 @@
             label8.TabIndex = 36;
             label8.Text = "Лист непройденных инструктажей:";
             // 
-            // button1
+            // LogOutButton
             // 
-            button1.Location = new Point(928, 47);
-            button1.Name = "button1";
-            button1.Size = new Size(120, 43);
-            button1.TabIndex = 34;
-            button1.Text = "Выйти из учётной записи";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += LoginForm_Click;
+            LogOutButton.Location = new Point(928, 47);
+            LogOutButton.Name = "LogOutButton";
+            LogOutButton.Size = new Size(120, 43);
+            LogOutButton.TabIndex = 34;
+            LogOutButton.Text = "Выйти из учётной записи";
+            LogOutButton.UseVisualStyleBackColor = true;
+            LogOutButton.Click += LogOutForm_Click;
             // 
             // consoleTextBox
             // 
@@ -423,7 +423,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1085, 450);
             Controls.Add(consoleTextBox);
-            Controls.Add(button1);
+            Controls.Add(LogOutButton);
             Controls.Add(ChiefTabControl);
             Name = "ChiefForm";
             Text = "ChiefOfDepartment";
@@ -466,7 +466,7 @@
         private Label label7;
         private ToolTip toolTip1;
         private Button testButton;
-        private Button button1;
+        private Button LogOutButton;
         private TabPage tabPage3;
         private CheckBox PassInstruction;
         private Button HyperLinkForInstructionsFolder;
