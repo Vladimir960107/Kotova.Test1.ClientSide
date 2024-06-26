@@ -31,6 +31,7 @@
             EncryptByBCrypt = new Button();
             textBox1 = new TextBox();
             button1 = new Button();
+            treeView1 = new TreeView();
             SuspendLayout();
             // 
             // EncryptByBCrypt
@@ -60,11 +61,21 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click_1;
             // 
+            // treeView1
+            // 
+            treeView1.CheckBoxes = true;
+            treeView1.Location = new Point(392, 79);
+            treeView1.Name = "treeView1";
+            treeView1.Size = new Size(247, 178);
+            treeView1.TabIndex = 3;
+            treeView1.AfterCheck += treeView1_AfterCheck;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(treeView1);
             Controls.Add(button1);
             Controls.Add(textBox1);
             Controls.Add(EncryptByBCrypt);
@@ -79,5 +90,6 @@
         private Button EncryptByBCrypt;
         private TextBox textBox1;
         private Button button1;
+        private TreeView treeView1;
     }
 }

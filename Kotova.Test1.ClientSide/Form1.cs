@@ -28,27 +28,50 @@ namespace Kotova.Test1.ClientSide
             if (folderBrowser.ShowDialog() == DialogResult.OK)
             {
                 string selectedFolder = folderBrowser.SelectedPath;
-                // You can now do something with the selected folder
+                treeView1.Nodes.Clear();  // Clear the existing items in the TreeView
+                TreeNode rootNode = new TreeNode(selectedFolder);
+                treeView1.Nodes.Add(rootNode);  // Add a root node with the selected folder
+                PopulateTreeView(selectedFolder, rootNode);  // Populate the TreeView
+                //rootNode.Expand();  // Optionally expand the root node, enable if want to all the rootNode be collapsed (чтобы было видно все вложенные файлы сразу, не нажимая плюсик :))
             }
         }
 
         private void PopulateTreeView(string directoryValue, TreeNode parentNode)
         {
+            // Processing directories
             string[] directoryArray = Directory.GetDirectories(directoryValue);
             try
             {
-                if (directoryArray.Length != 0)
+                foreach (string directory in directoryArray)
                 {
-                    foreach (string directory in directoryArray)
-                    {
-                        string directoryName = Path.GetFileName(directory);
-                        TreeNode myNode = new TreeNode(directoryName);
-                        parentNode.Nodes.Add(myNode);
-                        PopulateTreeView(directory, myNode);
-                    }
+                    string directoryName = Path.GetFileName(directory);
+                    TreeNode myNode = new TreeNode(directoryName);
+                    parentNode.Nodes.Add(myNode);
+                    PopulateTreeView(directory, myNode);
                 }
             }
             catch (UnauthorizedAccessException) { }
+
+            // Processing files
+            string[] fileArray = Directory.GetFiles(directoryValue);
+            foreach (string file in fileArray)
+            {
+                string fileName = Path.GetFileName(file);
+                TreeNode fileNode = new TreeNode(fileName);
+                parentNode.Nodes.Add(fileNode);
+            }
+        }
+
+        private void treeView1_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            // Optional: Check/uncheck child nodes
+            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
+            {
+                foreach (TreeNode childNode in e.Node.Nodes)
+                {
+                    childNode.Checked = e.Node.Checked;
+                }
+            }
         }
     }
 }
