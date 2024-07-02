@@ -1,5 +1,6 @@
 ﻿using Kotova.CommonClasses;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -17,15 +18,166 @@ namespace Kotova.Test1.ClientSide
 
         private static readonly HttpClient _httpClient = new HttpClient();
         private const string _loginUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/login"; //ADD IT TO THE 
+        private const string _validateTokenUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/validate-token";
         static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         static string fileName = "encrypted_jwt.dat";
         string filePath = Path.Combine(documentsPath, fileName);
+        public string? _jwtToken = null;
+        public bool _jwtRemembered = false;
+        private TaskCompletionSource<bool> _initTaskCompletionSource;
+
+
+        /*public Login_Russian()
+        {
+            InitializeComponent();
+            _initTaskCompletionSource = new TaskCompletionSource<bool>();
+            //bool initResult = InitializeAsync().Result;
+            this.Shown += async (sender, args) => _initTaskCompletionSource.SetResult(await InitializeAsync());
+
+            // Wait for the async initialization to complete
+            bool initResult = _initTaskCompletionSource.Task.Result;
+            // Wait for the async initialization to complete
+            if (initResult)
+            {
+                // Initialization succeeded
+                MessageBox.Show("Initialization succeeded");
+                string token = Decryption_stuff.DecryptedJWTToken();
+                HandleUserBasedOnRole(token);
+            }
+            else
+            {
+                // Initialization failed
+                MessageBox.Show("Initialization failed");
+                
+            }
+        }*/
 
         public Login_Russian()
         {
             InitializeComponent();
-
+            this.Load += async (sender, args) => await Login_Russian_LoadAsync(sender, args);
         }
+
+        private async Task Login_Russian_LoadAsync(object sender, EventArgs e)
+        {
+            bool initThroughJWTResult = await InitializeAsync();
+            if (initThroughJWTResult)
+            {
+                // Initialization succeeded
+                MessageBox.Show("Initialization succeeded");
+                string token = Decryption_stuff.DecryptedJWTToken();
+                HandleUserBasedOnRole(token);
+            }
+            else
+            {
+                // Initialization failed
+                MessageBox.Show("Initialization failed");
+            }
+        }
+
+
+
+
+        public class TokenRequest
+        {
+            public string Token { get; set; }
+        }
+
+        private async Task<bool> InitializeAsync() 
+        {
+            string token = Decryption_stuff.DecryptedJWTToken();
+
+
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+
+
+
+            if (token != null)
+            {
+
+                try
+                {
+                    var response = await _httpClient.PostAsJsonAsync(_validateTokenUrl, token); //Зашифруй токен, если считаешь, что это важно or something. 
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        var message = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show(message);
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        private void HandleUserBasedOnRole(string token)
+        {
+            string role = GetRoleFromToken(token);
+            string username = GetUserNameFromToken(token);
+            switch (role)
+            {
+                case "User":
+                    OpenUserForm(username);
+                    break;
+                case "ChiefOfDepartment":
+                    OpenChiefForm(username);
+                    break;
+                case "Coordinator":
+                    OpenCoordinatorForm(username);
+                    break;
+                default:
+                    MessageBox.Show("Oops, your role is invalid. Ask someone for help to resolve this issue :I");
+                    break;
+            }
+        }
+
+        private void OpenUserForm(string username)
+        {
+            UserForm userForm = new UserForm(this, username);
+            userForm.Location = this.Location;
+            this.Hide();
+            userForm.Show();
+            CheckDefaultUsername(userForm, username);
+        }
+
+        private void OpenChiefForm(string username)
+        {
+            ChiefForm chiefOfDepartmentForm = new ChiefForm(this, username);
+            chiefOfDepartmentForm.Location = this.Location;
+            chiefOfDepartmentForm.Show();
+            this.Hide();
+        }
+
+        private void OpenCoordinatorForm(string username)
+        {
+            CoordinatorForm coordinatorForm = new CoordinatorForm(this, username);
+            coordinatorForm.Location = this.Location;
+            coordinatorForm.Show();
+            this.Hide();
+        }
+
+        private async void CheckDefaultUsername(UserForm userForm, string username)
+        {
+            await Task.Delay(1000);
+            if (isDefaultUsername(username))
+            {
+                userForm._signUpForm?.Show();
+            }
+        }
+
 
         private void textBox1_Click(object sender, EventArgs e)
         {
@@ -58,7 +210,8 @@ namespace Kotova.Test1.ClientSide
         private async void LogInButton_Click(object sender, EventArgs e)
         {
             LogInButton.Enabled = false;
-
+            
+            
 
             if (string.IsNullOrWhiteSpace(LoginTextBox.Text) || string.IsNullOrWhiteSpace(PasswordTextBox.Text))
             {
@@ -90,19 +243,19 @@ namespace Kotova.Test1.ClientSide
                     }
                     else
                     {
-                        if (EncodeJWTToken(result.token))
+                        _jwtToken = result.token;
+                        if (EncodeJWTTokenSuccessfully(_jwtToken))
                         {
-                            MessageBox.Show("Login Successfull and JWT Token sucessfully encoded");
                             PasswordTextBox.Text = "";
-                            switch (GetRoleFromToken(result.token))
+                            switch (GetRoleFromToken(_jwtToken))
                             {
                                 case "User":
-                                    UserForm userForm = new UserForm(this, GetUserNameFromToken(result.token)); // put here like UserForm(this)
+                                    UserForm userForm = new UserForm(this, GetUserNameFromToken(_jwtToken)); // put here like UserForm(this)
                                     userForm.Location = this.Location;
                                     this.Hide();
                                     userForm.Show();
                                     await Task.Delay(1000);
-                                    if (isDefaultUsername(GetUserNameFromToken(result.token)))
+                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (userForm._signUpForm is not null)
                                         {
@@ -112,13 +265,13 @@ namespace Kotova.Test1.ClientSide
 
                                     break;
                                 case "ChiefOfDepartment":
-                                    ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
+                                    ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(_jwtToken));// put here like UserForm(this)
                                     chiefOfDepartmentForm.Location = this.Location;
                                     chiefOfDepartmentForm.Show();
                                     this.Hide();
                                     break;
                                 case "Coordinator":
-                                    CoordinatorForm coordinatorForm = new CoordinatorForm(this, GetUserNameFromToken(result.token));// put here like UserForm(this)
+                                    CoordinatorForm coordinatorForm = new CoordinatorForm(this, GetUserNameFromToken(_jwtToken));// put here like UserForm(this)
                                     coordinatorForm.Location = this.Location;
                                     coordinatorForm.Show();
                                     this.Hide();
@@ -173,7 +326,7 @@ namespace Kotova.Test1.ClientSide
             return false;
         }
 
-        private bool EncodeJWTToken(string token)
+        private bool EncodeJWTTokenSuccessfully(string token)
         {
             try
             {
@@ -182,7 +335,15 @@ namespace Kotova.Test1.ClientSide
                             null,  // Optional entropy (additional data) to increase encryption complexity
                             DataProtectionScope.CurrentUser  // Or DataProtectionScope.LocalMachine
                         );
-                File.WriteAllBytes(filePath, encryptedData);
+                if (RememberCredentialsCheckBox.Checked)
+                {
+                    File.WriteAllBytes(filePath, encryptedData);
+                    MessageBox.Show("Login Successfull and JWT Token sucessfully encoded");
+                }
+                else
+                {
+                    MessageBox.Show("Login Successfull");
+                }
                 return true;
             }
             catch

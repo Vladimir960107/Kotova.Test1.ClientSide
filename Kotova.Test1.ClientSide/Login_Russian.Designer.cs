@@ -34,6 +34,7 @@
             label1 = new Label();
             pictureBox1 = new PictureBox();
             panel2 = new Panel();
+            RememberCredentialsCheckBox = new CheckBox();
             SupportEmail = new LinkLabel();
             label4 = new Label();
             ForgotPasswordLabel = new LinkLabel();
@@ -109,6 +110,7 @@
             // 
             // panel2
             // 
+            panel2.Controls.Add(RememberCredentialsCheckBox);
             panel2.Controls.Add(SupportEmail);
             panel2.Controls.Add(label4);
             panel2.Controls.Add(ForgotPasswordLabel);
@@ -122,6 +124,16 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(614, 589);
             panel2.TabIndex = 1;
+            // 
+            // RememberCredentialsCheckBox
+            // 
+            RememberCredentialsCheckBox.AutoSize = true;
+            RememberCredentialsCheckBox.Location = new Point(21, 359);
+            RememberCredentialsCheckBox.Name = "RememberCredentialsCheckBox";
+            RememberCredentialsCheckBox.Size = new Size(92, 19);
+            RememberCredentialsCheckBox.TabIndex = 7;
+            RememberCredentialsCheckBox.Text = "Запомнить?";
+            RememberCredentialsCheckBox.UseVisualStyleBackColor = true;
             // 
             // SupportEmail
             // 
@@ -163,9 +175,9 @@
             LogInButton.BackColor = Color.FromArgb(41, 128, 185);
             LogInButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
             LogInButton.ForeColor = Color.White;
-            LogInButton.Location = new Point(82, 349);
+            LogInButton.Location = new Point(135, 344);
             LogInButton.Name = "LogInButton";
-            LogInButton.Size = new Size(520, 44);
+            LogInButton.Size = new Size(466, 44);
             LogInButton.TabIndex = 4;
             LogInButton.Text = "Войти";
             LogInButton.UseVisualStyleBackColor = false;
@@ -307,5 +319,6 @@
         private PictureBox pictureBox4;
         private ToolTip toolTip1;
         private TextBox PasswordTextBox;
+        private CheckBox RememberCredentialsCheckBox;
     }
 }

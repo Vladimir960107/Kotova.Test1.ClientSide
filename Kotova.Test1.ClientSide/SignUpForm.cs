@@ -18,7 +18,7 @@ namespace Kotova.Test1.ClientSide
     {
         private const string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
         private const string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
-        private Login_Russian? _login_form;
+        private Login_Russian? _loginForm;
         private UserForm? _userForm;
         const string defaultLoginText = "Введите новый логин";
         const string defaultPasswordText = "Введите новый пароль";
@@ -27,7 +27,7 @@ namespace Kotova.Test1.ClientSide
         public SignUpForm(Login_Russian form, UserForm userForm)
         {
             InitializeComponent();
-            _login_form = form;
+            _loginForm = form;
             _userForm = userForm;
 
         }
@@ -188,18 +188,18 @@ namespace Kotova.Test1.ClientSide
             string jsonPayload = JsonConvert.SerializeObject(userCredentials);
 
             HttpContent content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-            var response = await Test.connectionToUrlPatch(_changeCredUrl, content);
+            var response = await Test.connectionToUrlPatch(_changeCredUrl, content, _loginForm._jwtToken);
             if (response == HttpStatusCode.OK)
             {
                 MessageBox.Show("Вы успешно сменили логин и пароль!");
 
-                if (_login_form is not null)
+                if (_loginForm is not null)
                 {
                     if (_userForm is not null)
                     {
                         _userForm.Dispose();
                     }
-                    _login_form.Show();
+                    _loginForm.Show();
 
                     this.Dispose();
                 }

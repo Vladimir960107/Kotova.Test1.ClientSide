@@ -24,6 +24,8 @@ namespace Kotova.Test1.ClientSide
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
         public const string DB_pos_users_pathToInstruction = "path_to_instruction";
 
+        private bool _IsInstructionSelected = false;
+
         private List<Dictionary<string, object>> listOfInstructions_global;
 
         public Login_Russian? _loginForm;
@@ -69,7 +71,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
@@ -110,7 +112,7 @@ namespace Kotova.Test1.ClientSide
         private void ListOfInstructions_SelectedValueChanged(object sender, EventArgs e)
         {
             HyperLinkForInstructionsFolder.Enabled = true;
-            PassInstruction.Enabled = true;
+            _IsInstructionSelected = true;
         }
 
         private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
@@ -133,7 +135,7 @@ namespace Kotova.Test1.ClientSide
             }
             string path = Path.GetFullPath(pathStr);
             OpenFolderInExplorer(path);
-            //Here show the folder and exit? show folder and return or something.
+            if (_IsInstructionSelected) { _IsInstructionSelected = false; PassInstruction.Enabled = true; }
         }
 
         private void OpenFolderInExplorer(string path)
@@ -204,6 +206,7 @@ namespace Kotova.Test1.ClientSide
                 PassInstruction.Checked = false;
                 return;
             }
+            
 
         }
 
@@ -214,7 +217,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     string jsonData = JsonSerializer.Serialize(selectedDict);
@@ -270,6 +273,14 @@ namespace Kotova.Test1.ClientSide
             if (_signUpForm != null)
             {
                 _signUpForm.Dispose();
+            }
+            try
+            {
+                File.Delete(Decryption_stuff.defaultFilePath);
+            }
+            catch
+            {
+
             }
 
             _loginForm.Show();

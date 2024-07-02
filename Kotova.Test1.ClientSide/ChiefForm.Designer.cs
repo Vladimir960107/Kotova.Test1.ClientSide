@@ -35,7 +35,7 @@
             ListBoxNamesOfPeople = new ListBox();
             checkBoxIsForDrivers = new CheckBox();
             tabPage2 = new TabPage();
-            testButton = new Button();
+            treeView1 = new TreeView();
             PathToFolderOfInstruction = new Label();
             label7 = new Label();
             buttonChoosePathToInstruction = new Button();
@@ -46,6 +46,7 @@
             buttonCreateInstruction = new Button();
             label1 = new Label();
             typeOfInstructionListBox = new ListBox();
+            testButton = new Button();
             tabPage1 = new TabPage();
             ListOfInstructions = new ListBox();
             buttonSyncManualyInstrWithDB = new Button();
@@ -124,7 +125,7 @@
             // 
             // tabPage2
             // 
-            tabPage2.Controls.Add(testButton);
+            tabPage2.Controls.Add(treeView1);
             tabPage2.Controls.Add(PathToFolderOfInstruction);
             tabPage2.Controls.Add(label7);
             tabPage2.Controls.Add(buttonChoosePathToInstruction);
@@ -143,20 +144,19 @@
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
             // 
-            // testButton
+            // treeView1
             // 
-            testButton.Location = new Point(360, 45);
-            testButton.Name = "testButton";
-            testButton.Size = new Size(176, 39);
-            testButton.TabIndex = 15;
-            testButton.Text = "Test (Получить ответ с сервера)";
-            testButton.UseVisualStyleBackColor = true;
-            testButton.Click += testButton_Click;
+            treeView1.CheckBoxes = true;
+            treeView1.Location = new Point(364, 114);
+            treeView1.Name = "treeView1";
+            treeView1.Size = new Size(247, 178);
+            treeView1.TabIndex = 15;
+            treeView1.AfterCheck += treeView1_AfterCheck;
             // 
             // PathToFolderOfInstruction
             // 
             PathToFolderOfInstruction.AutoSize = true;
-            PathToFolderOfInstruction.Location = new Point(364, 104);
+            PathToFolderOfInstruction.Location = new Point(364, 83);
             PathToFolderOfInstruction.Name = "PathToFolderOfInstruction";
             PathToFolderOfInstruction.Size = new Size(94, 15);
             PathToFolderOfInstruction.TabIndex = 14;
@@ -173,7 +173,7 @@
             // 
             // buttonChoosePathToInstruction
             // 
-            buttonChoosePathToInstruction.Location = new Point(364, 138);
+            buttonChoosePathToInstruction.Location = new Point(364, 22);
             buttonChoosePathToInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonChoosePathToInstruction.Name = "buttonChoosePathToInstruction";
             buttonChoosePathToInstruction.Size = new Size(172, 56);
@@ -221,7 +221,7 @@
             // buttonCreateInstruction
             // 
             buttonCreateInstruction.Enabled = false;
-            buttonCreateInstruction.Location = new Point(342, 228);
+            buttonCreateInstruction.Location = new Point(199, 306);
             buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonCreateInstruction.Name = "buttonCreateInstruction";
             buttonCreateInstruction.Size = new Size(219, 40);
@@ -248,6 +248,16 @@
             typeOfInstructionListBox.Name = "typeOfInstructionListBox";
             typeOfInstructionListBox.Size = new Size(120, 49);
             typeOfInstructionListBox.TabIndex = 0;
+            // 
+            // testButton
+            // 
+            testButton.Location = new Point(708, 45);
+            testButton.Name = "testButton";
+            testButton.Size = new Size(176, 39);
+            testButton.TabIndex = 15;
+            testButton.Text = "Test (Получить ответ с сервера)";
+            testButton.UseVisualStyleBackColor = true;
+            testButton.Click += testButton_Click;
             // 
             // tabPage1
             // 
@@ -422,6 +432,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1085, 450);
+            Controls.Add(testButton);
             Controls.Add(consoleTextBox);
             Controls.Add(LogOutButton);
             Controls.Add(ChiefTabControl);
@@ -473,5 +484,6 @@
         private Label label8;
         private ListBox ListOfInstructions;
         private TextBox consoleTextBox;
+        private TreeView treeView1;
     }
 }

@@ -34,9 +34,9 @@ namespace Kotova.Test1.ClientSide
         private List<Dictionary<string, object>> listOfInstructions_global;
 
         static string? selectedFolderPath = null;
-        private Form? _loginForm;
+        private Login_Russian? _loginForm;
         string? _userName;
-        public ChiefForm(Form loginForm, string userName)
+        public ChiefForm(Login_Russian loginForm, string userName)
         {
             _loginForm = loginForm;
             _userName = userName;
@@ -63,7 +63,7 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                string jwtToken = _loginForm._jwtToken;
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                 var response = await _client.GetAsync($"{GetDepartmentIdByUserName}/{Uri.EscapeDataString(_userName)}");
@@ -102,7 +102,7 @@ namespace Kotova.Test1.ClientSide
 
             try
             {
-                string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                string jwtToken = _loginForm._jwtToken;
                 _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                 var response = await _client.GetAsync($"{GetDepartmentIdByUserName}/{Uri.EscapeDataString(_userName)}");
@@ -135,35 +135,12 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private void buttonChooseHyperLinkToInstruction_Click(object sender, EventArgs e)
-        {
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
-            {
-                // Optionally set the initial directory
-                // folderBrowserDialog.SelectedPath = @"C:\Initial\Folder\Path";
-
-                DialogResult result = folderBrowserDialog.ShowDialog();
-
-                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
-                {
-                    // Store the selected folder path in a variable
-                    selectedFolderPath = folderBrowserDialog.SelectedPath;
-
-                    PathToFolderOfInstruction.Text = selectedFolderPath;
-
-                    buttonCreateInstruction.Enabled = true;
-                    // Use the selectedFolderPath variable as needed in your code
-                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
-
-
-                }
-            }
-        }
+        
 
         private async void testButton_Click(object sender, EventArgs e)
         {
             string url = urlTest;
-            await Test.connectionToUrlGet(url);
+            await Test.connectionToUrlGet(url, _loginForm._jwtToken);
         }
 
         private async void buttonCreateInstruction_Click(object sender, EventArgs e)
@@ -197,7 +174,7 @@ namespace Kotova.Test1.ClientSide
             Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
             string json = JsonConvert.SerializeObject(instruction);
             HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
-            await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.");
+            await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
             buttonCreateInstruction.Enabled = true;
             InstructionTextBox.Text = "";
             typeOfInstructionListBox.SelectedIndex = -1;
@@ -214,7 +191,7 @@ namespace Kotova.Test1.ClientSide
 
                 using (var httpClient = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     var response = await httpClient.GetAsync(urlSyncInstructions);
@@ -263,7 +240,7 @@ namespace Kotova.Test1.ClientSide
 
                 using (var httpClient = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     var response = await httpClient.GetAsync(urlSyncNames);
@@ -336,7 +313,7 @@ namespace Kotova.Test1.ClientSide
                 {
                     using (var httpClient = new HttpClient())
                     {
-                        string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                        string jwtToken = _loginForm._jwtToken;
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                         // Set the URI of your server endpoint
                         var uri = new Uri(urlSubmitInstructionToPeople);
@@ -398,7 +375,14 @@ namespace Kotova.Test1.ClientSide
 
         private async void LogOutForm_Click(object sender, EventArgs e)
         {
+            try
+            {
+                File.Delete(Decryption_stuff.defaultFilePath);
+            }
+            catch
+            {
 
+            }
             _loginForm.Show();
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
@@ -444,7 +428,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
@@ -602,7 +586,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     string jsonData = System.Text.Json.JsonSerializer.Serialize(selectedDict);
@@ -632,5 +616,75 @@ namespace Kotova.Test1.ClientSide
                 PassInstruction.Checked = false;
             }
         }
+
+
+        private void buttonChooseHyperLinkToInstruction_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            {
+                // Optionally set the initial directory
+                // folderBrowserDialog.SelectedPath = @"C:\Initial\Folder\Path";
+
+                DialogResult result = folderBrowserDialog.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                {
+                    // Store the selected folder path in a variable
+                    selectedFolderPath = folderBrowserDialog.SelectedPath;
+
+                    PathToFolderOfInstruction.Text = selectedFolderPath;
+
+                    buttonCreateInstruction.Enabled = true;
+
+                    treeView1.Nodes.Clear();  // Clear the existing items in the TreeView
+                    TreeNode rootNode = new TreeNode(selectedFolderPath);
+                    treeView1.Nodes.Add(rootNode);  // Add a root node with the selected folder
+                    PopulateTreeView(selectedFolderPath, rootNode);  // Populate the TreeView
+                    //rootNode.Expand();  // Optionally expand the root node, enable if want to all the rootNode be collapsed (чтобы было видно все вложенные файлы сразу, не нажимая плюсик :))
+
+                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
+
+
+                }
+            }
+        }
+        private void PopulateTreeView(string directoryValue, TreeNode parentNode)
+        {
+            // Processing directories
+            string[] directoryArray = Directory.GetDirectories(directoryValue);
+            try
+            {
+                foreach (string directory in directoryArray)
+                {
+                    string directoryName = Path.GetFileName(directory);
+                    TreeNode myNode = new TreeNode(directoryName);
+                    parentNode.Nodes.Add(myNode);
+                    PopulateTreeView(directory, myNode);
+                }
+            }
+            catch (UnauthorizedAccessException) { }
+
+            // Processing files
+            string[] fileArray = Directory.GetFiles(directoryValue);
+            foreach (string file in fileArray)
+            {
+                string fileName = Path.GetFileName(file);
+                TreeNode fileNode = new TreeNode(fileName);
+                parentNode.Nodes.Add(fileNode);
+            }
+        }
+
+        private void treeView1_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            // Optional: Check/uncheck child nodes
+            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
+            {
+                foreach (TreeNode childNode in e.Node.Nodes)
+                {
+                    childNode.Checked = e.Node.Checked;
+                }
+            }
+        }
+
     }
 }

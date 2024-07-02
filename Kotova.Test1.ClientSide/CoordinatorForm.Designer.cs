@@ -812,7 +812,7 @@
             button1.TabIndex = 35;
             button1.Text = "Выйти из учётной записи";
             button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            button1.Click += LogOut_Click;
             // 
             // RoleOfNewcomerListBox
             // 

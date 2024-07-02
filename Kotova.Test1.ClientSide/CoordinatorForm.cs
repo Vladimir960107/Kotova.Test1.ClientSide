@@ -24,7 +24,7 @@ namespace Kotova.Test1.ClientSide
         private const string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
         private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-login-and-password-for-newcommer";
         private const string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
-        private Form? _loginForm;
+        private Login_Russian? _loginForm;
         private string? _userName;
         private string? selectedFolderPath;
         List<string>? rolesOfUsers = new List<string>();
@@ -33,7 +33,7 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
         }
 
-        public CoordinatorForm(Form loginForm, string userName)
+        public CoordinatorForm(Login_Russian loginForm, string userName)
         {
             _userName = userName;
             _loginForm = loginForm;
@@ -75,7 +75,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
@@ -103,7 +103,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
@@ -186,7 +186,7 @@ namespace Kotova.Test1.ClientSide
 
             try
             {
-                string token = Decryption_stuff.DecryptedJWTToken();
+                string token = _loginForm._jwtToken;
                 var response = await InsertNewEmployeeAsync(newEmployee, token);
 
                 if (response.IsSuccessStatusCode)
@@ -362,8 +362,16 @@ namespace Kotova.Test1.ClientSide
             this.Dispose(true);
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void LogOut_Click(object sender, EventArgs e)
         {
+            try
+            {
+                File.Delete(Decryption_stuff.defaultFilePath);
+            }
+            catch
+            {
+
+            }
             _loginForm.Show();
             this.Dispose(true);
         }

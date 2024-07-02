@@ -12,7 +12,7 @@ namespace Kotova.Test1.ClientSide
 {
     internal static class Test
     {
-        public static async Task<bool> connectionToUrlGet(string url)
+        public static async Task<bool> connectionToUrlGet(string url, string token)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        public static async Task<HttpStatusCode> connectionToUrlPost(string url, HttpContent content, string responseIfOk)
+        public static async Task<HttpStatusCode> connectionToUrlPost(string url, HttpContent content, string responseIfOk, string token)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace Kotova.Test1.ClientSide
         }
 
 
-        public static async Task<HttpStatusCode> connectionToUrlPatch(string url, HttpContent content)
+        public static async Task<HttpStatusCode> connectionToUrlPatch(string url, HttpContent content, string token)
         {
             try
             {

@@ -11,18 +11,18 @@ namespace Kotova.Test1.ClientSide
     {
         static string defaultDocumentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         static string defaultFileName = "encrypted_jwt.dat";
-        static string defaultFilePath = Path.Combine(defaultDocumentsPath, defaultFileName);
+        public static string defaultFilePath = Path.Combine(defaultDocumentsPath, defaultFileName);
         public static string DecryptedJWTToken()
         {
             return DecryptedJWTToken(defaultFilePath);
         }
 
-            static string DecryptedJWTToken(string filePath)
+            static string? DecryptedJWTToken(string filePath)
         {
 
             if (!File.Exists(filePath))
             {
-                throw new FileNotFoundException("File not found", filePath);
+                return null;
             }
 
             byte[] encryptedData = File.ReadAllBytes(filePath);
