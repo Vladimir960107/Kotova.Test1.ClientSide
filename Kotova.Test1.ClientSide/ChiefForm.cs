@@ -114,12 +114,11 @@ namespace Kotova.Test1.ClientSide
                     response = await _client.GetAsync($"{PingToServerIsOfflineURL}/{departmentId}");
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Response about closing send successfully");
-                        consoleTextBox.AppendText(Environment.NewLine);
+                        //MessageBox.Show("Response about closing send successfully");
+                        //consoleTextBox.AppendText(Environment.NewLine);
                         return true;
                     }
-                    consoleTextBox.AppendText("got DepartmentId, but didn't get response about closing form. Status code:" + $"{response.StatusCode}");
-                    consoleTextBox.AppendText(Environment.NewLine);
+                    MessageBox.Show("got DepartmentId, but didn't get response about closing form. Status code:" + $"{response.StatusCode}");
                     return true;
                 }
                 else
@@ -375,19 +374,13 @@ namespace Kotova.Test1.ClientSide
 
         private async void LogOutForm_Click(object sender, EventArgs e)
         {
-            try
-            {
-                File.Delete(Decryption_stuff.defaultFilePath);
-            }
-            catch
-            {
-
-            }
+            Decryption_stuff.DeleteJWTToken();
             _loginForm.Show();
+            this.Dispose();
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
             await PingToServerThatChiefIsOffline();
-            this.Dispose();
+            
         }
 
         private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
@@ -676,13 +669,68 @@ namespace Kotova.Test1.ClientSide
 
         private void treeView1_AfterCheck(object sender, TreeViewEventArgs e)
         {
-            // Optional: Check/uncheck child nodes
             if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
             {
-                foreach (TreeNode childNode in e.Node.Nodes)
+                treeView1.Enabled = false;
+
+                try
                 {
-                    childNode.Checked = e.Node.Checked;
+                    // Perform the checking/unchecking synchronously
+                    CheckAllChildNodes(e.Node, e.Node.Checked);
+                    UpdateParentNodes(e.Node, e.Node.Checked);
                 }
+                finally
+                {
+                    treeView1.Enabled = true;
+                }
+            }
+        }
+
+        private void CheckAllChildNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            foreach (TreeNode childNode in treeNode.Nodes)
+            {
+                if (childNode.Checked != nodeChecked)
+                {
+                    childNode.Checked = nodeChecked;
+                    CheckAllChildNodes(childNode, nodeChecked); // Recursive call
+                }
+            }
+        }
+
+        private void UpdateParentNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            TreeNode currentNode = treeNode;
+
+            while (currentNode.Parent != null)
+            {
+                if (nodeChecked)
+                {
+                    // If the current node is checked, ensure the parent is also checked
+                    currentNode.Parent.Checked = true;
+                }
+                else
+                {
+                    // If the current node is unchecked, ensure the parent is unchecked
+                    // only if all its siblings are also unchecked
+                    bool allSiblingsUnchecked = true;
+
+                    foreach (TreeNode sibling in currentNode.Parent.Nodes)
+                    {
+                        if (sibling.Checked)
+                        {
+                            allSiblingsUnchecked = false;
+                            break;
+                        }
+                    }
+
+                    if (allSiblingsUnchecked)
+                    {
+                        currentNode.Parent.Checked = false;
+                    }
+                }
+
+                currentNode = currentNode.Parent;
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Kotova.CommonClasses;
+using System.CodeDom;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -54,7 +55,6 @@ namespace Kotova.Test1.ClientSide
 
         public Login_Russian()
         {
-            InitializeComponent();
             this.Load += async (sender, args) => await Login_Russian_LoadAsync(sender, args);
         }
 
@@ -64,15 +64,17 @@ namespace Kotova.Test1.ClientSide
             if (initThroughJWTResult)
             {
                 // Initialization succeeded
-                MessageBox.Show("Initialization succeeded");
+                //MessageBox.Show("Initialization succeeded");
                 string token = Decryption_stuff.DecryptedJWTToken();
                 HandleUserBasedOnRole(token);
             }
             else
             {
                 // Initialization failed
-                MessageBox.Show("Initialization failed");
+                //MessageBox.Show("Initialization failed");
             }
+            InitializeComponent();
+
         }
 
 
@@ -85,11 +87,11 @@ namespace Kotova.Test1.ClientSide
 
         private async Task<bool> InitializeAsync() 
         {
-            string token = Decryption_stuff.DecryptedJWTToken();
+            _jwtToken = Decryption_stuff.DecryptedJWTToken();
 
 
 
-            if (string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(_jwtToken))
             {
                 return false;
             }
@@ -97,12 +99,12 @@ namespace Kotova.Test1.ClientSide
 
 
 
-            if (token != null)
+            if (_jwtToken != null)
             {
 
                 try
                 {
-                    var response = await _httpClient.PostAsJsonAsync(_validateTokenUrl, token); //Зашифруй токен, если считаешь, что это важно or something. 
+                    var response = await _httpClient.PostAsJsonAsync(_validateTokenUrl, _jwtToken); //Зашифруй токен, если считаешь, что это важно or something. 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         return true;

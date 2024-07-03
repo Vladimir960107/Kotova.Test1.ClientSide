@@ -18,7 +18,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = token;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
@@ -40,7 +40,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = token;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
                     HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
@@ -80,7 +80,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    string jwtToken = Decryption_stuff.DecryptedJWTToken();
+                    string jwtToken = token;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
 

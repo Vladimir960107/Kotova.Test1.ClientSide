@@ -364,14 +364,7 @@ namespace Kotova.Test1.ClientSide
 
         private void LogOut_Click(object sender, EventArgs e)
         {
-            try
-            {
-                File.Delete(Decryption_stuff.defaultFilePath);
-            }
-            catch
-            {
-
-            }
+            Decryption_stuff.DeleteJWTToken();
             _loginForm.Show();
             this.Dispose(true);
         }

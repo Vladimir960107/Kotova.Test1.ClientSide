@@ -17,7 +17,7 @@ namespace Kotova.Test1.ClientSide
             return DecryptedJWTToken(defaultFilePath);
         }
 
-            static string? DecryptedJWTToken(string filePath)
+        static string? DecryptedJWTToken(string filePath)
         {
 
             if (!File.Exists(filePath))
@@ -38,6 +38,21 @@ namespace Kotova.Test1.ClientSide
             string jwtToken = Encoding.UTF8.GetString(decryptedData);
 
             return jwtToken;
+        }
+        public static void DeleteJWTToken()
+        {
+            try
+            {
+                File.Delete(Decryption_stuff.defaultFilePath);
+            }
+            catch (DirectoryNotFoundException)
+            {
+                //Everything is Okay :)
+            }
+            catch (Exception ex) 
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
     }
 }

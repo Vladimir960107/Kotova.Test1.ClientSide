@@ -274,14 +274,7 @@ namespace Kotova.Test1.ClientSide
             {
                 _signUpForm.Dispose();
             }
-            try
-            {
-                File.Delete(Decryption_stuff.defaultFilePath);
-            }
-            catch
-            {
-
-            }
+            Decryption_stuff.DeleteJWTToken();
 
             _loginForm.Show();
             this.Dispose(true);
