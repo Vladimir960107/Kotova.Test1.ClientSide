@@ -86,7 +86,7 @@ namespace Kotova.Test1.ClientSide
                 else
                 {
                     //Console.WriteLine("Ping failed.");
-                    MessageBox.Show("Ping failed. Server is not working? Status code:"+$"{response.StatusCode}");
+                    MessageBox.Show("Ping failed. Server is not working? Status code:" + $"{response.StatusCode}");
                     return false;
                 }
             }
@@ -123,7 +123,7 @@ namespace Kotova.Test1.ClientSide
                 }
                 else
                 {
-                    MessageBox.Show("Pinging about closing form failed. Server is not working? Status code:" + $"{response.StatusCode}"); 
+                    MessageBox.Show("Pinging about closing form failed. Server is not working? Status code:" + $"{response.StatusCode}");
                     return false;
                 }
             }
@@ -134,7 +134,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        
+
 
         private async void testButton_Click(object sender, EventArgs e)
         {
@@ -165,13 +165,16 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("Не выбран тип инструктажа!");
                 return;
             }
+            List<string> paths = GetSelectedFilePaths(treeView1);
+
 
             bool isForDrivers = checkBoxIsForDrivers.Checked;
             int bitValueIsForDrivers = isForDrivers ? 1 : 0;
             string causeOfInstruction = InstructionTextBox.Text;
             Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox!
             Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
-            string json = JsonConvert.SerializeObject(instruction);
+            FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
+            string json = JsonConvert.SerializeObject(fullCustomInstr);
             HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
             await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
             buttonCreateInstruction.Enabled = true;
@@ -380,7 +383,7 @@ namespace Kotova.Test1.ClientSide
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
             await PingToServerThatChiefIsOffline();
-            
+
         }
 
         private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
@@ -393,7 +396,7 @@ namespace Kotova.Test1.ClientSide
             this.Dispose();
         }
 
-        
+
 
         private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -734,5 +737,83 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        public static List<string> GetSelectedFilePaths(TreeView treeView)
+        {
+            HashSet<string> uniqueFilePaths = new HashSet<string>();
+
+            foreach (TreeNode node in treeView.Nodes)
+            {
+                CollectFilePaths(node, uniqueFilePaths);
+            }
+
+            // Sort the paths
+            List<string> sortedFilePaths = uniqueFilePaths.ToList();
+            sortedFilePaths.Sort();
+
+            return sortedFilePaths;
+        }
+
+        private static void CollectFilePaths(TreeNode node, HashSet<string> filePaths)
+        {
+            if (node.Checked)
+            {
+                string fullPath = node.FullPath;
+
+                // Check if it's a file (assuming leaf nodes are files)
+                if (GetInfo(fullPath).type == 0)
+                {
+                    filePaths.Add(fullPath);
+                }
+            }
+
+            foreach (TreeNode childNode in node.Nodes)
+            {
+                CollectFilePaths(childNode, filePaths);
+            }
+        }
+
+        static Checkpath GetInfo(string path)
+        {
+            Checkpath checkpath = new Checkpath();
+            try
+            {
+                FileAttributes attr = File.GetAttributes(path);
+
+                //detect whether its a directory or file  
+                if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+                    checkpath.type = Filetype.Dir;
+                else
+                    checkpath.type = Filetype.File;
+                checkpath.Ifexists = true;
+            }
+            catch
+            {
+                bool t = Path.HasExtension(path);
+                if (t)
+                {
+                    checkpath.type = Filetype.File;
+                }
+                else
+                {
+                    checkpath.type = Filetype.Dir;
+                }
+
+                checkpath.Ifexists = false;
+            }
+            return checkpath;
+        }
+
+        public class Checkpath
+        {
+            public bool Ifexists { get; set; }
+
+            public Filetype type { get; set; }
+        }
+
+        public enum Filetype
+        {
+            File = 0,
+            Dir = 1
+        }
     }
 }

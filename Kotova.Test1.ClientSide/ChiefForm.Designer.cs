@@ -147,7 +147,7 @@
             // treeView1
             // 
             treeView1.CheckBoxes = true;
-            treeView1.Location = new Point(364, 114);
+            treeView1.Location = new Point(364, 101);
             treeView1.Name = "treeView1";
             treeView1.Size = new Size(247, 178);
             treeView1.TabIndex = 15;
