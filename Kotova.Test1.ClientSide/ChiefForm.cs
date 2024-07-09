@@ -175,6 +175,7 @@ namespace Kotova.Test1.ClientSide
             Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
             FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
             string json = JsonConvert.SerializeObject(fullCustomInstr);
+            TestTextBox.Text = json;
             HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
             await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
             buttonCreateInstruction.Enabled = true;

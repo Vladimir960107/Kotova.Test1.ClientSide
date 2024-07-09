@@ -63,6 +63,7 @@
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
+            TestTextBox = new TextBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -261,6 +262,7 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(TestTextBox);
             tabPage1.Controls.Add(ListOfInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
             tabPage1.Controls.Add(submitInstructionToPeople);
@@ -427,6 +429,13 @@
             consoleTextBox.Size = new Size(340, 305);
             consoleTextBox.TabIndex = 35;
             // 
+            // TestTextBox
+            // 
+            TestTextBox.Location = new Point(268, 217);
+            TestTextBox.Name = "TestTextBox";
+            TestTextBox.Size = new Size(100, 23);
+            TestTextBox.TabIndex = 34;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -485,5 +494,6 @@
         private ListBox ListOfInstructions;
         private TextBox consoleTextBox;
         private TreeView treeView1;
+        private TextBox TestTextBox;
     }
 }

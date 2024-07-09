@@ -22,9 +22,12 @@ namespace Kotova.Test1.ClientSide
 
         public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
-        public const string DB_pos_users_pathToInstruction = "path_to_instruction";
+        public const string dB_pos_users_pathToInstruction = "path_to_instruction";
+        public const string dB_instructionId = "instruction_id";
+        public const string db_filePath = "file_path";
 
         private bool _IsInstructionSelected = false;
+        private List<Dictionary<string, object>> listsOfPaths_global;
 
         private List<Dictionary<string, object>> listOfInstructions_global;
 
@@ -33,6 +36,7 @@ namespace Kotova.Test1.ClientSide
         string? _userName;
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        const string DownloadListsOfFilesURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_lists_of_files_for_user";
         public UserForm()
         {
             InitializeComponent();
@@ -54,7 +58,7 @@ namespace Kotova.Test1.ClientSide
         {
             ListOfInstructionsForUser.Items.Clear();
             bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
-            if (IsEmpty == true)
+            if (IsEmpty)
             {
                 MessageBox.Show("All the instructions passed!");
             }
@@ -67,6 +71,7 @@ namespace Kotova.Test1.ClientSide
                 throw new ArgumentNullException(nameof(userName));
             }
             string url = DownloadInstructionForUserURL;
+            string url2 = DownloadListsOfFilesURL;
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -76,17 +81,19 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
+                    //HttpResponseMessage response2 = await client.GetAsync(url2);
+                    //response2.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonResponse);
-
-                    if (result.Count == 0)
+                    var result = JsonSerializer.Deserialize<QueryResult>(jsonResponse);
+                    if (result.Result1.Count == 0)
                     {
                         return true;
                     }
 
-                    listOfInstructions_global = result;
-                    foreach (Dictionary<string, object> temp in result)
+                    listOfInstructions_global = result.Result1;
+                    listsOfPaths_global = result.Result2;
+                    foreach (Dictionary<string, object> temp in result.Result1)
                     {
                         ListOfInstructionsForUser.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
 
@@ -111,7 +118,27 @@ namespace Kotova.Test1.ClientSide
 
         private void ListOfInstructions_SelectedValueChanged(object sender, EventArgs e)
         {
+            FilesOfInstructionCheckedListBox.Items.Clear();
             HyperLinkForInstructionsFolder.Enabled = true;
+            if (ListOfInstructionsForUser.SelectedItem == null)
+            {
+                MessageBox.Show("You haven't select the Instruction.");
+                PassInstruction.Enabled = false;
+                HyperLinkForInstructionsFolder.Enabled = false;
+                return;
+            }
+            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
+            int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
+
+            List<string> listOfPath = new List<string>();
+            foreach (var listOfPaths in listsOfPaths_global)
+            {
+                if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
+                {
+                    FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
+                }
+            }
+
             _IsInstructionSelected = true;
         }
 
@@ -125,7 +152,7 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
             Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString()); //most likely suppress it, cause its not null.
-            string? pathStr = selectedDict[DB_pos_users_pathToInstruction].ToString();
+            string? pathStr = selectedDict[dB_pos_users_pathToInstruction].ToString();
 
             if (pathStr is null || pathStr.Length == 0)
             {
@@ -135,7 +162,7 @@ namespace Kotova.Test1.ClientSide
             }
             string path = Path.GetFullPath(pathStr);
             OpenFolderInExplorer(path);
-            if (_IsInstructionSelected) { _IsInstructionSelected = false; PassInstruction.Enabled = true; }
+            if (_IsInstructionSelected) { _IsInstructionSelected = false; }
         }
 
         private void OpenFolderInExplorer(string path)
@@ -204,9 +231,10 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show("You did not agree with the action.", "Action Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 PassInstruction.Checked = false;
+                FilesOfInstructionCheckedListBox.Items.Clear();
                 return;
             }
-            
+
 
         }
 
@@ -278,6 +306,57 @@ namespace Kotova.Test1.ClientSide
 
             _loginForm.Show();
             this.Dispose(true);
+        }
+
+        private void FilesOfInstructionCheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            this.BeginInvoke((MethodInvoker)delegate
+            {
+                if (AreAllItemsChecked(FilesOfInstructionCheckedListBox))
+                {
+                    PassInstruction.Enabled = true;
+                }
+                else
+                {
+                    PassInstruction.Enabled = false;
+                }
+
+                if (e.NewValue == CheckState.Checked)
+                {
+                    string selectedPath = FilesOfInstructionCheckedListBox.Items[e.Index].ToString();
+                    OpenFile(selectedPath);
+                }
+            });
+
+        }
+
+        private bool AreAllItemsChecked(CheckedListBox checkedListBox)
+        {
+            for (int index = 0; index < checkedListBox.Items.Count; index++)
+            {
+                if (!checkedListBox.GetItemChecked(index))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void OpenFile(string filePath)
+        {
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open file: {ex.Message}");
+            }
         }
     }
 }

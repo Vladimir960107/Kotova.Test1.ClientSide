@@ -36,6 +36,7 @@
             HyperLinkForInstructionsFolder = new Button();
             PassInstruction = new CheckBox();
             SignOut = new Button();
+            FilesOfInstructionCheckedListBox = new CheckedListBox();
             SuspendLayout();
             // 
             // CheckForNewInstructions
@@ -70,9 +71,9 @@
             // 
             ListOfInstructionsForUser.FormattingEnabled = true;
             ListOfInstructionsForUser.ItemHeight = 15;
-            ListOfInstructionsForUser.Location = new Point(214, 170);
+            ListOfInstructionsForUser.Location = new Point(12, 170);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
-            ListOfInstructionsForUser.Size = new Size(430, 229);
+            ListOfInstructionsForUser.Size = new Size(236, 229);
             ListOfInstructionsForUser.TabIndex = 24;
             ListOfInstructionsForUser.SelectedValueChanged += ListOfInstructions_SelectedValueChanged;
             // 
@@ -117,11 +118,22 @@
             SignOut.UseVisualStyleBackColor = true;
             SignOut.Click += SignOut_Click;
             // 
+            // FilesOfInstructionCheckedListBox
+            // 
+            FilesOfInstructionCheckedListBox.FormattingEnabled = true;
+            FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
+            FilesOfInstructionCheckedListBox.Location = new Point(296, 179);
+            FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
+            FilesOfInstructionCheckedListBox.Size = new Size(213, 220);
+            FilesOfInstructionCheckedListBox.TabIndex = 30;
+            FilesOfInstructionCheckedListBox.ItemCheck += FilesOfInstructionCheckedListBox_ItemCheck;
+            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(FilesOfInstructionCheckedListBox);
             Controls.Add(SignOut);
             Controls.Add(PassInstruction);
             Controls.Add(HyperLinkForInstructionsFolder);
@@ -147,5 +159,6 @@
         private Button HyperLinkForInstructionsFolder;
         private CheckBox PassInstruction;
         private Button SignOut;
+        private CheckedListBox FilesOfInstructionCheckedListBox;
     }
 }
