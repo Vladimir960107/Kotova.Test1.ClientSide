@@ -57,13 +57,13 @@
             ListOfInstructionsForUser = new ListBox();
             ChiefTabControl = new TabControl();
             tabPage3 = new TabPage();
+            FilesOfInstructionCheckedListBox = new CheckedListBox();
             PassInstruction = new CheckBox();
             HyperLinkForInstructionsFolder = new Button();
             label8 = new Label();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
-            TestTextBox = new TextBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -262,7 +262,6 @@
             // 
             // tabPage1
             // 
-            tabPage1.Controls.Add(TestTextBox);
             tabPage1.Controls.Add(ListOfInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
             tabPage1.Controls.Add(submitInstructionToPeople);
@@ -347,7 +346,7 @@
             ListOfInstructionsForUser.Location = new Point(20, 59);
             ListOfInstructionsForUser.Margin = new Padding(3, 2, 3, 2);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
-            ListOfInstructionsForUser.Size = new Size(467, 229);
+            ListOfInstructionsForUser.Size = new Size(244, 229);
             ListOfInstructionsForUser.TabIndex = 29;
             ListOfInstructionsForUser.SelectedValueChanged += InstructionsToPass_SelectedIndexChanged;
             // 
@@ -365,6 +364,7 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(FilesOfInstructionCheckedListBox);
             tabPage3.Controls.Add(PassInstruction);
             tabPage3.Controls.Add(ListOfInstructionsForUser);
             tabPage3.Controls.Add(HyperLinkForInstructionsFolder);
@@ -376,6 +376,16 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Прохождение инструктажей";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // FilesOfInstructionCheckedListBox
+            // 
+            FilesOfInstructionCheckedListBox.FormattingEnabled = true;
+            FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
+            FilesOfInstructionCheckedListBox.Location = new Point(283, 69);
+            FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
+            FilesOfInstructionCheckedListBox.Size = new Size(195, 220);
+            FilesOfInstructionCheckedListBox.TabIndex = 39;
+            FilesOfInstructionCheckedListBox.ItemCheck += FilesOfInstructionCheckedListBox_ItemCheck;
             // 
             // PassInstruction
             // 
@@ -428,13 +438,6 @@
             consoleTextBox.ScrollBars = ScrollBars.Both;
             consoleTextBox.Size = new Size(340, 305);
             consoleTextBox.TabIndex = 35;
-            // 
-            // TestTextBox
-            // 
-            TestTextBox.Location = new Point(268, 217);
-            TestTextBox.Name = "TestTextBox";
-            TestTextBox.Size = new Size(100, 23);
-            TestTextBox.TabIndex = 34;
             // 
             // ChiefForm
             // 
@@ -494,6 +497,6 @@
         private ListBox ListOfInstructions;
         private TextBox consoleTextBox;
         private TreeView treeView1;
-        private TextBox TestTextBox;
+        private CheckedListBox FilesOfInstructionCheckedListBox;
     }
 }

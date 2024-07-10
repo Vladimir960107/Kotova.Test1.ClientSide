@@ -23,7 +23,9 @@ namespace Kotova.Test1.ClientSide
         public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
         public const string dB_pos_users_pathToInstruction = "path_to_instruction";
-        public const string dB_instructionId = "instruction_id";
+
+
+        public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
 
         private bool _IsInstructionSelected = false;
@@ -81,8 +83,6 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-                    //HttpResponseMessage response2 = await client.GetAsync(url2);
-                    //response2.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     var result = JsonSerializer.Deserialize<QueryResult>(jsonResponse);
@@ -96,12 +96,6 @@ namespace Kotova.Test1.ClientSide
                     foreach (Dictionary<string, object> temp in result.Result1)
                     {
                         ListOfInstructionsForUser.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
-
-                        /*foreach (KeyValuePair<string, object> kvp in temp)
-                        {
-                           var tempValue = kvp.Value.ToString() is null ? "Null" : kvp.Value.ToString();
-                            
-                        }*/
 
                     }
                     return false;
@@ -225,13 +219,13 @@ namespace Kotova.Test1.ClientSide
                 }
                 Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
                 await SendInstructionIsPassedToDB(selectedDict);
-                //После этого отправить запрос на выбранный Database через сервер что инструктаж пройден. And uncheck the checkbox.
+                FilesOfInstructionCheckedListBox.Items.Clear();
+
             }
             else
             {
                 MessageBox.Show("You did not agree with the action.", "Action Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 PassInstruction.Checked = false;
-                FilesOfInstructionCheckedListBox.Items.Clear();
                 return;
             }
 
