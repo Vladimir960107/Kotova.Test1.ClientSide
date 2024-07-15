@@ -207,16 +207,16 @@ namespace Kotova.Test1.ClientSide
         private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
         {
             if (!PassInstruction.Checked) { return; }
+            if (ListOfInstructionsForUser.SelectedItem == null)
+            {
+                MessageBox.Show("You haven't select the Instruction.");
+                PassInstruction.Enabled = false;
+                return;
+            }
             if (ConfirmAction())
             {
                 MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
-                if (ListOfInstructionsForUser.SelectedItem == null)
-                {
-                    MessageBox.Show("You haven't select the Instruction.");
-                    PassInstruction.Enabled = false;
-                    return;
-                }
                 Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
                 await SendInstructionIsPassedToDB(selectedDict);
                 FilesOfInstructionCheckedListBox.Items.Clear();
@@ -283,6 +283,8 @@ namespace Kotova.Test1.ClientSide
                 return false;
             }
         }
+
+
         private void UserForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             _loginForm.Dispose();

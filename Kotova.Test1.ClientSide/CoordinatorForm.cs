@@ -24,6 +24,7 @@ namespace Kotova.Test1.ClientSide
         private const string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
         private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-login-and-password-for-newcommer";
         private const string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
+        private const string DownloadNamesForInitialInstrUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-list-of-people-init-instructions";
         private Login_Russian? _loginForm;
         private string? _userName;
         private string? selectedFolderPath;
@@ -80,9 +81,13 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
+
+                    // Parse the JSON response to extract the $values array
+                    var jsonDocument = JsonDocument.Parse(jsonResponse);
+                    var valuesElement = jsonDocument.RootElement.GetProperty("$values");
+                    List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(valuesElement.GetRawText());
+
                     departmentForNewcomer.Items.AddRange(result.ToArray());
                     return true;
                 }
@@ -95,7 +100,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async Task<bool> refreshRolesFromDB(ListBox listBoxRoles) // THE SAME FUNCTION AS refreshDepartmentsFromDB. just url changed and listbox, that's all. Oh, and List<string> have different names additionally.
+        private async Task<bool> refreshRolesFromDB(ListBox listBoxRoles)
         {
             string url = DownloadRolesForUsersUrl;
             listBoxRoles.Items.Clear();
@@ -108,9 +113,13 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    rolesOfUsers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
+
+                    // Parse the JSON response to extract the $values array
+                    var jsonDocument = JsonDocument.Parse(jsonResponse);
+                    var valuesElement = jsonDocument.RootElement.GetProperty("$values");
+                    List<string> rolesOfUsers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(valuesElement.GetRawText());
+
                     if (rolesOfUsers == null || rolesOfUsers.Count == 0)
                     {
                         return false;
@@ -126,6 +135,7 @@ namespace Kotova.Test1.ClientSide
                 return false;
             }
         }
+
 
         private async void uploadNewcommer_Click(object sender, EventArgs e)
         {
@@ -184,6 +194,8 @@ namespace Kotova.Test1.ClientSide
 
             string roleName = RoleOfNewcomerListBox.SelectedItem.ToString();
 
+            string isEmployeeRequireInitInstr = AddInitialInstructionToNewcomer.Checked.ToString();
+            MessageBox.Show(isEmployeeRequireInitInstr);
             try
             {
                 string token = _loginForm._jwtToken;
@@ -194,7 +206,7 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("Employee inserted into DB", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     try
                     {
-                        response = await GetLoginPassword(new List<string> { newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text, roleName }, token);
+                        response = await GetLoginPassword(new List<string> { newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text, roleName , isEmployeeRequireInitInstr}, token);
                         if (response.IsSuccessStatusCode)
                         {
 
@@ -261,12 +273,12 @@ namespace Kotova.Test1.ClientSide
         {
             using (HttpClient client = new HttpClient())
             {
-                string url = InsertNewEmployeeURL; // Replace with your actual API URL
+                string url = InsertNewEmployeeURL; 
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var json = JsonConvert.SerializeObject(employee);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync(url, data);
+                var response = await client.PostAsync(url, data); // TODO: Это надо переделать, так как сервер возвращает что всё хорошо даже когда это не так :/
                 return response;
             }
 
@@ -368,5 +380,134 @@ namespace Kotova.Test1.ClientSide
             _loginForm.Show();
             this.Dispose(true);
         }
+
+        private async void buttonSyncManuallyInitialInstrWithDB_Click(object sender, EventArgs e)
+        {
+            string url = DownloadNamesForInitialInstrUrl;
+            NamesOfPeopleForInitialInstr.Items.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    rolesOfUsers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
+                    if (rolesOfUsers == null || rolesOfUsers.Count == 0)
+                    {
+                        MessageBox.Show("Все люди прошли вводные инструктажи!");
+                    }
+                    NamesOfPeopleForInitialInstr.Items.AddRange(rolesOfUsers.ToArray());
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+        }
+
+
+
+
+
+
+
+
+        /*private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!PassInstruction.Checked) { return; }
+            if (NamesOfPeopleForInitialInstr.SelectedItem == null)
+            {
+                MessageBox.Show("You haven't select the Instruction.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+            if (ConfirmAction())
+            {
+                MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                PassInstruction.Enabled = false;
+                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(NamesOfPeopleForInitialInstr.SelectedItem.ToString());
+                await SendInstructionIsPassedToDB(selectedDict);
+
+            }
+            else
+            {
+                MessageBox.Show("You did not agree with the action.", "Action Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                PassInstruction.Checked = false;
+                return;
+            }
+        }
+
+        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedItemStr)
+        {
+
+            foreach (Dictionary<string, object> tempD in listOfInstructions_global)
+            {
+                Dictionary<string, object> selectedDictionary = listOfInstructions_global.FirstOrDefault(tempD => tempD[dB_pos_users_causeOfInstruction].ToString() == selectedItemStr);
+                if (selectedDictionary != null)
+                {
+                    return selectedDictionary; // HERE WE DIDN't CHECK  THAT названия инструктажей не повторяется, а просто вернули первое попавшееся. Проверку бы!
+                }
+            }
+            throw new Exception("Corresponding Dictionary not found!");
+
+        }
+
+        private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
+        {
+            string url = SendInstructionIsPassedURL;
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    string jsonData = JsonSerializer.Serialize(selectedDict);
+
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                    HttpResponseMessage response = await client.PostAsync(url, content);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Everyting is fine, updating the listbox of instructions");
+                        ListOfInstructionsForUser.Items.Clear();
+                        DownloadInstructionsForUserFromServer(_userName);
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+            finally
+            {
+                PassInstruction.Checked = false;
+            }
+        }
+
+        private bool ConfirmAction()
+        {
+            var result = MessageBox.Show("Do you agree with the action?", "Confirm Action", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }*/
     }
 }

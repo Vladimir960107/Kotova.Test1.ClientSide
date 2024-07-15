@@ -80,24 +80,28 @@ namespace Kotova.Test1.ClientSide
                     response = await _client.GetAsync($"{PingToServerIsOnlineURL}/{departmentId}"); // посмотри чтобы возвращалось время апдейта в БД. чтобы не дай бог в будущем в разных часовых поясах не путать.
                     if (response.IsSuccessStatusCode)
                     {
-                        consoleTextBox.AppendText("pinged successfully"); // вместо message box сделать чтобы в консоль писалась или textbox или подобном. 
+                        consoleTextBox.AppendText("пинг на сервер отправлен успешно");
+                        //consoleTextBox.AppendText("pinged successfully"); // вместо message box сделать чтобы в консоль писалась или textbox или подобном. 
                         consoleTextBox.AppendText(Environment.NewLine);
                         return true;
                     }
-                    consoleTextBox.AppendText("got DepartmentId, but ping failed. Status code:" + $"{response.StatusCode}");
+                    consoleTextBox.AppendText("Получен DepartmentId, но пинг на сервер не успешен. Status code:" + $"{response.StatusCode}");
+                    //consoleTextBox.AppendText("got DepartmentId, but ping failed. Status code:" + $"{response.StatusCode}");
                     consoleTextBox.AppendText(Environment.NewLine);
                     return true;
                 }
                 else
                 {
-                    //Console.WriteLine("Ping failed.");
-                    MessageBox.Show("Ping failed. Server is not working? Status code:" + $"{response.StatusCode}");
+                    MessageBox.Show("Пинг на сервер провален. Сервер не работает? Status code:" + $"{response.StatusCode}");
+                    //MessageBox.Show("Ping failed. Server is not working? Status code:" + $"{response.StatusCode}");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error occurred while pinging: {ex.Message}");
+                MessageBox.Show($"Произошла ошибка во время пинга: {ex.Message}");
+
+                //MessageBox.Show($"Error occurred while pinging: {ex.Message}");
                 return false;
             }
         }
@@ -123,18 +127,19 @@ namespace Kotova.Test1.ClientSide
                         //consoleTextBox.AppendText(Environment.NewLine);
                         return true;
                     }
-                    MessageBox.Show("got DepartmentId, but didn't get response about closing form. Status code:" + $"{response.StatusCode}");
+                    MessageBox.Show("Получен DepartmentId, Не отправлено уведомление на сервер о закрытии формы. Status code:" + $"{response.StatusCode}");
+                    //MessageBox.Show("got DepartmentId, but didn't get response about closing form. Status code:" + $"{response.StatusCode}");
                     return true;
                 }
                 else
                 {
-                    MessageBox.Show("Pinging about closing form failed. Server is not working? Status code:" + $"{response.StatusCode}");
+                    MessageBox.Show("Не удалось отправить запрос на закрытие формы. Сервер не работает? Status code:" + $"{response.StatusCode}");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error occurred while pinging about offline: {ex.Message}");
+                MessageBox.Show($"Произошла ошибка при отправке запроса на сервер о статусе \"оффлайн\": {ex.Message}");
                 return false;
             }
         }
@@ -207,27 +212,29 @@ namespace Kotova.Test1.ClientSide
                         string responseBody = await response.Content.ReadAsStringAsync();
                         if (string.IsNullOrWhiteSpace(responseBody))
                         {
-                            throw new Exception("responseBody is empty"); //throw here better something
+                            throw new Exception("responseBody пуст"); //throw here better something
                         }
                         List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before! so warning maybe suppressed
 
                         string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
                         ListOfInstructions.Items.AddRange(resultArray);
-                        MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
                         string errorMessage = await response.Content.ReadAsStringAsync();
                         // The call was not successful, handle errors or retry logic
                         //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Не удалось синхронизировать имена с базой данных. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
                 // Exception handling for networking errors, etc.
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -265,7 +272,8 @@ namespace Kotova.Test1.ClientSide
 
                         ListBoxNamesOfPeople.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
-                        MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {

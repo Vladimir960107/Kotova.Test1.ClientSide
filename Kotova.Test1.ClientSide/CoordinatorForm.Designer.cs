@@ -45,16 +45,16 @@
             label2 = new Label();
             dateTimePicker2 = new DateTimePicker();
             tabPage1 = new TabPage();
+            PassInstruction = new CheckBox();
             button6 = new Button();
             textBox9 = new TextBox();
             textBox8 = new TextBox();
             textBox7 = new TextBox();
             label1 = new Label();
-            buttonSyncManualyInstrWithDB = new Button();
-            typeOfInstructionListBox = new ListBox();
+            buttonSyncManualyInitialInstrWithDB = new Button();
+            NamesOfPeopleForInitialInstr = new ListBox();
             datePickerEnd = new DateTimePicker();
             label6 = new Label();
-            buttonCreateInstruction = new Button();
             tabControl1 = new TabControl();
             tabPage4 = new TabPage();
             button4 = new Button();
@@ -67,6 +67,8 @@
             textBox12 = new TextBox();
             label10 = new Label();
             tabPage3 = new TabPage();
+            label25 = new Label();
+            RoleOfNewcomerListBox = new ListBox();
             label24 = new Label();
             InitialInstructionButton = new Button();
             InitialInstructionPathLabel = new Label();
@@ -101,8 +103,7 @@
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
             button1 = new Button();
-            RoleOfNewcomerListBox = new ListBox();
-            label25 = new Label();
+            AddInitialInstructionToNewcomer = new CheckBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -260,16 +261,16 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(PassInstruction);
             tabPage1.Controls.Add(button6);
             tabPage1.Controls.Add(textBox9);
             tabPage1.Controls.Add(textBox8);
             tabPage1.Controls.Add(textBox7);
             tabPage1.Controls.Add(label1);
-            tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
-            tabPage1.Controls.Add(typeOfInstructionListBox);
+            tabPage1.Controls.Add(buttonSyncManualyInitialInstrWithDB);
+            tabPage1.Controls.Add(NamesOfPeopleForInitialInstr);
             tabPage1.Controls.Add(datePickerEnd);
             tabPage1.Controls.Add(label6);
-            tabPage1.Controls.Add(buttonCreateInstruction);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
@@ -277,6 +278,16 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Вводные инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // PassInstruction
+            // 
+            PassInstruction.AutoSize = true;
+            PassInstruction.Location = new Point(449, 334);
+            PassInstruction.Name = "PassInstruction";
+            PassInstruction.Size = new Size(245, 19);
+            PassInstruction.TabIndex = 42;
+            PassInstruction.Text = "Подтверждаю, что инструктаж пройден";
+            PassInstruction.UseVisualStyleBackColor = true;
             // 
             // button6
             // 
@@ -320,25 +331,26 @@
             label1.TabIndex = 37;
             label1.Text = "Вводнный инструктаж";
             // 
-            // buttonSyncManualyInstrWithDB
+            // buttonSyncManualyInitialInstrWithDB
             // 
-            buttonSyncManualyInstrWithDB.Location = new Point(3, 131);
-            buttonSyncManualyInstrWithDB.Margin = new Padding(3, 2, 3, 2);
-            buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrWithDB";
-            buttonSyncManualyInstrWithDB.Size = new Size(216, 22);
-            buttonSyncManualyInstrWithDB.TabIndex = 33;
-            buttonSyncManualyInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
-            buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
+            buttonSyncManualyInitialInstrWithDB.Location = new Point(3, 131);
+            buttonSyncManualyInitialInstrWithDB.Margin = new Padding(3, 2, 3, 2);
+            buttonSyncManualyInitialInstrWithDB.Name = "buttonSyncManualyInitialInstrWithDB";
+            buttonSyncManualyInitialInstrWithDB.Size = new Size(216, 22);
+            buttonSyncManualyInitialInstrWithDB.TabIndex = 33;
+            buttonSyncManualyInitialInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
+            buttonSyncManualyInitialInstrWithDB.UseVisualStyleBackColor = true;
+            buttonSyncManualyInitialInstrWithDB.Click += buttonSyncManuallyInitialInstrWithDB_Click;
             // 
-            // typeOfInstructionListBox
+            // NamesOfPeopleForInitialInstr
             // 
-            typeOfInstructionListBox.FormattingEnabled = true;
-            typeOfInstructionListBox.ItemHeight = 15;
-            typeOfInstructionListBox.Items.AddRange(new object[] { "ФИО 1", "ФИО 2" });
-            typeOfInstructionListBox.Location = new Point(6, 167);
-            typeOfInstructionListBox.Name = "typeOfInstructionListBox";
-            typeOfInstructionListBox.Size = new Size(403, 49);
-            typeOfInstructionListBox.TabIndex = 1;
+            NamesOfPeopleForInitialInstr.FormattingEnabled = true;
+            NamesOfPeopleForInitialInstr.ItemHeight = 15;
+            NamesOfPeopleForInitialInstr.Items.AddRange(new object[] { "ФИО 1", "ФИО 2" });
+            NamesOfPeopleForInitialInstr.Location = new Point(6, 167);
+            NamesOfPeopleForInitialInstr.Name = "NamesOfPeopleForInitialInstr";
+            NamesOfPeopleForInitialInstr.Size = new Size(403, 49);
+            NamesOfPeopleForInitialInstr.TabIndex = 1;
             // 
             // datePickerEnd
             // 
@@ -356,16 +368,6 @@
             label6.Size = new Size(173, 15);
             label6.TabIndex = 14;
             label6.Text = "Дата проведения инструктажа";
-            // 
-            // buttonCreateInstruction
-            // 
-            buttonCreateInstruction.Location = new Point(450, 313);
-            buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
-            buttonCreateInstruction.Name = "buttonCreateInstruction";
-            buttonCreateInstruction.Size = new Size(219, 40);
-            buttonCreateInstruction.TabIndex = 18;
-            buttonCreateInstruction.Text = "Вводный инструктаж пройден";
-            buttonCreateInstruction.UseVisualStyleBackColor = true;
             // 
             // tabControl1
             // 
@@ -481,6 +483,7 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(AddInitialInstructionToNewcomer);
             tabPage3.Controls.Add(label25);
             tabPage3.Controls.Add(RoleOfNewcomerListBox);
             tabPage3.Controls.Add(label24);
@@ -510,6 +513,24 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Данные сотрудника";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(306, 187);
+            label25.Name = "label25";
+            label25.Size = new Size(195, 15);
+            label25.TabIndex = 29;
+            label25.Text = "Выбрать роль нового сотрудника:";
+            // 
+            // RoleOfNewcomerListBox
+            // 
+            RoleOfNewcomerListBox.FormattingEnabled = true;
+            RoleOfNewcomerListBox.ItemHeight = 15;
+            RoleOfNewcomerListBox.Location = new Point(306, 212);
+            RoleOfNewcomerListBox.Name = "RoleOfNewcomerListBox";
+            RoleOfNewcomerListBox.Size = new Size(281, 64);
+            RoleOfNewcomerListBox.TabIndex = 28;
             // 
             // label24
             // 
@@ -652,7 +673,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(306, 142);
+            label5.Location = new Point(306, 124);
             label5.Name = "label5";
             label5.Size = new Size(93, 15);
             label5.TabIndex = 10;
@@ -660,7 +681,7 @@
             // 
             // dateOfBirthDateTimePicker
             // 
-            dateOfBirthDateTimePicker.Location = new Point(306, 174);
+            dateOfBirthDateTimePicker.Location = new Point(306, 153);
             dateOfBirthDateTimePicker.Margin = new Padding(3, 2, 3, 2);
             dateOfBirthDateTimePicker.Name = "dateOfBirthDateTimePicker";
             dateOfBirthDateTimePicker.Size = new Size(219, 23);
@@ -814,23 +835,15 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += LogOut_Click;
             // 
-            // RoleOfNewcomerListBox
+            // AddInitialInstructionToNewcomer
             // 
-            RoleOfNewcomerListBox.FormattingEnabled = true;
-            RoleOfNewcomerListBox.ItemHeight = 15;
-            RoleOfNewcomerListBox.Location = new Point(306, 233);
-            RoleOfNewcomerListBox.Name = "RoleOfNewcomerListBox";
-            RoleOfNewcomerListBox.Size = new Size(281, 64);
-            RoleOfNewcomerListBox.TabIndex = 28;
-            // 
-            // label25
-            // 
-            label25.AutoSize = true;
-            label25.Location = new Point(306, 208);
-            label25.Name = "label25";
-            label25.Size = new Size(195, 15);
-            label25.TabIndex = 29;
-            label25.Text = "Выбрать роль нового сотрудника:";
+            AddInitialInstructionToNewcomer.AutoSize = true;
+            AddInitialInstructionToNewcomer.Location = new Point(306, 289);
+            AddInitialInstructionToNewcomer.Name = "AddInitialInstructionToNewcomer";
+            AddInitialInstructionToNewcomer.Size = new Size(284, 19);
+            AddInitialInstructionToNewcomer.TabIndex = 30;
+            AddInitialInstructionToNewcomer.Text = "Добавить ли сотруднику вводный инструктаж?";
+            AddInitialInstructionToNewcomer.UseVisualStyleBackColor = true;
             // 
             // CoordinatorForm
             // 
@@ -862,9 +875,8 @@
         private TabPage tabPage1;
         private DateTimePicker datePickerEnd;
         private Label label6;
-        private Button buttonCreateInstruction;
         private TabControl tabControl1;
-        private Button buttonSyncManualyInstrWithDB;
+        private Button buttonSyncManualyInitialInstrWithDB;
         private TabPage tabPage3;
         private TextBox employeesPositionTextBox;
         private TextBox employeeFullNameTextBox;
@@ -873,7 +885,7 @@
         private Label label5;
         private DateTimePicker dateOfBirthDateTimePicker;
         private Label label1;
-        public ListBox typeOfInstructionListBox;
+        public ListBox NamesOfPeopleForInitialInstr;
         private TextBox textBox9;
         private TextBox textBox8;
         private TextBox textBox7;
@@ -932,5 +944,7 @@
         private Button button1;
         private Label label25;
         private ListBox RoleOfNewcomerListBox;
+        private CheckBox PassInstruction;
+        private CheckBox AddInitialInstructionToNewcomer;
     }
 }
