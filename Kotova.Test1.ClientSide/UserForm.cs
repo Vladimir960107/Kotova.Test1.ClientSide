@@ -39,7 +39,6 @@ namespace Kotova.Test1.ClientSide
         string? _userName;
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
-        const string DownloadListsOfFilesURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_lists_of_files_for_user";
         public UserForm()
         {
             InitializeComponent();
@@ -74,7 +73,6 @@ namespace Kotova.Test1.ClientSide
                 throw new ArgumentNullException(nameof(userName));
             }
             string url = DownloadInstructionForUserURL;
-            string url2 = DownloadListsOfFilesURL; // УБЕРИ ЭТО И УБЕРИ ЭТО ЖЕ НА СЕРВЕРЕ!
             try
             {
                 using (HttpClient client = new HttpClient())

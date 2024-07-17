@@ -93,6 +93,26 @@ namespace Kotova.Test1.ClientSide.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap setting_line_icon {
+            get {
+                object obj = ResourceManager.GetObject("setting-line-icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap settings_line_icon {
+            get {
+                object obj = ResourceManager.GetObject("settings-line-icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap technology {
             get {
                 object obj = ResourceManager.GetObject("technology", resourceCulture);

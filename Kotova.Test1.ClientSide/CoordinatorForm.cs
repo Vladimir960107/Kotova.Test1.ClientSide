@@ -43,7 +43,7 @@ namespace Kotova.Test1.ClientSide
 
         private async void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedIndex == 3)
+            if (tabControl1.SelectedTab.Text == "Данные сотрудника")
             {
                 if (await refreshDepartmentsFromDB(DepartmentForNewcomer))
                 {

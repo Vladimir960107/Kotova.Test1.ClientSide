@@ -19,12 +19,12 @@ namespace Kotova.Test1.ClientSide
         private const string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
         private const string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
         private Login_Russian? _loginForm;
-        private UserForm? _userForm;
+        private Form? _userForm;
         const string defaultLoginText = "Введите новый логин";
         const string defaultPasswordText = "Введите новый пароль";
         const string defaultPasswordRepeatText = "Повторите новый пароль";
         const string defaultEmailText = "Введите почту (Необязательно)";
-        public SignUpForm(Login_Russian form, UserForm userForm)
+        public SignUpForm(Login_Russian form, Form userForm)
         {
             InitializeComponent();
             _loginForm = form;
@@ -200,7 +200,7 @@ namespace Kotova.Test1.ClientSide
                         _userForm.Dispose();
                     }
                     _loginForm.Show();
-
+                   
                     this.Dispose();
                 }
             }

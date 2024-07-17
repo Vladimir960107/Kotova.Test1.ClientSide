@@ -41,10 +41,14 @@ namespace Kotova.Test1.ClientSide
         static string? selectedFolderPath = null;
         private Login_Russian? _loginForm;
         string? _userName;
+        public SignUpForm _signUpForm;
+
         public ChiefForm(Login_Russian loginForm, string userName)
         {
             _loginForm = loginForm;
             _userName = userName;
+            SignUpForm signUpForm = new SignUpForm(loginForm, this);
+            _signUpForm = signUpForm;
             InitializeComponent();
 
             PingServer();
@@ -390,13 +394,18 @@ namespace Kotova.Test1.ClientSide
 
         private async void LogOutForm_Click(object sender, EventArgs e)
         {
+
+            LogOutForm_Click_Internal();
+        }
+        public async void LogOutForm_Click_Internal()
+        {
             Decryption_stuff.DeleteJWTToken();
             _loginForm.Show();
             this.Dispose();
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
             await PingToServerThatChiefIsOffline();
-
+            
         }
 
         private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
