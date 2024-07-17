@@ -64,6 +64,7 @@
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
+            tabPage4 = new TabPage();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -355,6 +356,7 @@
             ChiefTabControl.Controls.Add(tabPage1);
             ChiefTabControl.Controls.Add(tabPage2);
             ChiefTabControl.Controls.Add(tabPage3);
+            ChiefTabControl.Controls.Add(tabPage4);
             ChiefTabControl.Location = new Point(12, 23);
             ChiefTabControl.Name = "ChiefTabControl";
             ChiefTabControl.SelectedIndex = 0;
@@ -439,6 +441,16 @@
             consoleTextBox.Size = new Size(340, 305);
             consoleTextBox.TabIndex = 35;
             // 
+            // tabPage4
+            // 
+            tabPage4.Location = new Point(4, 24);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Padding = new Padding(3);
+            tabPage4.Size = new Size(667, 374);
+            tabPage4.TabIndex = 3;
+            tabPage4.Text = "Контроль прохождения инстр.";
+            tabPage4.UseVisualStyleBackColor = true;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -498,5 +510,6 @@
         private TextBox consoleTextBox;
         private TreeView treeView1;
         private CheckedListBox FilesOfInstructionCheckedListBox;
+        private TabPage tabPage4;
     }
 }

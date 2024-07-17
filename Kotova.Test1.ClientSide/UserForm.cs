@@ -27,6 +27,7 @@ namespace Kotova.Test1.ClientSide
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
+        public const string db_typeOfInstruction = "type_of_instruction";
 
         private bool _IsInstructionSelected = false;
         private List<Dictionary<string, object>> listsOfPaths_global;
@@ -73,7 +74,7 @@ namespace Kotova.Test1.ClientSide
                 throw new ArgumentNullException(nameof(userName));
             }
             string url = DownloadInstructionForUserURL;
-            string url2 = DownloadListsOfFilesURL;
+            string url2 = DownloadListsOfFilesURL; // УБЕРИ ЭТО И УБЕРИ ЭТО ЖЕ НА СЕРВЕРЕ!
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -123,12 +124,29 @@ namespace Kotova.Test1.ClientSide
             }
             Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
             int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
-
             List<string> listOfPath = new List<string>();
             foreach (var listOfPaths in listsOfPaths_global)
             {
                 if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
                 {
+                    if (listOfPaths[db_filePath] == null)
+                    {
+                        if (selectedDict[db_typeOfInstruction].ToString() == "0") // Проверка что мы входим в вводный инструктаж только!
+                        {
+                            _IsInstructionSelected = true;
+                            PassInstruction.Enabled = true;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!"); 
+                            PassInstruction.Enabled = false;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+                            
+                    }
                     FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
                 }
             }
@@ -146,6 +164,11 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
             Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString()); //most likely suppress it, cause its not null.
+            if (selectedDict[db_typeOfInstruction].ToString() == "0")
+            {
+                MessageBox.Show("Ты не должен был входить в эту строчку, исправляй (HyperLinkForInstructionsFolder!");
+                return;
+            }
             string? pathStr = selectedDict[dB_pos_users_pathToInstruction].ToString();
 
             if (pathStr is null || pathStr.Length == 0)

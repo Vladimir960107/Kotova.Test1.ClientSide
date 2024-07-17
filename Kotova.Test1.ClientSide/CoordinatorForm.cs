@@ -28,7 +28,7 @@ namespace Kotova.Test1.ClientSide
         private Login_Russian? _loginForm;
         private string? _userName;
         private string? selectedFolderPath;
-        List<string>? rolesOfUsers = new List<string>();
+        List<InstructionDto>? namesOfUsersOfInitInstr = new List<InstructionDto>();
         public CoordinatorForm()
         {
             InitializeComponent();
@@ -195,7 +195,6 @@ namespace Kotova.Test1.ClientSide
             string roleName = RoleOfNewcomerListBox.SelectedItem.ToString();
 
             string isEmployeeRequireInitInstr = AddInitialInstructionToNewcomer.Checked.ToString();
-            MessageBox.Show(isEmployeeRequireInitInstr);
             try
             {
                 string token = _loginForm._jwtToken;
@@ -206,7 +205,7 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("Employee inserted into DB", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     try
                     {
-                        response = await GetLoginPassword(new List<string> { newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text, roleName , isEmployeeRequireInitInstr}, token);
+                        response = await GetLoginPassword(new List<string> { newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text, roleName, isEmployeeRequireInitInstr }, token);
                         if (response.IsSuccessStatusCode)
                         {
 
@@ -273,7 +272,7 @@ namespace Kotova.Test1.ClientSide
         {
             using (HttpClient client = new HttpClient())
             {
-                string url = InsertNewEmployeeURL; 
+                string url = InsertNewEmployeeURL;
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var json = JsonConvert.SerializeObject(employee);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
@@ -381,7 +380,7 @@ namespace Kotova.Test1.ClientSide
             this.Dispose(true);
         }
 
-        private async void buttonSyncManuallyInitialInstrWithDB_Click(object sender, EventArgs e)
+        private async void buttonSyncNamesForInitialInstrWithDB_Click(object sender, EventArgs e)
         {
             string url = DownloadNamesForInitialInstrUrl;
             NamesOfPeopleForInitialInstr.Items.Clear();
@@ -394,14 +393,46 @@ namespace Kotova.Test1.ClientSide
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    rolesOfUsers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonResponse); //If you want - check that returned not empty List
-                    if (rolesOfUsers == null || rolesOfUsers.Count == 0)
+
+                    // Log the JSON response
+                    Console.WriteLine("JSON Response: " + jsonResponse);
+
+                    // Parse the JSON response
+                    var jsonDocument = JsonDocument.Parse(jsonResponse);
+                    var root = jsonDocument.RootElement;
+
+                    // Extract the "$values" array
+                    if (root.TryGetProperty("$values", out JsonElement valuesElement))
                     {
-                        MessageBox.Show("Все люди прошли вводные инструктажи!");
+                        // Deserialize the "$values" array to a list of InstructionDto
+                        var options = new JsonSerializerOptions
+                        {
+                            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                            WriteIndented = true
+                        };
+
+                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionDto>>(valuesElement.GetRawText(), options);
+                        namesOfUsersOfInitInstr = result;
+                        // Check and display the results
+                        if (result == null || result.Count == 0)
+                        {
+                            MessageBox.Show("Все люди прошли вводные инструктажи!");
+                        }
+                        else
+                        {
+                            var itemsToAdd = result.Select(e => $"{e.Name}").ToList();
+                            foreach (var item in itemsToAdd)
+                            {
+                                NamesOfPeopleForInitialInstr.Items.Add(item);
+                            }
+                        }
                     }
-                    NamesOfPeopleForInitialInstr.Items.AddRange(rolesOfUsers.ToArray());
+                    else
+                    {
+                        Console.WriteLine("JSON does not contain '$values' key");
+                        MessageBox.Show("Ошибка: JSON не содержит ключа '$values'");
+                    }
                 }
             }
             catch (HttpRequestException ex)
@@ -409,7 +440,18 @@ namespace Kotova.Test1.ClientSide
                 // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
             }
+            catch (System.Text.Json.JsonException jsonEx)
+            {
+                // Handle JSON exceptions
+                MessageBox.Show($"JSON Error: {jsonEx.Message}");
+            }
         }
+
+        private void NamesOfPeopleForInitialInstr_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
 
 
 
