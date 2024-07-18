@@ -61,14 +61,16 @@
             PassInstruction = new CheckBox();
             HyperLinkForInstructionsFolder = new Button();
             label8 = new Label();
+            tabPage4 = new TabPage();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
-            tabPage4 = new TabPage();
+            TestButtonForInstructions = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
             tabPage3.SuspendLayout();
+            tabPage4.SuspendLayout();
             SuspendLayout();
             // 
             // submitInstructionToPeople
@@ -421,6 +423,17 @@
             label8.TabIndex = 36;
             label8.Text = "Лист непройденных инструктажей:";
             // 
+            // tabPage4
+            // 
+            tabPage4.Controls.Add(TestButtonForInstructions);
+            tabPage4.Location = new Point(4, 24);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Padding = new Padding(3);
+            tabPage4.Size = new Size(667, 374);
+            tabPage4.TabIndex = 3;
+            tabPage4.Text = "Контроль прохождения инстр.";
+            tabPage4.UseVisualStyleBackColor = true;
+            // 
             // LogOutButton
             // 
             LogOutButton.Location = new Point(928, 47);
@@ -441,15 +454,15 @@
             consoleTextBox.Size = new Size(340, 305);
             consoleTextBox.TabIndex = 35;
             // 
-            // tabPage4
+            // TestButtonForInstructions
             // 
-            tabPage4.Location = new Point(4, 24);
-            tabPage4.Name = "tabPage4";
-            tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(667, 374);
-            tabPage4.TabIndex = 3;
-            tabPage4.Text = "Контроль прохождения инстр.";
-            tabPage4.UseVisualStyleBackColor = true;
+            TestButtonForInstructions.Location = new Point(192, 20);
+            TestButtonForInstructions.Name = "TestButtonForInstructions";
+            TestButtonForInstructions.Size = new Size(240, 23);
+            TestButtonForInstructions.TabIndex = 0;
+            TestButtonForInstructions.Text = "Пока что тестовая кнопка";
+            TestButtonForInstructions.UseVisualStyleBackColor = true;
+            TestButtonForInstructions.Click += TestButtonForInstructions_Click;
             // 
             // ChiefForm
             // 
@@ -470,6 +483,7 @@
             ChiefTabControl.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
+            tabPage4.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -511,5 +525,6 @@
         private TreeView treeView1;
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private TabPage tabPage4;
+        private Button TestButtonForInstructions;
     }
 }

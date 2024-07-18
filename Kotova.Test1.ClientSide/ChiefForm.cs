@@ -27,6 +27,7 @@ namespace Kotova.Test1.ClientSide
         const string CheckStatusOfChiefOnServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/status";
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
         const string DownloadListsOfFilesURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_lists_of_files_for_user";
+        const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
@@ -405,7 +406,7 @@ namespace Kotova.Test1.ClientSide
             myTimer.Stop();
             myTimer.Tick -= new EventHandler(TimerEventProcessor);
             await PingToServerThatChiefIsOffline();
-            
+
         }
 
         private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
@@ -913,6 +914,39 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to open file: {ex.Message}");
+            }
+        }
+
+        private async void TestButtonForInstructions_Click(object sender, EventArgs e)
+        {
+            try
+            {
+
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync(getNotPassedInstructionURL);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+
+                        MessageBox.Show("Всё пройден успешно", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Провал. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Exception handling for networking errors, etc.
+                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

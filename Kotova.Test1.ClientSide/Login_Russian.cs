@@ -122,13 +122,13 @@ namespace Kotova.Test1.ClientSide
         private void DarkThemeItem_Click(object sender, EventArgs e)
         {
             // Logic for enabling dark theme
-            MessageBox.Show("Dark Theme Enabled");
+            MessageBox.Show("Dark Theme включена.");
         }
 
         private void LightThemeItem_Click(object sender, EventArgs e)
         {
             // Logic for enabling light theme
-            MessageBox.Show("Light Theme Enabled");
+            MessageBox.Show("Light Theme включена.");
         }
 
         private void pictureBox5_Click(object sender, EventArgs e)
