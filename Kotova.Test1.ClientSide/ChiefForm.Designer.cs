@@ -30,9 +30,7 @@
         {
             components = new System.ComponentModel.Container();
             submitInstructionToPeople = new Button();
-            label3 = new Label();
             SyncNamesWithDB = new Button();
-            ListBoxNamesOfPeople = new ListBox();
             checkBoxIsForDrivers = new CheckBox();
             tabPage2 = new TabPage();
             treeView1 = new TreeView();
@@ -48,6 +46,7 @@
             typeOfInstructionListBox = new ListBox();
             testButton = new Button();
             tabPage1 = new TabPage();
+            checkedListBoxNamesOfPeople = new CheckedListBox();
             ListOfInstructions = new ListBox();
             buttonSyncManualyInstrWithDB = new Button();
             label5 = new Label();
@@ -62,15 +61,20 @@
             HyperLinkForInstructionsFolder = new Button();
             label8 = new Label();
             tabPage4 = new TabPage();
+            dataGridViewPeopleThatNotPassedInstr = new DataGridView();
+            listBoxOfNotPassedByInstructions = new ListBox();
+            TestButtonForInstructions = new Button();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
-            TestButtonForInstructions = new Button();
+            Names = new DataGridViewTextBoxColumn();
+            Passed = new DataGridViewTextBoxColumn();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).BeginInit();
             SuspendLayout();
             // 
             // submitInstructionToPeople
@@ -84,15 +88,6 @@
             submitInstructionToPeople.UseVisualStyleBackColor = true;
             submitInstructionToPeople.Click += submitInstructionToPeople_Click;
             // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(304, 170);
-            label3.Name = "label3";
-            label3.Size = new Size(310, 15);
-            label3.TabIndex = 27;
-            label3.Text = "Чтобы отменить выбор - ctrl+ЛКМ(левый клик мыши)";
-            // 
             // SyncNamesWithDB
             // 
             SyncNamesWithDB.Location = new Point(349, 59);
@@ -103,18 +98,6 @@
             SyncNamesWithDB.Text = "Синхронизировать ФИО с Базой Данных";
             SyncNamesWithDB.UseVisualStyleBackColor = true;
             SyncNamesWithDB.Click += SyncNamesWithDB_Click;
-            // 
-            // ListBoxNamesOfPeople
-            // 
-            ListBoxNamesOfPeople.FormattingEnabled = true;
-            ListBoxNamesOfPeople.ItemHeight = 15;
-            ListBoxNamesOfPeople.Items.AddRange(new object[] { "Список ФИО" });
-            ListBoxNamesOfPeople.Location = new Point(304, 85);
-            ListBoxNamesOfPeople.Margin = new Padding(3, 2, 3, 2);
-            ListBoxNamesOfPeople.Name = "ListBoxNamesOfPeople";
-            ListBoxNamesOfPeople.SelectionMode = SelectionMode.MultiExtended;
-            ListBoxNamesOfPeople.Size = new Size(346, 79);
-            ListBoxNamesOfPeople.TabIndex = 21;
             // 
             // checkBoxIsForDrivers
             // 
@@ -265,12 +248,11 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(checkedListBoxNamesOfPeople);
             tabPage1.Controls.Add(ListOfInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
             tabPage1.Controls.Add(submitInstructionToPeople);
             tabPage1.Controls.Add(label5);
-            tabPage1.Controls.Add(label3);
-            tabPage1.Controls.Add(ListBoxNamesOfPeople);
             tabPage1.Controls.Add(SyncNamesWithDB);
             tabPage1.Controls.Add(label4);
             tabPage1.Controls.Add(Download_file_excel);
@@ -283,6 +265,15 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Обработка инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // checkedListBoxNamesOfPeople
+            // 
+            checkedListBoxNamesOfPeople.FormattingEnabled = true;
+            checkedListBoxNamesOfPeople.HorizontalScrollbar = true;
+            checkedListBoxNamesOfPeople.Location = new Point(325, 86);
+            checkedListBoxNamesOfPeople.Name = "checkedListBoxNamesOfPeople";
+            checkedListBoxNamesOfPeople.Size = new Size(289, 94);
+            checkedListBoxNamesOfPeople.TabIndex = 34;
             // 
             // ListOfInstructions
             // 
@@ -425,6 +416,8 @@
             // 
             // tabPage4
             // 
+            tabPage4.Controls.Add(dataGridViewPeopleThatNotPassedInstr);
+            tabPage4.Controls.Add(listBoxOfNotPassedByInstructions);
             tabPage4.Controls.Add(TestButtonForInstructions);
             tabPage4.Location = new Point(4, 24);
             tabPage4.Name = "tabPage4";
@@ -433,6 +426,36 @@
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Контроль прохождения инстр.";
             tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // dataGridViewPeopleThatNotPassedInstr
+            // 
+            dataGridViewPeopleThatNotPassedInstr.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewPeopleThatNotPassedInstr.Columns.AddRange(new DataGridViewColumn[] { Names, Passed });
+            dataGridViewPeopleThatNotPassedInstr.Location = new Point(324, 59);
+            dataGridViewPeopleThatNotPassedInstr.Name = "dataGridViewPeopleThatNotPassedInstr";
+            dataGridViewPeopleThatNotPassedInstr.RowTemplate.Height = 25;
+            dataGridViewPeopleThatNotPassedInstr.Size = new Size(322, 184);
+            dataGridViewPeopleThatNotPassedInstr.TabIndex = 2;
+            // 
+            // listBoxOfNotPassedByInstructions
+            // 
+            listBoxOfNotPassedByInstructions.FormattingEnabled = true;
+            listBoxOfNotPassedByInstructions.ItemHeight = 15;
+            listBoxOfNotPassedByInstructions.Location = new Point(25, 59);
+            listBoxOfNotPassedByInstructions.Name = "listBoxOfNotPassedByInstructions";
+            listBoxOfNotPassedByInstructions.Size = new Size(280, 184);
+            listBoxOfNotPassedByInstructions.TabIndex = 1;
+            listBoxOfNotPassedByInstructions.SelectedIndexChanged += listBoxOfNotPassedByInstructions_SelectedIndexChanged;
+            // 
+            // TestButtonForInstructions
+            // 
+            TestButtonForInstructions.Location = new Point(192, 20);
+            TestButtonForInstructions.Name = "TestButtonForInstructions";
+            TestButtonForInstructions.Size = new Size(240, 23);
+            TestButtonForInstructions.TabIndex = 0;
+            TestButtonForInstructions.Text = "Пока что тестовая кнопка";
+            TestButtonForInstructions.UseVisualStyleBackColor = true;
+            TestButtonForInstructions.Click += TestButtonForInstructions_Click;
             // 
             // LogOutButton
             // 
@@ -454,15 +477,15 @@
             consoleTextBox.Size = new Size(340, 305);
             consoleTextBox.TabIndex = 35;
             // 
-            // TestButtonForInstructions
+            // Names
             // 
-            TestButtonForInstructions.Location = new Point(192, 20);
-            TestButtonForInstructions.Name = "TestButtonForInstructions";
-            TestButtonForInstructions.Size = new Size(240, 23);
-            TestButtonForInstructions.TabIndex = 0;
-            TestButtonForInstructions.Text = "Пока что тестовая кнопка";
-            TestButtonForInstructions.UseVisualStyleBackColor = true;
-            TestButtonForInstructions.Click += TestButtonForInstructions_Click;
+            Names.HeaderText = "ФИО";
+            Names.Name = "Names";
+            // 
+            // Passed
+            // 
+            Passed.HeaderText = "Пройден ли инструктаж?";
+            Passed.Name = "Passed";
             // 
             // ChiefForm
             // 
@@ -484,15 +507,14 @@
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             tabPage4.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
         private Button submitInstructionToPeople;
-        private Label label3;
         private Button SyncNamesWithDB;
-        private ListBox ListBoxNamesOfPeople;
         private CheckBox checkBoxIsForDrivers;
         private TabPage tabPage2;
         private Label label1;
@@ -526,5 +548,10 @@
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private TabPage tabPage4;
         private Button TestButtonForInstructions;
+        private ListBox listBoxOfNotPassedByInstructions;
+        private CheckedListBox checkedListBoxNamesOfPeople;
+        private DataGridView dataGridViewPeopleThatNotPassedInstr;
+        private DataGridViewTextBoxColumn Names;
+        private DataGridViewTextBoxColumn Passed;
     }
 }

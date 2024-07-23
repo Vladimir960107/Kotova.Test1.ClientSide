@@ -38,6 +38,7 @@ namespace Kotova.Test1.ClientSide
 
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
+        private List<InstructionForChief> instructionForChiefs_global;
 
         static string? selectedFolderPath = null;
         private Login_Russian? _loginForm;
@@ -56,6 +57,8 @@ namespace Kotova.Test1.ClientSide
             myTimer.Interval = 30000;  // 30 seconds
             myTimer.Tick += new EventHandler(TimerEventProcessor);
             myTimer.Start();
+
+
         }
 
         private async void TimerEventProcessor(Object myObject, EventArgs myEventArgs)
@@ -255,7 +258,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 SyncNamesWithDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
-                ListBoxNamesOfPeople.Items.Clear();
+                checkedListBoxNamesOfPeople.Items.Clear();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -275,7 +278,8 @@ namespace Kotova.Test1.ClientSide
                         }
                         string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
 
-                        ListBoxNamesOfPeople.Items.AddRange(resultArray);
+                        //ListBoxNamesOfPeople.Items.AddRange(resultArray);
+                        checkedListBoxNamesOfPeople.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
                         //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -303,7 +307,9 @@ namespace Kotova.Test1.ClientSide
         private async void submitInstructionToPeople_Click(object sender, EventArgs e)
         {
             submitInstructionToPeople.Enabled = false;
-            var listOfNames = ListBoxNamesOfPeople.SelectedItems;
+            var listOfNames = checkedListBoxNamesOfPeople.SelectedItems;
+            //var listOfNames = ListBoxNamesOfPeople.SelectedItems;
+
             List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
             if (listOfNames.Count == 0)
             {
@@ -922,6 +928,8 @@ namespace Kotova.Test1.ClientSide
             try
             {
 
+                dataGridViewPeopleThatNotPassedInstr.Rows.Clear();
+                listBoxOfNotPassedByInstructions.Items.Clear();
                 using (var httpClient = new HttpClient())
                 {
                     string jwtToken = _loginForm._jwtToken;
@@ -929,11 +937,22 @@ namespace Kotova.Test1.ClientSide
 
                     var response = await httpClient.GetAsync(getNotPassedInstructionURL);
 
+
                     if (response.IsSuccessStatusCode)
                     {
-
-                        MessageBox.Show("Всё пройден успешно", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+                        MessageBox.Show("Синхронизация с базой данных непройденных инструктажей успешно", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChief>>(jsonResponse);
+                        if (result.Count == 0)
+                        {
+                            MessageBox.Show("Похоже все инструктажи всеми пройдены!");
+                            return;
+                        }
+                        instructionForChiefs_global = result;
+                        List<string> namesOfInstructions = result
+                            .Select(i => $"[{i.InstructionId}]: {i.CauseOfInstruction}")
+                            .ToList();
+                        listBoxOfNotPassedByInstructions.Items.AddRange(namesOfInstructions.ToArray());
                     }
                     else
                     {
@@ -947,6 +966,54 @@ namespace Kotova.Test1.ClientSide
             {
                 // Exception handling for networking errors, etc.
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void listBoxOfNotPassedByInstructions_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            dataGridViewPeopleThatNotPassedInstr.Rows.Clear();
+            var instructionString = listBoxOfNotPassedByInstructions.SelectedItem.ToString();
+            string pattern = @"^\[(\d+)\]:\s(.+)$";
+            if (Regex.IsMatch(instructionString, pattern))
+            {
+                Match match = Regex.Match(instructionString, pattern);
+                if (match.Success)
+                {
+                    int instructionId = int.Parse(match.Groups[1].Value);
+                    string causeOfInstruction = match.Groups[2].Value;
+
+                    // Find the corresponding InstructionForChief object
+                    var matchingInstruction = instructionForChiefs_global.FirstOrDefault(i =>
+                        i.InstructionId == instructionId &&
+                        i.CauseOfInstruction == causeOfInstruction);
+
+                    
+
+
+                    if (matchingInstruction != null)
+                    {
+                        foreach (var person in matchingInstruction.Persons)
+                        {
+                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(person.PersonnelNumber, person.Passed?"Да":"Нет");
+                            if (!person.Passed)
+                            {
+                                dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;
+                            }
+                            else
+                            {
+                                dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Green;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("No matching instruction found.");
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Invalid format.");
             }
         }
     }
