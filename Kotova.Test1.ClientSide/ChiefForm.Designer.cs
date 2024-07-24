@@ -62,13 +62,13 @@
             label8 = new Label();
             tabPage4 = new TabPage();
             dataGridViewPeopleThatNotPassedInstr = new DataGridView();
+            Names = new DataGridViewTextBoxColumn();
+            Passed = new DataGridViewTextBoxColumn();
             listBoxOfNotPassedByInstructions = new ListBox();
             TestButtonForInstructions = new Button();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
-            Names = new DataGridViewTextBoxColumn();
-            Passed = new DataGridViewTextBoxColumn();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -126,7 +126,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(667, 374);
+            tabPage2.Size = new Size(667, 588);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
@@ -208,7 +208,7 @@
             // buttonCreateInstruction
             // 
             buttonCreateInstruction.Enabled = false;
-            buttonCreateInstruction.Location = new Point(199, 306);
+            buttonCreateInstruction.Location = new Point(217, 523);
             buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonCreateInstruction.Name = "buttonCreateInstruction";
             buttonCreateInstruction.Size = new Size(219, 40);
@@ -261,7 +261,7 @@
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(667, 374);
+            tabPage1.Size = new Size(667, 588);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Обработка инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
@@ -353,7 +353,7 @@
             ChiefTabControl.Location = new Point(12, 23);
             ChiefTabControl.Name = "ChiefTabControl";
             ChiefTabControl.SelectedIndex = 0;
-            ChiefTabControl.Size = new Size(675, 402);
+            ChiefTabControl.Size = new Size(675, 616);
             ChiefTabControl.TabIndex = 33;
             ChiefTabControl.SelectedIndexChanged += ChiefTabControl_SelectedIndexChanged;
             // 
@@ -437,6 +437,16 @@
             dataGridViewPeopleThatNotPassedInstr.Size = new Size(322, 184);
             dataGridViewPeopleThatNotPassedInstr.TabIndex = 2;
             // 
+            // Names
+            // 
+            Names.HeaderText = "ФИО";
+            Names.Name = "Names";
+            // 
+            // Passed
+            // 
+            Passed.HeaderText = "Пройден ли инструктаж?";
+            Passed.Name = "Passed";
+            // 
             // listBoxOfNotPassedByInstructions
             // 
             listBoxOfNotPassedByInstructions.FormattingEnabled = true;
@@ -474,24 +484,14 @@
             consoleTextBox.Name = "consoleTextBox";
             consoleTextBox.ReadOnly = true;
             consoleTextBox.ScrollBars = ScrollBars.Both;
-            consoleTextBox.Size = new Size(340, 305);
+            consoleTextBox.Size = new Size(340, 529);
             consoleTextBox.TabIndex = 35;
-            // 
-            // Names
-            // 
-            Names.HeaderText = "ФИО";
-            Names.Name = "Names";
-            // 
-            // Passed
-            // 
-            Passed.HeaderText = "Пройден ли инструктаж?";
-            Passed.Name = "Passed";
             // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1085, 450);
+            ClientSize = new Size(1102, 765);
             Controls.Add(testButton);
             Controls.Add(consoleTextBox);
             Controls.Add(LogOutButton);

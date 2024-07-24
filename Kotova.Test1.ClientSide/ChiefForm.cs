@@ -26,7 +26,6 @@ namespace Kotova.Test1.ClientSide
         const string PingToServerIsOfflineURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping-is-offline";
         const string CheckStatusOfChiefOnServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/status";
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
-        const string DownloadListsOfFilesURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_lists_of_files_for_user";
         const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
@@ -464,7 +463,6 @@ namespace Kotova.Test1.ClientSide
                 throw new ArgumentNullException(nameof(userName));
             }
             string url = DownloadInstructionForUserURL;
-            string url2 = DownloadListsOfFilesURL;
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -994,7 +992,7 @@ namespace Kotova.Test1.ClientSide
                     {
                         foreach (var person in matchingInstruction.Persons)
                         {
-                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(person.PersonnelNumber, person.Passed?"Да":"Нет");
+                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(person.PersonName, person.Passed?"Да":"Нет");
                             if (!person.Passed)
                             {
                                 dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;

@@ -55,7 +55,7 @@
             NamesOfPeopleForInitialInstr = new ListBox();
             datePickerEnd = new DateTimePicker();
             label6 = new Label();
-            tabControl1 = new TabControl();
+            CoordinatorTabControl = new TabControl();
             tabPage3 = new TabPage();
             AddInitialInstructionToNewcomer = new CheckBox();
             label25 = new Label();
@@ -80,6 +80,12 @@
             dateOfBirthDateTimePicker = new DateTimePicker();
             employeesPositionTextBox = new TextBox();
             employeeFullNameTextBox = new TextBox();
+            tabPage4 = new TabPage();
+            FilesOfInstructionCheckedListBox = new CheckedListBox();
+            PassInstructionAsUser = new CheckBox();
+            ListOfInstructionsForUser = new ListBox();
+            HyperLinkForInstructionsFolder = new Button();
+            label10 = new Label();
             tabPage5 = new TabPage();
             listBox5 = new ListBox();
             label16 = new Label();
@@ -96,8 +102,9 @@
             button1 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
-            tabControl1.SuspendLayout();
+            CoordinatorTabControl.SuspendLayout();
             tabPage3.SuspendLayout();
+            tabPage4.SuspendLayout();
             tabPage5.SuspendLayout();
             SuspendLayout();
             // 
@@ -358,18 +365,19 @@
             label6.TabIndex = 14;
             label6.Text = "Дата проведения инструктажа";
             // 
-            // tabControl1
+            // CoordinatorTabControl
             // 
-            tabControl1.Controls.Add(tabPage1);
-            tabControl1.Controls.Add(tabPage2);
-            tabControl1.Controls.Add(tabPage3);
-            tabControl1.Controls.Add(tabPage5);
-            tabControl1.Location = new Point(55, 12);
-            tabControl1.Name = "tabControl1";
-            tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(989, 426);
-            tabControl1.TabIndex = 22;
-            tabControl1.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
+            CoordinatorTabControl.Controls.Add(tabPage1);
+            CoordinatorTabControl.Controls.Add(tabPage2);
+            CoordinatorTabControl.Controls.Add(tabPage3);
+            CoordinatorTabControl.Controls.Add(tabPage4);
+            CoordinatorTabControl.Controls.Add(tabPage5);
+            CoordinatorTabControl.Location = new Point(55, 12);
+            CoordinatorTabControl.Name = "CoordinatorTabControl";
+            CoordinatorTabControl.SelectedIndex = 0;
+            CoordinatorTabControl.Size = new Size(989, 426);
+            CoordinatorTabControl.TabIndex = 22;
+            CoordinatorTabControl.SelectedIndexChanged += CoordinatorTabControl_SelectedIndexChanged;
             // 
             // tabPage3
             // 
@@ -601,6 +609,74 @@
             employeeFullNameTextBox.Size = new Size(209, 23);
             employeeFullNameTextBox.TabIndex = 0;
             // 
+            // tabPage4
+            // 
+            tabPage4.Controls.Add(FilesOfInstructionCheckedListBox);
+            tabPage4.Controls.Add(PassInstructionAsUser);
+            tabPage4.Controls.Add(ListOfInstructionsForUser);
+            tabPage4.Controls.Add(HyperLinkForInstructionsFolder);
+            tabPage4.Controls.Add(label10);
+            tabPage4.Location = new Point(4, 24);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Padding = new Padding(3);
+            tabPage4.Size = new Size(981, 398);
+            tabPage4.TabIndex = 5;
+            tabPage4.Text = "Прохождение инструктажей";
+            tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // FilesOfInstructionCheckedListBox
+            // 
+            FilesOfInstructionCheckedListBox.FormattingEnabled = true;
+            FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
+            FilesOfInstructionCheckedListBox.Location = new Point(301, 82);
+            FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
+            FilesOfInstructionCheckedListBox.Size = new Size(195, 220);
+            FilesOfInstructionCheckedListBox.TabIndex = 44;
+            FilesOfInstructionCheckedListBox.ItemCheck += FilesOfInstructionCheckedListBox_ItemCheck;
+            // 
+            // PassInstructionAsUser
+            // 
+            PassInstructionAsUser.AutoSize = true;
+            PassInstructionAsUser.Enabled = false;
+            PassInstructionAsUser.Location = new Point(63, 322);
+            PassInstructionAsUser.Name = "PassInstructionAsUser";
+            PassInstructionAsUser.Size = new Size(245, 19);
+            PassInstructionAsUser.TabIndex = 43;
+            PassInstructionAsUser.Text = "Подтверждаю, что инструктаж пройден";
+            PassInstructionAsUser.UseVisualStyleBackColor = true;
+            PassInstructionAsUser.CheckedChanged += PassInstruction_CheckedChanged;
+            // 
+            // ListOfInstructionsForUser
+            // 
+            ListOfInstructionsForUser.FormattingEnabled = true;
+            ListOfInstructionsForUser.ItemHeight = 15;
+            ListOfInstructionsForUser.Location = new Point(38, 72);
+            ListOfInstructionsForUser.Margin = new Padding(3, 2, 3, 2);
+            ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
+            ListOfInstructionsForUser.Size = new Size(244, 229);
+            ListOfInstructionsForUser.TabIndex = 40;
+            ListOfInstructionsForUser.SelectedValueChanged += InstructionsToPass_SelectedIndexChanged;
+            // 
+            // HyperLinkForInstructionsFolder
+            // 
+            HyperLinkForInstructionsFolder.Enabled = false;
+            HyperLinkForInstructionsFolder.Location = new Point(511, 73);
+            HyperLinkForInstructionsFolder.Name = "HyperLinkForInstructionsFolder";
+            HyperLinkForInstructionsFolder.Size = new Size(111, 229);
+            HyperLinkForInstructionsFolder.TabIndex = 42;
+            HyperLinkForInstructionsFolder.Text = "Гиперссылка на инструктаж";
+            HyperLinkForInstructionsFolder.UseVisualStyleBackColor = true;
+            HyperLinkForInstructionsFolder.Click += HyperLinkForInstructionsFolder_Click;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(63, 30);
+            label10.Name = "label10";
+            label10.Size = new Size(201, 15);
+            label10.TabIndex = 41;
+            label10.Text = "Лист непройденных инструктажей:";
+            // 
             // tabPage5
             // 
             tabPage5.Controls.Add(listBox5);
@@ -741,7 +817,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1190, 543);
             Controls.Add(button1);
-            Controls.Add(tabControl1);
+            Controls.Add(CoordinatorTabControl);
             Name = "CoordinatorForm";
             Text = "Coordinator";
             FormClosed += CoordinatorForm_FormClosed;
@@ -749,9 +825,11 @@
             tabPage2.PerformLayout();
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
-            tabControl1.ResumeLayout(false);
+            CoordinatorTabControl.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
+            tabPage4.ResumeLayout(false);
+            tabPage4.PerformLayout();
             tabPage5.ResumeLayout(false);
             tabPage5.PerformLayout();
             ResumeLayout(false);
@@ -763,7 +841,7 @@
         private TabPage tabPage1;
         private DateTimePicker datePickerEnd;
         private Label label6;
-        private TabControl tabControl1;
+        private TabControl CoordinatorTabControl;
         private Button buttonSyncManualyInitialInstrWithDB;
         private TabPage tabPage3;
         private TextBox employeesPositionTextBox;
@@ -824,5 +902,11 @@
         private ListBox RoleOfNewcomerListBox;
         private CheckBox PassInstruction;
         private CheckBox AddInitialInstructionToNewcomer;
+        private TabPage tabPage4;
+        private CheckedListBox FilesOfInstructionCheckedListBox;
+        private CheckBox PassInstructionAsUser;
+        private ListBox ListOfInstructionsForUser;
+        private Button HyperLinkForInstructionsFolder;
+        private Label label10;
     }
 }
