@@ -54,33 +54,6 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
         }
 
-        private async void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (CoordinatorTabControl.SelectedTab.Text == "Данные сотрудника")
-            {
-                if (await refreshDepartmentsFromDB(DepartmentForNewcomer))
-                {
-                    if (await refreshRolesFromDB(RoleOfNewcomerListBox))
-                    {
-                        MessageBox.Show("Отделы и роли обновились успешно.");
-                        return;
-
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Отделы обновились, но роли нет! Что-то не так. Проверь tabControl1_SelectedIndexChanged");
-                    }
-                    return;
-
-                }
-                else
-                {
-                    MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
-                }
-
-            }
-        }
-
         private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer)
         {
             string url = DownloadDepartmentsForUserURL;
@@ -533,7 +506,28 @@ namespace Kotova.Test1.ClientSide
                 {
                     MessageBox.Show("All the instructions passed!");
                 }
+            }
+            if (CoordinatorTabControl.SelectedTab.Text == "Данные сотрудника")
+            {
+                if (await refreshDepartmentsFromDB(DepartmentForNewcomer))
+                {
+                    if (await refreshRolesFromDB(RoleOfNewcomerListBox))
+                    {
+                        MessageBox.Show("Отделы и роли обновились успешно.");
+                        return;
 
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Отделы обновились, но роли нет! Что-то не так. Проверь tabControl1_SelectedIndexChanged");
+                    }
+                    return;
+
+                }
+                else
+                {
+                    MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
+                }
 
             }
         }
@@ -734,7 +728,7 @@ namespace Kotova.Test1.ClientSide
                     {
                         MessageBox.Show("Everyting is fine, updating the listbox of instructions");
                         ListOfInstructionsForUser.Items.Clear();
-                        DownloadInstructionsForUserFromServer(_userName);
+                        await DownloadInstructionsForUserFromServer(_userName);
                     }
                 }
             }

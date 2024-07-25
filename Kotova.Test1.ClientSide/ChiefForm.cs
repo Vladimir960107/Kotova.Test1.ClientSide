@@ -162,43 +162,141 @@ namespace Kotova.Test1.ClientSide
         private async void buttonCreateInstruction_Click(object sender, EventArgs e)
         {
             buttonCreateInstruction.Enabled = false;
-            if (selectedFolderPath is null)
+            var listOfNames = checkedListBoxNamesOfPeopleCreatingInstr.SelectedItems;
+
+            List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
+            if (listOfNames.Count == 0)
             {
-                MessageBox.Show("Путь до инструктажа не выбран!");
+                MessageBox.Show("Люди не выбраны!");
                 buttonCreateInstruction.Enabled = true;
                 return;
             }
-            DateTime startTime = DateTime.Now;
-            DateTime endDate = datePickerEnd.Value.Date;
-            if (endDate <= startTime)
+
+            FullCustomInstruction? fullCustomInstruction = await CreateInstructionInternal();
+
+           
+
+            if (fullCustomInstruction is null) 
             {
-                MessageBox.Show("До какой даты должно быть больше текущего времени!");
-                buttonCreateInstruction.Enabled = true;
                 return;
             }
-            if (typeOfInstructionListBox.SelectedIndex == -1)
+
+            string? causeOfCreatedInstruction = fullCustomInstruction._instruction.cause_of_instruction;
+            // Дальше по сути идёт функция назначения выбранному инструктажу людей. 
+            buttonCreateInstruction.Enabled = false;
+
+            if (causeOfCreatedInstruction is null)
             {
-                buttonCreateInstruction.Enabled = true;
-                MessageBox.Show("Не выбран тип инструктажа!");
+                MessageBox.Show("Причина инструктажа - null, инструктаж не назначен людям");
                 return;
             }
-            List<string> paths = GetSelectedFilePaths(treeView1);
+
+            try
+            {
+                foreach (var item in listOfNames)
+                {
+                    listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                }
+                
+                string instructionNameString = causeOfCreatedInstruction.ToString();
+                InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
+                string jsonData = JsonConvert.SerializeObject(package);
+                string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                try
+                {
+                    using (var httpClient = new HttpClient())
+                    {
+                        string jwtToken = _loginForm._jwtToken;
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                        // Set the URI of your server endpoint
+                        var uri = new Uri(urlSubmitInstructionToPeople);
+
+                        // Prepare the content to send
+                        var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+
+                        // Send a POST request with the serialized JSON content
+                        var response = await httpClient.PostAsync(uri, content);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            MessageBox.Show("Data successfully sent to the server and Instructions added to User.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            var errorMessage = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred while sending data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    submitInstructionToPeople.Enabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Some error occurred during Submit:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                submitInstructionToPeople.Enabled = true;
+            }
+        }
+        private async Task<FullCustomInstruction?> CreateInstructionInternal()
+        {
+            try
+            {
+                buttonCreateInstruction.Enabled = false;
+                if (selectedFolderPath is null)
+                {
+                    MessageBox.Show("Путь до инструктажа не выбран!");
+                    buttonCreateInstruction.Enabled = true;
+                    return null;
+                }
+                DateTime startTime = DateTime.Now;
+                DateTime endDate = datePickerEnd.Value.Date;
+                if (endDate <= startTime)
+                {
+                    MessageBox.Show("До какой даты должно быть больше текущего времени!");
+                    buttonCreateInstruction.Enabled = true;
+                    return null;
+                }
+                if (typeOfInstructionListBox.SelectedIndex == -1)
+                {
+                    buttonCreateInstruction.Enabled = true;
+                    MessageBox.Show("Не выбран тип инструктажа!");
+                    return null;
+                }
+                List<string> paths = GetSelectedFilePaths(treeView1);
 
 
-            bool isForDrivers = checkBoxIsForDrivers.Checked;
-            int bitValueIsForDrivers = isForDrivers ? 1 : 0;
-            string causeOfInstruction = InstructionTextBox.Text;
-            Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox!
-            Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
-            FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
-            string json = JsonConvert.SerializeObject(fullCustomInstr);
-            HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
-            await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
-            buttonCreateInstruction.Enabled = true;
-            InstructionTextBox.Text = "";
-            typeOfInstructionListBox.SelectedIndex = -1;
-            selectedFolderPath = null;
-            PathToFolderOfInstruction.Text = "Путь не выбран";
+                bool isForDrivers = checkBoxIsForDrivers.Checked;
+                int bitValueIsForDrivers = isForDrivers ? 1 : 0;
+                string causeOfInstruction = InstructionTextBox.Text;
+                Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox!
+                Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
+                FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
+                string json = JsonConvert.SerializeObject(fullCustomInstr);
+                HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
+                await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
+                buttonCreateInstruction.Enabled = true;
+                InstructionTextBox.Text = "";
+                typeOfInstructionListBox.SelectedIndex = -1;
+                selectedFolderPath = null;
+                PathToFolderOfInstruction.Text = "Путь не выбран";
+                return fullCustomInstr;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return null;
+            }
+
         }
 
         private async void buttonSyncManualyInstrWithDB_Click(object sender, EventArgs e)
@@ -428,7 +526,10 @@ namespace Kotova.Test1.ClientSide
 
 
 
+        private void CreateInstructionWithPeopleButton_Click(object sender, EventArgs e)
+        {
 
+        }
 
 
 
@@ -454,7 +555,60 @@ namespace Kotova.Test1.ClientSide
 
 
             }
+
+            if (ChiefTabControl.SelectedTab.Text == "Создание инструктажа")
+            {
+                try
+                {
+                    SyncNamesWithDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
+                    checkedListBoxNamesOfPeopleCreatingInstr.Items.Clear();
+
+                    using (var httpClient = new HttpClient())
+                    {
+                        string jwtToken = _loginForm._jwtToken;
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                        var response = await httpClient.GetAsync(urlSyncNames);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+
+                            string responseBody = await response.Content.ReadAsStringAsync();
+                            List<Tuple<string, string>>? result = JsonConvert.DeserializeObject<List<Tuple<string, string>>>(responseBody);
+                            if (result is null)
+                            {
+                                throw new Exception("responseBody is empty");
+                            }
+                            string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
+
+                            //ListBoxNamesOfPeople.Items.AddRange(resultArray);
+                            checkedListBoxNamesOfPeopleCreatingInstr.Items.AddRange(resultArray);
+                            // Successfully called the ImportIntoDB endpoint, handle accordingly
+                            //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            string errorMessage = await response.Content.ReadAsStringAsync();
+                            //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Exception handling for networking errors, etc.
+                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    SyncNamesWithDB.Enabled = true; // Re-enable the button after the operation completes
+                }
+            }
         }
+
+
+
 
         private async Task<bool> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в User.cs в совершенно отдельном файле.
         {
@@ -985,14 +1139,14 @@ namespace Kotova.Test1.ClientSide
                         i.InstructionId == instructionId &&
                         i.CauseOfInstruction == causeOfInstruction);
 
-                    
+
 
 
                     if (matchingInstruction != null)
                     {
                         foreach (var person in matchingInstruction.Persons)
                         {
-                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(person.PersonName, person.Passed?"Да":"Нет");
+                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(person.PersonName, person.Passed ? "Да" : "Нет");
                             if (!person.Passed)
                             {
                                 dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;
@@ -1014,5 +1168,6 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("Invalid format.");
             }
         }
+
     }
 }

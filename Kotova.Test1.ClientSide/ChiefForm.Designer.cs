@@ -33,6 +33,7 @@
             SyncNamesWithDB = new Button();
             checkBoxIsForDrivers = new CheckBox();
             tabPage2 = new TabPage();
+            checkedListBoxNamesOfPeopleCreatingInstr = new CheckedListBox();
             treeView1 = new TreeView();
             PathToFolderOfInstruction = new Label();
             label7 = new Label();
@@ -112,6 +113,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(checkedListBoxNamesOfPeopleCreatingInstr);
             tabPage2.Controls.Add(treeView1);
             tabPage2.Controls.Add(PathToFolderOfInstruction);
             tabPage2.Controls.Add(label7);
@@ -130,6 +132,15 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // checkedListBoxNamesOfPeopleCreatingInstr
+            // 
+            checkedListBoxNamesOfPeopleCreatingInstr.FormattingEnabled = true;
+            checkedListBoxNamesOfPeopleCreatingInstr.HorizontalScrollbar = true;
+            checkedListBoxNamesOfPeopleCreatingInstr.Location = new Point(47, 306);
+            checkedListBoxNamesOfPeopleCreatingInstr.Name = "checkedListBoxNamesOfPeopleCreatingInstr";
+            checkedListBoxNamesOfPeopleCreatingInstr.Size = new Size(289, 94);
+            checkedListBoxNamesOfPeopleCreatingInstr.TabIndex = 35;
             // 
             // treeView1
             // 
@@ -208,7 +219,7 @@
             // buttonCreateInstruction
             // 
             buttonCreateInstruction.Enabled = false;
-            buttonCreateInstruction.Location = new Point(217, 523);
+            buttonCreateInstruction.Location = new Point(239, 474);
             buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonCreateInstruction.Name = "buttonCreateInstruction";
             buttonCreateInstruction.Size = new Size(219, 40);
@@ -367,7 +378,7 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(667, 374);
+            tabPage3.Size = new Size(667, 588);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Прохождение инструктажей";
             tabPage3.UseVisualStyleBackColor = true;
@@ -422,7 +433,7 @@
             tabPage4.Location = new Point(4, 24);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(667, 374);
+            tabPage4.Size = new Size(667, 588);
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Контроль прохождения инстр.";
             tabPage4.UseVisualStyleBackColor = true;
@@ -553,5 +564,6 @@
         private DataGridView dataGridViewPeopleThatNotPassedInstr;
         private DataGridViewTextBoxColumn Names;
         private DataGridViewTextBoxColumn Passed;
+        private CheckedListBox checkedListBoxNamesOfPeopleCreatingInstr;
     }
 }
