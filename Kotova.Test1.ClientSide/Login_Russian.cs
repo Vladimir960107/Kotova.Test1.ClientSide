@@ -200,6 +200,9 @@ namespace Kotova.Test1.ClientSide
                 case "Coordinator":
                     OpenCoordinatorForm(username);
                     break;
+                case "Management":
+                    OpenManagementForm(username);
+                    break;
                 default:
                     MessageBox.Show("Oops, your role is invalid. Ask someone for help to resolve this issue :I");
                     break;
@@ -228,6 +231,14 @@ namespace Kotova.Test1.ClientSide
             CoordinatorForm coordinatorForm = new CoordinatorForm(this, username);
             coordinatorForm.Location = this.Location;
             coordinatorForm.Show();
+            this.Hide();
+        }
+
+        private void OpenManagementForm(string username)
+        {
+            ManagementForm managementForm = new ManagementForm(this, username);
+            managementForm.Location = this.Location;
+            managementForm.Show();
             this.Hide();
         }
 
@@ -269,7 +280,7 @@ namespace Kotova.Test1.ClientSide
             PasswordTextBox.UseSystemPasswordChar = true;
         }
 
-        private async void LogInButton_Click(object sender, EventArgs e)
+        private async void LogInButton_Click(object sender, EventArgs e) // TODO: Переписать эту функцию как выше описано, потому что повторяется!
         {
             LogInButton.Enabled = false;
 
@@ -317,7 +328,8 @@ namespace Kotova.Test1.ClientSide
                                     userForm.Location = this.Location;
                                     this.Hide();
                                     userForm.Show();
-                                    await Task.Delay(1000);
+
+                                    DelayforRegistrationForm();
                                     if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (userForm._signUpForm is not null)
@@ -332,7 +344,8 @@ namespace Kotova.Test1.ClientSide
                                     chiefOfDepartmentForm.Location = this.Location;
                                     chiefOfDepartmentForm.Show();
                                     this.Hide();
-                                    await Task.Delay(1000);
+
+                                    DelayforRegistrationForm();
                                     if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (chiefOfDepartmentForm._signUpForm is not null)
@@ -347,6 +360,31 @@ namespace Kotova.Test1.ClientSide
                                     coordinatorForm.Location = this.Location;
                                     coordinatorForm.Show();
                                     this.Hide();
+
+                                    DelayforRegistrationForm();
+                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
+                                    {
+                                        if (coordinatorForm._signUpForm is not null)
+                                        {
+                                            coordinatorForm._signUpForm.Show();
+                                        }
+                                    }
+
+                                    break;
+                                case "Management":
+                                    ManagementForm managementForm = new ManagementForm(this, GetUserNameFromToken(_jwtToken));
+                                    managementForm.Location = this.Location;
+                                    managementForm.Show();
+                                    this.Hide();
+
+                                    DelayforRegistrationForm();
+                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
+                                    {
+                                        if (managementForm._signUpForm is not null)
+                                        {
+                                            managementForm._signUpForm.Show();
+                                        }
+                                    }
                                     break;
                                 default:
                                     MessageBox.Show("Oops, your role is invalid. Ask someone for help to resolve this issue :I");
@@ -385,7 +423,10 @@ namespace Kotova.Test1.ClientSide
             }
 
         }
-
+        private async void DelayforRegistrationForm()
+        {
+            await Task.Delay(1000);
+        }
 
         private bool isDefaultUsername(string v)
         {

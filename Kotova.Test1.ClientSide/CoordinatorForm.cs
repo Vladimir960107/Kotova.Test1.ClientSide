@@ -32,6 +32,7 @@ namespace Kotova.Test1.ClientSide
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
         private Login_Russian? _loginForm;
         private string? _userName;
+        public SignUpForm _signUpForm;
         private string? selectedFolderPath;
         List<InstructionDto>? namesOfUsersOfInitInstr = new List<InstructionDto>();
         private List<Dictionary<string, object>> listOfInstructions_global;
@@ -52,6 +53,12 @@ namespace Kotova.Test1.ClientSide
             _userName = userName;
             _loginForm = loginForm;
             InitializeComponent();
+
+            UserLabel.Text = _userName;
+            PassInstruction.Enabled = false;
+
+            SignUpForm signUpForm = new SignUpForm(loginForm, this);
+            _signUpForm = signUpForm;
         }
 
         private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer)
@@ -260,7 +267,7 @@ namespace Kotova.Test1.ClientSide
         {
             switch (v)
             {
-                case "Обычный сотрудник":
+                case "Сотрудник":
                     return "user";
                 case "Руководство ОТДЕЛА":
                     return("chief of department");

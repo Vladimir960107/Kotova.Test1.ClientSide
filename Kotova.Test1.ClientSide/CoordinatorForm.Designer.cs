@@ -100,6 +100,8 @@
             dateTimePicker3 = new DateTimePicker();
             contextMenuStrip1 = new ContextMenuStrip(components);
             button1 = new Button();
+            UserLabel = new Label();
+            label11 = new Label();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             CoordinatorTabControl.SuspendLayout();
@@ -372,7 +374,7 @@
             CoordinatorTabControl.Controls.Add(tabPage3);
             CoordinatorTabControl.Controls.Add(tabPage4);
             CoordinatorTabControl.Controls.Add(tabPage5);
-            CoordinatorTabControl.Location = new Point(55, 12);
+            CoordinatorTabControl.Location = new Point(46, 62);
             CoordinatorTabControl.Name = "CoordinatorTabControl";
             CoordinatorTabControl.SelectedIndex = 0;
             CoordinatorTabControl.Size = new Size(989, 426);
@@ -803,7 +805,7 @@
             // 
             // button1
             // 
-            button1.Location = new Point(1058, 36);
+            button1.Location = new Point(1058, 62);
             button1.Name = "button1";
             button1.Size = new Size(120, 43);
             button1.TabIndex = 35;
@@ -811,11 +813,31 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += LogOut_Click;
             // 
+            // UserLabel
+            // 
+            UserLabel.AutoSize = true;
+            UserLabel.Location = new Point(140, 29);
+            UserLabel.Name = "UserLabel";
+            UserLabel.Size = new Size(81, 15);
+            UserLabel.TabIndex = 37;
+            UserLabel.Text = "UnknownUser";
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(46, 29);
+            label11.Name = "label11";
+            label11.Size = new Size(88, 15);
+            label11.TabIndex = 36;
+            label11.Text = "Вы вошли как:";
+            // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1190, 543);
+            Controls.Add(UserLabel);
+            Controls.Add(label11);
             Controls.Add(button1);
             Controls.Add(CoordinatorTabControl);
             Name = "CoordinatorForm";
@@ -833,6 +855,7 @@
             tabPage5.ResumeLayout(false);
             tabPage5.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -908,5 +931,7 @@
         private ListBox ListOfInstructionsForUser;
         private Button HyperLinkForInstructionsFolder;
         private Label label10;
+        private Label UserLabel;
+        private Label label11;
     }
 }
