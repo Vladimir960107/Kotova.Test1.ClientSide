@@ -8,8 +8,10 @@ using System.Drawing;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -17,6 +19,7 @@ namespace Kotova.Test1.ClientSide
     {
 
         private const string DownloadDepartmentsForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-departments";
+        private const string DownloadDepartmentsAndEmployeesURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-all-departments-and-employees";
         private const string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
         private const string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-login-and-password-for-newcommer";
         private const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
@@ -65,7 +68,30 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("All the instructions passed!");
                 }
             }
+            if (ManagementTabControl.SelectedTab.Text == "Создание инструктажей")
+            {
+                if (await refreshDepartmentsFromDB(DepartmentsCheckedListBox))
+                {
+                    if (await refreshDepartmentsAndPeopleFromDB(PeopleAndDepartmentsTreeView))
+                    {
+                        MessageBox.Show("Отделы и люди обновились успешно.");
+                        return;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Не обновились данные, но первые обновились. Странно");
+                        return;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
+                    return;
+                }
+            }
         }
+
+        #region Вкладка прохождения инструктажей самим сотрудником
 
         private async Task<bool> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в User.cs в совершенно отдельном файле.
         {
@@ -429,13 +455,154 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Failed to open file: {ex.Message}");
             }
         }
+        #endregion
+        #region Вкладка создания инструктажей для отдела/конкретных людей
 
 
+        private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
+        {
+            string url = DownloadDepartmentsForUserURL;
+            departmentForNewcomer.Items.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    // Parse the JSON response to extract the $values array
+                    var jsonDocument = JsonDocument.Parse(jsonResponse);
+                    var valuesElement = jsonDocument.RootElement.GetProperty("$values");
+                    List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(valuesElement.GetRawText());
+
+                    departmentForNewcomer.Items.AddRange(result.ToArray());
+                    return true;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> refreshDepartmentsAndPeopleFromDB(System.Windows.Forms.TreeView peopleAndDepartmentsTreeView) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
+        {
+            string url = DownloadDepartmentsAndEmployeesURL;
+            peopleAndDepartmentsTreeView.Nodes.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    if (jsonResponse is null)
+                    {
+                        MessageBox.Show("Не обновились отделы с людьми!");
+                        return false;
+                    }
+                    // Parse the JSON response to extract the $values array
+                    List<Dept> result = System.Text.Json.JsonSerializer.Deserialize<List<Dept>>(jsonResponse);
+                    MessageBox.Show(jsonResponse);
+                    PopulateTreeView(peopleAndDepartmentsTreeView, result);
+                    return true;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void PopulateTreeView(System.Windows.Forms.TreeView treeView, List<Dept> departments)
+        {
+            treeView.Nodes.Clear(); // Clear existing nodes
+            foreach (var department in departments)
+            {
+                TreeNode departmentNode = new TreeNode(department.Name) { Tag = department };
+                AddUserNodes(departmentNode, department.Employees);
+                treeView.Nodes.Add(departmentNode);
+            }
+        }
+
+        private void AddUserNodes(TreeNode treeNode, List<Employee> users)
+        {
+            if (users == null) return;
+
+            foreach (var user in users)
+            {
+                TreeNode userNode = new TreeNode(user.full_name) { Tag = user };
+                treeNode.Nodes.Add(userNode);
+            }
+        }
+
+        private void peopleAndDepartmentsTreeView_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
+            {
+                PeopleAndDepartmentsTreeView.Enabled = false;
+
+                try
+                {
+                    // Perform the checking/unchecking synchronously
+                    CheckAllChildNodes(e.Node, e.Node.Checked);
+                    UpdateParentNodes(e.Node, e.Node.Checked);
+                }
+                finally
+                {
+                    PeopleAndDepartmentsTreeView.Enabled = true;
+                }
+            }
+        }
+
+        private void UpdateParentNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            TreeNode currentNode = treeNode;
+
+            while (currentNode.Parent != null)
+            {
+                if (nodeChecked)
+                {
+                    // If the current node is checked, ensure the parent is also checked
+                    currentNode.Parent.Checked = true;
+                }
+                else
+                {
+                    // If the current node is unchecked, ensure the parent is unchecked
+                    // only if all its siblings are also unchecked
+                    bool allSiblingsUnchecked = true;
+
+                    foreach (TreeNode sibling in currentNode.Parent.Nodes)
+                    {
+                        if (sibling.Checked)
+                        {
+                            allSiblingsUnchecked = false;
+                            break;
+                        }
+                    }
+
+                    if (allSiblingsUnchecked)
+                    {
+                        currentNode.Parent.Checked = false;
+                    }
+                }
+
+                currentNode = currentNode.Parent;
+            }
+        }
+
+
+        #endregion
     }
-
-
-
-
-
-
 }

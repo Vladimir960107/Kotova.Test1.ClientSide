@@ -29,21 +29,6 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            tabPage2 = new TabPage();
-            button5 = new Button();
-            button2 = new Button();
-            listBox22345 = new ListBox();
-            label9 = new Label();
-            textBox11 = new TextBox();
-            label8 = new Label();
-            textBox10 = new TextBox();
-            label7 = new Label();
-            textBox6 = new TextBox();
-            label4 = new Label();
-            listBox1 = new ListBox();
-            label3 = new Label();
-            label2 = new Label();
-            dateTimePicker2 = new DateTimePicker();
             tabPage1 = new TabPage();
             PassInstruction = new CheckBox();
             button6 = new Button();
@@ -102,160 +87,12 @@
             button1 = new Button();
             UserLabel = new Label();
             label11 = new Label();
-            tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             CoordinatorTabControl.SuspendLayout();
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             tabPage5.SuspendLayout();
             SuspendLayout();
-            // 
-            // tabPage2
-            // 
-            tabPage2.Controls.Add(button5);
-            tabPage2.Controls.Add(button2);
-            tabPage2.Controls.Add(listBox22345);
-            tabPage2.Controls.Add(label9);
-            tabPage2.Controls.Add(textBox11);
-            tabPage2.Controls.Add(label8);
-            tabPage2.Controls.Add(textBox10);
-            tabPage2.Controls.Add(label7);
-            tabPage2.Controls.Add(textBox6);
-            tabPage2.Controls.Add(label4);
-            tabPage2.Controls.Add(listBox1);
-            tabPage2.Controls.Add(label3);
-            tabPage2.Controls.Add(label2);
-            tabPage2.Controls.Add(dateTimePicker2);
-            tabPage2.Location = new Point(4, 24);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(981, 398);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "Внеплановые инструктажи";
-            tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // button5
-            // 
-            button5.Location = new Point(771, 58);
-            button5.Name = "button5";
-            button5.Size = new Size(178, 286);
-            button5.TabIndex = 13;
-            button5.Text = "Сформировать excel форму об инструктажах";
-            button5.UseVisualStyleBackColor = true;
-            // 
-            // button2
-            // 
-            button2.Location = new Point(458, 270);
-            button2.Name = "button2";
-            button2.Size = new Size(214, 74);
-            button2.TabIndex = 12;
-            button2.Text = "Отправить инструктаж сотрудникам";
-            button2.UseVisualStyleBackColor = true;
-            // 
-            // listBox22345
-            // 
-            listBox22345.FormattingEnabled = true;
-            listBox22345.ItemHeight = 15;
-            listBox22345.Items.AddRange(new object[] { "ФИО1 (дата рождения, должность) отдел1", "ФИО2 (дата рождения, должность) отдел1", "ФИО1 (дата рождения, должность) отдел2", "ФИО2 (дата рождения, должность) отдел2", "Хочешь - возьми что-то ещё, потому что здесь будет 400 человек и 17 отделов." });
-            listBox22345.Location = new Point(265, 71);
-            listBox22345.Name = "listBox22345";
-            listBox22345.Size = new Size(407, 109);
-            listBox22345.TabIndex = 11;
-            // 
-            // label9
-            // 
-            label9.AutoSize = true;
-            label9.Location = new Point(265, 53);
-            label9.Name = "label9";
-            label9.Size = new Size(292, 15);
-            label9.TabIndex = 10;
-            label9.Text = "ОТДЕЛЫ И ФИО людей, отвечающих за инструктаж";
-            // 
-            // textBox11
-            // 
-            textBox11.Location = new Point(33, 321);
-            textBox11.Name = "textBox11";
-            textBox11.Size = new Size(213, 23);
-            textBox11.TabIndex = 9;
-            textBox11.Text = "Выбирается автоматически из БД";
-            // 
-            // label8
-            // 
-            label8.AutoSize = true;
-            label8.Location = new Point(33, 303);
-            label8.Name = "label8";
-            label8.Size = new Size(206, 15);
-            label8.TabIndex = 8;
-            label8.Text = "Должность проводившего(автомат)";
-            // 
-            // textBox10
-            // 
-            textBox10.Location = new Point(33, 272);
-            textBox10.Name = "textBox10";
-            textBox10.Size = new Size(213, 23);
-            textBox10.TabIndex = 7;
-            textBox10.Text = "Выбирается из списка базы данных";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(33, 254);
-            label7.Name = "label7";
-            label7.Size = new Size(186, 15);
-            label7.TabIndex = 6;
-            label7.Text = "ФИО проводившего инструктаж";
-            // 
-            // textBox6
-            // 
-            textBox6.Location = new Point(33, 211);
-            textBox6.Name = "textBox6";
-            textBox6.Size = new Size(213, 23);
-            textBox6.TabIndex = 5;
-            textBox6.Text = "Причина инструктажа такая-то";
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(33, 193);
-            label4.Name = "label4";
-            label4.Size = new Size(133, 15);
-            label4.TabIndex = 4;
-            label4.Text = "Причина инструктажа:";
-            // 
-            // listBox1
-            // 
-            listBox1.FormattingEnabled = true;
-            listBox1.ItemHeight = 15;
-            listBox1.Items.AddRange(new object[] { "Тех. отдел", "Общестрой" });
-            listBox1.Location = new Point(33, 111);
-            listBox1.Name = "listBox1";
-            listBox1.Size = new Size(213, 49);
-            listBox1.TabIndex = 3;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(33, 93);
-            label3.Name = "label3";
-            label3.Size = new Size(52, 15);
-            label3.TabIndex = 2;
-            label3.Text = "Отделы:";
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(33, 25);
-            label2.Name = "label2";
-            label2.Size = new Size(239, 15);
-            label2.TabIndex = 1;
-            label2.Text = "Дата окончания проведения инструктажа:";
-            // 
-            // dateTimePicker2
-            // 
-            dateTimePicker2.Location = new Point(33, 58);
-            dateTimePicker2.Name = "dateTimePicker2";
-            dateTimePicker2.Size = new Size(201, 23);
-            dateTimePicker2.TabIndex = 0;
             // 
             // tabPage1
             // 
@@ -370,7 +207,6 @@
             // CoordinatorTabControl
             // 
             CoordinatorTabControl.Controls.Add(tabPage1);
-            CoordinatorTabControl.Controls.Add(tabPage2);
             CoordinatorTabControl.Controls.Add(tabPage3);
             CoordinatorTabControl.Controls.Add(tabPage4);
             CoordinatorTabControl.Controls.Add(tabPage5);
@@ -843,8 +679,6 @@
             Name = "CoordinatorForm";
             Text = "Coordinator";
             FormClosed += CoordinatorForm_FormClosed;
-            tabPage2.ResumeLayout(false);
-            tabPage2.PerformLayout();
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
             CoordinatorTabControl.ResumeLayout(false);
@@ -859,8 +693,6 @@
         }
 
         #endregion
-
-        private TabPage tabPage2;
         private TabPage tabPage1;
         private DateTimePicker datePickerEnd;
         private Label label6;
@@ -879,20 +711,6 @@
         private TextBox BirthDateInitInstr;
         private TextBox ProfessionInitInstr;
         private Button uploadNewcommer;
-        private ListBox listBox1;
-        private Label label3;
-        private Label label2;
-        private DateTimePicker dateTimePicker2;
-        private TextBox textBox10;
-        private Label label7;
-        private TextBox textBox6;
-        private Label label4;
-        private TextBox textBox11;
-        private Label label8;
-        private Label label9;
-        private ListBox listBox22345;
-        private Button button2;
-        private Button button5;
         private Button button6;
         private TabPage tabPage5;
         private ListBox listBox3;

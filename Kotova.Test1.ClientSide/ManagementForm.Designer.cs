@@ -32,6 +32,10 @@
             label1 = new Label();
             ManagementTabControl = new TabControl();
             tabPage1 = new TabPage();
+            PeopleAndDepartmentsTreeView = new TreeViewWithoutDoubleClick();
+            label5 = new Label();
+            typeOfInstructionListBox = new ListBox();
+            DepartmentsCheckedListBox = new CheckedListBox();
             button5 = new Button();
             button2 = new Button();
             listBox22345 = new ListBox();
@@ -42,7 +46,6 @@
             label7 = new Label();
             textBox6 = new TextBox();
             label4 = new Label();
-            listBox1 = new ListBox();
             label3 = new Label();
             label2 = new Label();
             dateTimePicker2 = new DateTimePicker();
@@ -82,12 +85,16 @@
             ManagementTabControl.Location = new Point(42, 79);
             ManagementTabControl.Name = "ManagementTabControl";
             ManagementTabControl.SelectedIndex = 0;
-            ManagementTabControl.Size = new Size(1000, 424);
+            ManagementTabControl.Size = new Size(1180, 633);
             ManagementTabControl.TabIndex = 30;
             ManagementTabControl.SelectedIndexChanged += ManagementTabControl_SelectedIndexChanged;
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(PeopleAndDepartmentsTreeView);
+            tabPage1.Controls.Add(label5);
+            tabPage1.Controls.Add(typeOfInstructionListBox);
+            tabPage1.Controls.Add(DepartmentsCheckedListBox);
             tabPage1.Controls.Add(button5);
             tabPage1.Controls.Add(button2);
             tabPage1.Controls.Add(listBox22345);
@@ -98,21 +105,56 @@
             tabPage1.Controls.Add(label7);
             tabPage1.Controls.Add(textBox6);
             tabPage1.Controls.Add(label4);
-            tabPage1.Controls.Add(listBox1);
             tabPage1.Controls.Add(label3);
             tabPage1.Controls.Add(label2);
             tabPage1.Controls.Add(dateTimePicker2);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(992, 396);
+            tabPage1.Size = new Size(1172, 605);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Создание инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
             // 
+            // PeopleAndDepartmentsTreeView
+            // 
+            PeopleAndDepartmentsTreeView.CheckBoxes = true;
+            PeopleAndDepartmentsTreeView.Location = new Point(470, 228);
+            PeopleAndDepartmentsTreeView.Name = "PeopleAndDepartmentsTreeView";
+            PeopleAndDepartmentsTreeView.Size = new Size(261, 192);
+            PeopleAndDepartmentsTreeView.TabIndex = 32;
+            PeopleAndDepartmentsTreeView.AfterCheck += peopleAndDepartmentsTreeView_AfterCheck;
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(38, 107);
+            label5.Name = "label5";
+            label5.Size = new Size(148, 15);
+            label5.TabIndex = 30;
+            label5.Text = "Выбор типа инструктажа:";
+            // 
+            // typeOfInstructionListBox
+            // 
+            typeOfInstructionListBox.FormattingEnabled = true;
+            typeOfInstructionListBox.ItemHeight = 15;
+            typeOfInstructionListBox.Items.AddRange(new object[] { "Первичный;", "Повторный;", "Целевой;", "Внеплановый;" });
+            typeOfInstructionListBox.Location = new Point(38, 134);
+            typeOfInstructionListBox.Name = "typeOfInstructionListBox";
+            typeOfInstructionListBox.Size = new Size(120, 64);
+            typeOfInstructionListBox.TabIndex = 29;
+            // 
+            // DepartmentsCheckedListBox
+            // 
+            DepartmentsCheckedListBox.FormattingEnabled = true;
+            DepartmentsCheckedListBox.Location = new Point(38, 240);
+            DepartmentsCheckedListBox.Name = "DepartmentsCheckedListBox";
+            DepartmentsCheckedListBox.Size = new Size(213, 130);
+            DepartmentsCheckedListBox.TabIndex = 28;
+            // 
             // button5
             // 
-            button5.Location = new Point(776, 72);
+            button5.Location = new Point(970, 67);
             button5.Name = "button5";
             button5.Size = new Size(178, 286);
             button5.TabIndex = 27;
@@ -121,7 +163,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(463, 284);
+            button2.Location = new Point(691, 456);
             button2.Name = "button2";
             button2.Size = new Size(214, 74);
             button2.TabIndex = 26;
@@ -133,7 +175,7 @@
             listBox22345.FormattingEnabled = true;
             listBox22345.ItemHeight = 15;
             listBox22345.Items.AddRange(new object[] { "ФИО1 (дата рождения, должность) отдел1", "ФИО2 (дата рождения, должность) отдел1", "ФИО1 (дата рождения, должность) отдел2", "ФИО2 (дата рождения, должность) отдел2", "Хочешь - возьми что-то ещё, потому что здесь будет 400 человек и 17 отделов." });
-            listBox22345.Location = new Point(270, 85);
+            listBox22345.Location = new Point(470, 107);
             listBox22345.Name = "listBox22345";
             listBox22345.Size = new Size(407, 109);
             listBox22345.TabIndex = 25;
@@ -141,7 +183,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(270, 67);
+            label9.Location = new Point(470, 89);
             label9.Name = "label9";
             label9.Size = new Size(292, 15);
             label9.TabIndex = 24;
@@ -149,7 +191,7 @@
             // 
             // textBox11
             // 
-            textBox11.Location = new Point(38, 335);
+            textBox11.Location = new Point(38, 507);
             textBox11.Name = "textBox11";
             textBox11.Size = new Size(213, 23);
             textBox11.TabIndex = 23;
@@ -158,7 +200,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(38, 317);
+            label8.Location = new Point(38, 489);
             label8.Name = "label8";
             label8.Size = new Size(206, 15);
             label8.TabIndex = 22;
@@ -166,7 +208,7 @@
             // 
             // textBox10
             // 
-            textBox10.Location = new Point(38, 286);
+            textBox10.Location = new Point(38, 458);
             textBox10.Name = "textBox10";
             textBox10.Size = new Size(213, 23);
             textBox10.TabIndex = 21;
@@ -175,7 +217,7 @@
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(38, 268);
+            label7.Location = new Point(38, 440);
             label7.Name = "label7";
             label7.Size = new Size(186, 15);
             label7.TabIndex = 20;
@@ -183,7 +225,7 @@
             // 
             // textBox6
             // 
-            textBox6.Location = new Point(38, 225);
+            textBox6.Location = new Point(38, 397);
             textBox6.Name = "textBox6";
             textBox6.Size = new Size(213, 23);
             textBox6.TabIndex = 19;
@@ -192,26 +234,16 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(38, 207);
+            label4.Location = new Point(38, 379);
             label4.Name = "label4";
             label4.Size = new Size(133, 15);
             label4.TabIndex = 18;
             label4.Text = "Причина инструктажа:";
             // 
-            // listBox1
-            // 
-            listBox1.FormattingEnabled = true;
-            listBox1.ItemHeight = 15;
-            listBox1.Items.AddRange(new object[] { "Тех. отдел", "Общестрой" });
-            listBox1.Location = new Point(38, 125);
-            listBox1.Name = "listBox1";
-            listBox1.Size = new Size(213, 49);
-            listBox1.TabIndex = 17;
-            // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(38, 107);
+            label3.Location = new Point(38, 212);
             label3.Name = "label3";
             label3.Size = new Size(52, 15);
             label3.TabIndex = 16;
@@ -243,7 +275,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(992, 396);
+            tabPage2.Size = new Size(1172, 605);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Прохождение инструктажей";
             tabPage2.UseVisualStyleBackColor = true;
@@ -305,7 +337,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1139, 596);
+            ClientSize = new Size(1260, 826);
             Controls.Add(ManagementTabControl);
             Controls.Add(ManagementLabel);
             Controls.Add(label1);
@@ -328,15 +360,12 @@
         private TabPage tabPage1;
         private Button button5;
         private Button button2;
-        private ListBox listBox22345;
-        private Label label9;
         private TextBox textBox11;
         private Label label8;
         private TextBox textBox10;
         private Label label7;
         private TextBox textBox6;
         private Label label4;
-        private ListBox listBox1;
         private Label label3;
         private Label label2;
         private DateTimePicker dateTimePicker2;
@@ -346,5 +375,13 @@
         private ListBox ListOfInstructionsForUser;
         private Button HyperLinkForInstructionsFolder;
         private Label label10;
+        private CheckedListBox DepartmentsCheckedListBox;
+        private Label label5;
+        private ListBox typeOfInstructionListBox;
+        private TreeView PeopleAndDepartmentsTreeView;
+        private ListBox listBox22345;
+        private Label label9;
+
+
     }
 }

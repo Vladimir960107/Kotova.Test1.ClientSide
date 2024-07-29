@@ -61,6 +61,30 @@ namespace Kotova.Test1.ClientSide
             _signUpForm = signUpForm;
         }
 
+        private void LogOut_Click(object sender, EventArgs e)
+        {
+            Decryption_stuff.DeleteJWTToken();
+            if (_signUpForm is not null)
+            {
+                _signUpForm.Dispose();
+            }
+            _loginForm.Show();
+            this.Dispose(true);
+        }
+
+        private void CoordinatorForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            if (_loginForm is not null)
+            {
+                _loginForm.Dispose();
+            }
+            if (_signUpForm is not null)
+            {
+                _signUpForm.Dispose();
+            }
+            this.Dispose(true);
+        }
+
         private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer)
         {
             string url = DownloadDepartmentsForUserURL;
@@ -403,21 +427,7 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private void CoordinatorForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            if (_loginForm is not null)
-            {
-                _loginForm.Dispose();
-            }
-            this.Dispose(true);
-        }
-
-        private void LogOut_Click(object sender, EventArgs e)
-        {
-            Decryption_stuff.DeleteJWTToken();
-            _loginForm.Show();
-            this.Dispose(true);
-        }
+        
 
         private async void buttonSyncNamesForInitialInstrWithDB_Click(object sender, EventArgs e)
         {

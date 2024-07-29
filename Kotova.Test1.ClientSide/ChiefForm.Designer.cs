@@ -34,7 +34,7 @@
             checkBoxIsForDrivers = new CheckBox();
             tabPage2 = new TabPage();
             checkedListBoxNamesOfPeopleCreatingInstr = new CheckedListBox();
-            treeView1 = new TreeView();
+            treeView1 = new TreeViewWithoutDoubleClick();
             PathToFolderOfInstruction = new Label();
             label7 = new Label();
             buttonChoosePathToInstruction = new Button();
