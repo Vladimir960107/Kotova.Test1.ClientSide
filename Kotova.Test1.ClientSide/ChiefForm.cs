@@ -30,6 +30,7 @@ namespace Kotova.Test1.ClientSide
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
+        public const string db_typeOfInstruction = "type_of_instruction";
 
         System.Windows.Forms.Timer myTimer = new System.Windows.Forms.Timer();
 
@@ -162,7 +163,7 @@ namespace Kotova.Test1.ClientSide
         private async void buttonCreateInstruction_Click(object sender, EventArgs e)
         {
             buttonCreateInstruction.Enabled = false;
-            var listOfNames = checkedListBoxNamesOfPeopleCreatingInstr.SelectedItems;
+            var listOfNames = checkedListBoxNamesOfPeopleCreatingInstr.CheckedItems;
 
             List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
             if (listOfNames.Count == 0)
@@ -214,7 +215,7 @@ namespace Kotova.Test1.ClientSide
 
                         // Prepare the content to send
                         var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
-
+                        MessageBox.Show($"Send data to server: {encryptedJsonData}");
                         // Send a POST request with the serialized JSON content
                         var response = await httpClient.PostAsync(uri, content);
 
@@ -512,7 +513,7 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА)
+        private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА). Уже закрывается?
         {
 
             _loginForm.Dispose();
@@ -526,10 +527,6 @@ namespace Kotova.Test1.ClientSide
 
 
 
-        private void CreateInstructionWithPeopleButton_Click(object sender, EventArgs e)
-        {
-
-        }
 
 
 
@@ -544,9 +541,10 @@ namespace Kotova.Test1.ClientSide
 
         private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (ChiefTabControl.SelectedIndex == 2)
+            if (ChiefTabControl.SelectedTab.Text == "Прохождение инструктажей")
             {
                 ListOfInstructions.Items.Clear();
+                ListOfInstructionsForUser.Items.Clear();
                 bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
                 if (IsEmpty == true)
                 {
@@ -671,6 +669,23 @@ namespace Kotova.Test1.ClientSide
             {
                 if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
                 {
+                    if (listOfPaths[db_filePath] == null)
+                    {
+                        if (selectedDict[db_typeOfInstruction].ToString() == "0") // Проверка что мы входим в вводный инструктаж только!
+                        {
+                            PassInstruction.Enabled = true;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
+                            PassInstruction.Enabled = false;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+
+                    }
                     FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
                 }
             }
@@ -1126,6 +1141,11 @@ namespace Kotova.Test1.ClientSide
         private void listBoxOfNotPassedByInstructions_SelectedIndexChanged(object sender, EventArgs e)
         {
             dataGridViewPeopleThatNotPassedInstr.Rows.Clear();
+            if (listBoxOfNotPassedByInstructions.SelectedItem is null)
+            {
+                return;
+            }
+
             var instructionString = listBoxOfNotPassedByInstructions.SelectedItem.ToString();
             string pattern = @"^\[(\d+)\]:\s(.+)$";
             if (Regex.IsMatch(instructionString, pattern))
