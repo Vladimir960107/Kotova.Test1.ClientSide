@@ -329,7 +329,7 @@ namespace Kotova.Test1.ClientSide
                                     this.Hide();
                                     userForm.Show();
 
-                                    DelayforRegistrationForm();
+                                    await DelayforRegistrationForm();
                                     if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (userForm._signUpForm is not null)
@@ -345,7 +345,7 @@ namespace Kotova.Test1.ClientSide
                                     chiefOfDepartmentForm.Show();
                                     this.Hide();
 
-                                    DelayforRegistrationForm();
+                                    await DelayforRegistrationForm();
                                     if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (chiefOfDepartmentForm._signUpForm is not null)
@@ -361,7 +361,7 @@ namespace Kotova.Test1.ClientSide
                                     coordinatorForm.Show();
                                     this.Hide();
 
-                                    DelayforRegistrationForm();
+                                    await DelayforRegistrationForm();
                                     if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (coordinatorForm._signUpForm is not null)
@@ -377,7 +377,7 @@ namespace Kotova.Test1.ClientSide
                                     managementForm.Show();
                                     this.Hide();
 
-                                    DelayforRegistrationForm();
+                                    await DelayforRegistrationForm();
                                     if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
                                     {
                                         if (managementForm._signUpForm is not null)
@@ -423,7 +423,7 @@ namespace Kotova.Test1.ClientSide
             }
 
         }
-        private async void DelayforRegistrationForm()
+        private async Task DelayforRegistrationForm()
         {
             await Task.Delay(1000);
         }

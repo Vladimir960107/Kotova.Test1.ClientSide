@@ -45,6 +45,9 @@ namespace Kotova.Test1.ClientSide
             _userName = userName;
             ManagementLabel.Text = _userName;
             PassInstructionAsUser.Enabled = false;
+            DepartmentsCheckedListBox.Enabled = false;
+            PeopleAndDepartmentsTreeView.Enabled = false;
+            refreshDepartmentsAndnPeopleFromDBInternal();
 
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
@@ -70,26 +73,195 @@ namespace Kotova.Test1.ClientSide
             }
             if (ManagementTabControl.SelectedTab.Text == "Создание инструктажей")
             {
-                if (await refreshDepartmentsFromDB(DepartmentsCheckedListBox))
+                refreshDepartmentsAndnPeopleFromDBInternal();
+            }
+        }
+
+        private async void refreshDepartmentsAndnPeopleFromDBInternal()
+        {
+            if (await refreshDepartmentsFromDB(DepartmentsCheckedListBox))
+            {
+                if (await refreshDepartmentsAndPeopleFromDB(PeopleAndDepartmentsTreeView))
                 {
-                    if (await refreshDepartmentsAndPeopleFromDB(PeopleAndDepartmentsTreeView))
-                    {
-                        MessageBox.Show("Отделы и люди обновились успешно.");
-                        return;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Не обновились данные, но первые обновились. Странно");
-                        return;
-                    }
+                    //MessageBox.Show("Отделы и люди обновились успешно.");
+                    return;
                 }
                 else
                 {
-                    MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
+                    MessageBox.Show("Не обновились люди, но обновились отделы. Странно, проверь");
                     return;
                 }
             }
+            else
+            {
+                MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
+                return;
+            }
         }
+
+
+        #region Вкладка создания инструктажей для отдела/конкретных людей
+
+
+        private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
+        {
+            string url = DownloadDepartmentsForUserURL;
+            departmentForNewcomer.Items.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    // Parse the JSON response to extract the $values array
+                    var jsonDocument = JsonDocument.Parse(jsonResponse);
+                    var valuesElement = jsonDocument.RootElement.GetProperty("$values");
+                    List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(valuesElement.GetRawText());
+
+                    departmentForNewcomer.Items.AddRange(result.ToArray());
+                    return true;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> refreshDepartmentsAndPeopleFromDB(System.Windows.Forms.TreeView peopleAndDepartmentsTreeView) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
+        {
+            string url = DownloadDepartmentsAndEmployeesURL;
+            peopleAndDepartmentsTreeView.Nodes.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    if (jsonResponse is null)
+                    {
+                        MessageBox.Show("Не обновились отделы с людьми!");
+                        return false;
+                    }
+                    // Parse the JSON response to extract the $values array
+                    List<Dept> result = System.Text.Json.JsonSerializer.Deserialize<List<Dept>>(jsonResponse);
+                    PopulateTreeView(peopleAndDepartmentsTreeView, result);
+                    return true;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+                return false;
+            }
+        }
+
+        private void PopulateTreeView(System.Windows.Forms.TreeView treeView, List<Dept> departments)
+        {
+            treeView.Nodes.Clear(); // Clear existing nodes
+            foreach (var department in departments)
+            {
+                TreeNode departmentNode = new TreeNode(department.Name) { Tag = department };
+                AddUserNodes(departmentNode, department.Employees);
+                treeView.Nodes.Add(departmentNode);
+            }
+        }
+
+        private void AddUserNodes(TreeNode treeNode, List<Employee> users)
+        {
+            if (users == null) return;
+
+            foreach (var user in users)
+            {
+                TreeNode userNode = new TreeNode(user.full_name) { Tag = user };
+                treeNode.Nodes.Add(userNode);
+            }
+        }
+
+        private void peopleAndDepartmentsTreeView_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
+            {
+                PeopleAndDepartmentsTreeView.Enabled = false;
+
+                try
+                {
+                    // Perform the checking/unchecking synchronously
+                    CheckAllChildNodes(e.Node, e.Node.Checked);
+                    UpdateParentNodes(e.Node, e.Node.Checked);
+                }
+                finally
+                {
+                    PeopleAndDepartmentsTreeView.Enabled = true;
+                }
+            }
+        }
+
+        private void UpdateParentNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            TreeNode currentNode = treeNode;
+
+            while (currentNode.Parent != null)
+            {
+                if (nodeChecked)
+                {
+                    // If the current node is checked, ensure the parent is also checked
+                    currentNode.Parent.Checked = true;
+                }
+                else
+                {
+                    // If the current node is unchecked, ensure the parent is unchecked
+                    // only if all its siblings are also unchecked
+                    bool allSiblingsUnchecked = true;
+
+                    foreach (TreeNode sibling in currentNode.Parent.Nodes)
+                    {
+                        if (sibling.Checked)
+                        {
+                            allSiblingsUnchecked = false;
+                            break;
+                        }
+                    }
+
+                    if (allSiblingsUnchecked)
+                    {
+                        currentNode.Parent.Checked = false;
+                    }
+                }
+
+                currentNode = currentNode.Parent;
+            }
+        }
+
+        private void typeOfInstructionListBox_SelectedValueChanged(object sender, EventArgs e)
+        {
+            if (typeOfInstructionListBox.SelectedItem.ToString() == "Внеплановый;")
+            {
+                DepartmentsCheckedListBox.Enabled = false;
+                PeopleAndDepartmentsTreeView.Enabled = true;
+            }
+            else
+            {
+                DepartmentsCheckedListBox.Enabled = true;
+                PeopleAndDepartmentsTreeView.Enabled = false;
+            }
+
+        }
+
+
+        #endregion
 
         #region Вкладка прохождения инструктажей самим сотрудником
 
@@ -456,153 +628,26 @@ namespace Kotova.Test1.ClientSide
             }
         }
         #endregion
-        #region Вкладка создания инструктажей для отдела/конкретных людей
 
-
-        private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
+        #region Общие кнопки
+        private void signUpButton_Click(object sender, EventArgs e)
         {
-            string url = DownloadDepartmentsForUserURL;
-            departmentForNewcomer.Items.Clear();
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    string jwtToken = _loginForm._jwtToken;
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-
-                    // Parse the JSON response to extract the $values array
-                    var jsonDocument = JsonDocument.Parse(jsonResponse);
-                    var valuesElement = jsonDocument.RootElement.GetProperty("$values");
-                    List<string> result = System.Text.Json.JsonSerializer.Deserialize<List<string>>(valuesElement.GetRawText());
-
-                    departmentForNewcomer.Items.AddRange(result.ToArray());
-                    return true;
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                // Handle any exceptions here
-                MessageBox.Show($"Error: {ex.Message}");
-                return false;
-            }
+            _signUpForm.Show();
         }
 
-        private async Task<bool> refreshDepartmentsAndPeopleFromDB(System.Windows.Forms.TreeView peopleAndDepartmentsTreeView) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
+        private void LogOutButton_Click(object sender, EventArgs e)
         {
-            string url = DownloadDepartmentsAndEmployeesURL;
-            peopleAndDepartmentsTreeView.Nodes.Clear();
-            try
+            Decryption_stuff.DeleteJWTToken();
+            if (_signUpForm is not null)
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    string jwtToken = _loginForm._jwtToken;
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                    HttpResponseMessage response = await client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    if (jsonResponse is null)
-                    {
-                        MessageBox.Show("Не обновились отделы с людьми!");
-                        return false;
-                    }
-                    // Parse the JSON response to extract the $values array
-                    List<Dept> result = System.Text.Json.JsonSerializer.Deserialize<List<Dept>>(jsonResponse);
-                    MessageBox.Show(jsonResponse);
-                    PopulateTreeView(peopleAndDepartmentsTreeView, result);
-                    return true;
-                }
+                _signUpForm.Dispose();
             }
-            catch (HttpRequestException ex)
-            {
-                // Handle any exceptions here
-                MessageBox.Show($"Error: {ex.Message}");
-                return false;
-            }
+            _loginForm.Show();
+            this.Dispose(true);
         }
-
-        private void PopulateTreeView(System.Windows.Forms.TreeView treeView, List<Dept> departments)
-        {
-            treeView.Nodes.Clear(); // Clear existing nodes
-            foreach (var department in departments)
-            {
-                TreeNode departmentNode = new TreeNode(department.Name) { Tag = department };
-                AddUserNodes(departmentNode, department.Employees);
-                treeView.Nodes.Add(departmentNode);
-            }
-        }
-
-        private void AddUserNodes(TreeNode treeNode, List<Employee> users)
-        {
-            if (users == null) return;
-
-            foreach (var user in users)
-            {
-                TreeNode userNode = new TreeNode(user.full_name) { Tag = user };
-                treeNode.Nodes.Add(userNode);
-            }
-        }
-
-        private void peopleAndDepartmentsTreeView_AfterCheck(object sender, TreeViewEventArgs e)
-        {
-            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
-            {
-                PeopleAndDepartmentsTreeView.Enabled = false;
-
-                try
-                {
-                    // Perform the checking/unchecking synchronously
-                    CheckAllChildNodes(e.Node, e.Node.Checked);
-                    UpdateParentNodes(e.Node, e.Node.Checked);
-                }
-                finally
-                {
-                    PeopleAndDepartmentsTreeView.Enabled = true;
-                }
-            }
-        }
-
-        private void UpdateParentNodes(TreeNode treeNode, bool nodeChecked)
-        {
-            TreeNode currentNode = treeNode;
-
-            while (currentNode.Parent != null)
-            {
-                if (nodeChecked)
-                {
-                    // If the current node is checked, ensure the parent is also checked
-                    currentNode.Parent.Checked = true;
-                }
-                else
-                {
-                    // If the current node is unchecked, ensure the parent is unchecked
-                    // only if all its siblings are also unchecked
-                    bool allSiblingsUnchecked = true;
-
-                    foreach (TreeNode sibling in currentNode.Parent.Nodes)
-                    {
-                        if (sibling.Checked)
-                        {
-                            allSiblingsUnchecked = false;
-                            break;
-                        }
-                    }
-
-                    if (allSiblingsUnchecked)
-                    {
-                        currentNode.Parent.Checked = false;
-                    }
-                }
-
-                currentNode = currentNode.Parent;
-            }
-        }
-
 
         #endregion
+
+
     }
 }

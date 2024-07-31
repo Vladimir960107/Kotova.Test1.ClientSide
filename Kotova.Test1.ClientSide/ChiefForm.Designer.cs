@@ -62,6 +62,7 @@
             HyperLinkForInstructionsFolder = new Button();
             label8 = new Label();
             tabPage4 = new TabPage();
+            listBoxOfPassedInstructions = new ListBox();
             dataGridViewPeopleThatNotPassedInstr = new DataGridView();
             Names = new DataGridViewTextBoxColumn();
             Passed = new DataGridViewTextBoxColumn();
@@ -135,6 +136,7 @@
             // 
             // checkedListBoxNamesOfPeopleCreatingInstr
             // 
+            checkedListBoxNamesOfPeopleCreatingInstr.CheckOnClick = true;
             checkedListBoxNamesOfPeopleCreatingInstr.FormattingEnabled = true;
             checkedListBoxNamesOfPeopleCreatingInstr.HorizontalScrollbar = true;
             checkedListBoxNamesOfPeopleCreatingInstr.Location = new Point(47, 306);
@@ -279,6 +281,7 @@
             // 
             // checkedListBoxNamesOfPeople
             // 
+            checkedListBoxNamesOfPeople.CheckOnClick = true;
             checkedListBoxNamesOfPeople.FormattingEnabled = true;
             checkedListBoxNamesOfPeople.HorizontalScrollbar = true;
             checkedListBoxNamesOfPeople.Location = new Point(325, 86);
@@ -385,6 +388,7 @@
             // 
             // FilesOfInstructionCheckedListBox
             // 
+            FilesOfInstructionCheckedListBox.CheckOnClick = true;
             FilesOfInstructionCheckedListBox.FormattingEnabled = true;
             FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
             FilesOfInstructionCheckedListBox.Location = new Point(283, 69);
@@ -427,6 +431,7 @@
             // 
             // tabPage4
             // 
+            tabPage4.Controls.Add(listBoxOfPassedInstructions);
             tabPage4.Controls.Add(dataGridViewPeopleThatNotPassedInstr);
             tabPage4.Controls.Add(listBoxOfNotPassedByInstructions);
             tabPage4.Controls.Add(TestButtonForInstructions);
@@ -437,6 +442,15 @@
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Контроль прохождения инстр.";
             tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // listBoxOfPassedInstructions
+            // 
+            listBoxOfPassedInstructions.FormattingEnabled = true;
+            listBoxOfPassedInstructions.ItemHeight = 15;
+            listBoxOfPassedInstructions.Location = new Point(25, 278);
+            listBoxOfPassedInstructions.Name = "listBoxOfPassedInstructions";
+            listBoxOfPassedInstructions.Size = new Size(280, 184);
+            listBoxOfPassedInstructions.TabIndex = 3;
             // 
             // dataGridViewPeopleThatNotPassedInstr
             // 
@@ -555,7 +569,6 @@
         private Label label8;
         private ListBox ListOfInstructions;
         private TextBox consoleTextBox;
-        private TreeView treeView1;
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private TabPage tabPage4;
         private Button TestButtonForInstructions;
@@ -565,5 +578,7 @@
         private DataGridViewTextBoxColumn Names;
         private DataGridViewTextBoxColumn Passed;
         private CheckedListBox checkedListBoxNamesOfPeopleCreatingInstr;
+        private ListBox listBoxOfPassedInstructions;
+        private TreeViewWithoutDoubleClick treeView1;
     }
 }

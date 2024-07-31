@@ -1105,6 +1105,8 @@ namespace Kotova.Test1.ClientSide
                             .Select(i => $"[{i.InstructionId}]: {i.CauseOfInstruction}")
                             .ToList();
                         listBoxOfNotPassedByInstructions.Items.AddRange(namesOfInstructions.ToArray());
+
+
                     }
                     else
                     {
@@ -1168,6 +1170,5 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("Invalid format.");
             }
         }
-
     }
 }

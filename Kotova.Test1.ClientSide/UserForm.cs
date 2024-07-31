@@ -222,7 +222,6 @@ namespace Kotova.Test1.ClientSide
                 }
             }
             throw new Exception("Corresponding Dictionary not found!");
-
         }
 
         private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
