@@ -71,6 +71,7 @@
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
+            tabPage5 = new TabPage();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -364,6 +365,7 @@
             ChiefTabControl.Controls.Add(tabPage2);
             ChiefTabControl.Controls.Add(tabPage3);
             ChiefTabControl.Controls.Add(tabPage4);
+            ChiefTabControl.Controls.Add(tabPage5);
             ChiefTabControl.Location = new Point(12, 23);
             ChiefTabControl.Name = "ChiefTabControl";
             ChiefTabControl.SelectedIndex = 0;
@@ -512,6 +514,16 @@
             consoleTextBox.Size = new Size(340, 529);
             consoleTextBox.TabIndex = 35;
             // 
+            // tabPage5
+            // 
+            tabPage5.Location = new Point(4, 24);
+            tabPage5.Name = "tabPage5";
+            tabPage5.Padding = new Padding(3);
+            tabPage5.Size = new Size(667, 588);
+            tabPage5.TabIndex = 4;
+            tabPage5.Text = "Учёт сотрудников";
+            tabPage5.UseVisualStyleBackColor = true;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -580,5 +592,6 @@
         private CheckedListBox checkedListBoxNamesOfPeopleCreatingInstr;
         private ListBox listBoxOfPassedInstructions;
         private TreeViewWithoutDoubleClick treeView1;
+        private TabPage tabPage5;
     }
 }

@@ -42,6 +42,8 @@
             label9 = new Label();
             textBox11 = new TextBox();
             label8 = new Label();
+            textBox10 = new TextBox();
+            label7 = new Label();
             CauseOfInstructionTextBox = new TextBox();
             label4 = new Label();
             label3 = new Label();
@@ -54,8 +56,6 @@
             label10 = new Label();
             signUpButton = new Button();
             LogOutButton = new Button();
-            label7 = new Label();
-            textBox10 = new TextBox();
             ManagementTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -172,7 +172,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(691, 456);
+            button2.Location = new Point(486, 440);
             button2.Name = "button2";
             button2.Size = new Size(214, 74);
             button2.TabIndex = 26;
@@ -204,6 +204,23 @@
             label8.Size = new Size(206, 15);
             label8.TabIndex = 22;
             label8.Text = "Должность проводившего(автомат)";
+            // 
+            // textBox10
+            // 
+            textBox10.Location = new Point(38, 458);
+            textBox10.Name = "textBox10";
+            textBox10.Size = new Size(213, 23);
+            textBox10.TabIndex = 21;
+            textBox10.Text = "Выбирается из списка базы данных";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(38, 440);
+            label7.Name = "label7";
+            label7.Size = new Size(186, 15);
+            label7.TabIndex = 20;
+            label7.Text = "ФИО проводившего инструктаж";
             // 
             // CauseOfInstructionTextBox
             // 
@@ -327,23 +344,6 @@
             LogOutButton.Text = "Выйти из учётной записи";
             LogOutButton.UseVisualStyleBackColor = true;
             LogOutButton.Click += LogOutButton_Click;
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(38, 440);
-            label7.Name = "label7";
-            label7.Size = new Size(186, 15);
-            label7.TabIndex = 20;
-            label7.Text = "ФИО проводившего инструктаж";
-            // 
-            // textBox10
-            // 
-            textBox10.Location = new Point(38, 458);
-            textBox10.Name = "textBox10";
-            textBox10.Size = new Size(213, 23);
-            textBox10.TabIndex = 21;
-            textBox10.Text = "Выбирается из списка базы данных";
             // 
             // ManagementForm
             // 
