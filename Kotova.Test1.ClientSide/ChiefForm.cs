@@ -219,6 +219,7 @@ namespace Kotova.Test1.ClientSide
                         // Send a POST request with the serialized JSON content
                         var response = await httpClient.PostAsync(uri, content);
 
+
                         if (response.IsSuccessStatusCode)
                         {
                             MessageBox.Show("Data successfully sent to the server and Instructions added to User.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -246,6 +247,7 @@ namespace Kotova.Test1.ClientSide
             finally
             {
                 submitInstructionToPeople.Enabled = true;
+                treeView1.Nodes.Clear();
             }
         }
         private async Task<FullCustomInstruction?> CreateInstructionInternal()
