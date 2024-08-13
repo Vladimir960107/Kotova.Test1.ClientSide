@@ -185,49 +185,60 @@ namespace Kotova.Test1.ClientSide
 
         private async void uploadNewcommer_Click(object sender, EventArgs e)
         {
+            uploadNewcommer.Enabled = false;
             if (string.IsNullOrWhiteSpace(employeeFullNameTextBox.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("ФИО не заплнено.");
                 return;
             }
             if (!IsValidRussianFullName(employeeFullNameTextBox.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Недействительные ФИО. Пожалуйста, вводите только русские буквы и дефисы.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(employeesPositionTextBox.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Должность не заполнена.");
                 return;
             }
             if (DepartmentForNewcomer.SelectedIndex == -1)
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Отдел не выбран.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(personnelNumberTextBox.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Табельный номер не заполнен.");
                 return;
             }
             if (!IsValidPersonnelNumber(personnelNumberTextBox.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Неверный табельный номер. Он должен состоять ровно из 10 цифр.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(WorkplaceNumberTextBox.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Номер рабочего места не заполнен.");
                 return;
             }
             if (!IsValidDateOfBirth(dateOfBirthDateTimePicker.Text))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Неверная дата рождения. Введите действительную дату и убедитесь, что возрастной критерий(>=18 лет) соответствует.");
                 return;
             }
             if (!IsValidRole(RoleOfNewcomerListBox.SelectedIndex))
             {
+                uploadNewcommer.Enabled = true;
                 MessageBox.Show("Не выбрана или выбрана неверная роль сотрудника.");
+                return;
             }
             Employee newEmployee = new Employee();
             newEmployee.personnel_number = personnelNumberTextBox.Text;
@@ -259,22 +270,26 @@ namespace Kotova.Test1.ClientSide
                             var login_and_password = System.Text.Json.JsonSerializer.Deserialize<Tuple<string, string>>(jsonResponse);
                             loginTextBox.Text = login_and_password.Item1;
                             PasswordTextBox.Text = login_and_password.Item2;
+                            uploadNewcommer.Enabled = true;
                         }
                         else
                         {
                             string errorText = await response.Content.ReadAsStringAsync();
                             MessageBox.Show($"Error getting login/password: {errorText}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            uploadNewcommer.Enabled = true;
                         }
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show($"some error occured while getting login/password: {ex}");
+                        uploadNewcommer.Enabled = true;
                     }
                 }
                 else
                 {
                     string errorText = await response.Content.ReadAsStringAsync();
                     MessageBox.Show($"Error inserting employee: {errorText}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    uploadNewcommer.Enabled = true;
                 }
 
 
@@ -283,6 +298,7 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                uploadNewcommer.Enabled = true;
             }
 
         }
@@ -587,7 +603,7 @@ namespace Kotova.Test1.ClientSide
             {
                 // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
-                throw ex;
+                return false;
             }
         }
 

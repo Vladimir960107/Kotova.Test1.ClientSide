@@ -104,7 +104,7 @@ namespace Kotova.Test1.ClientSide
             {
                 // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
-                throw ex;
+                return false;
             }
 
         }
