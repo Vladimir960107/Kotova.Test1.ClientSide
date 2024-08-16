@@ -404,12 +404,12 @@ namespace Kotova.Test1.ClientSide
                 {
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(jsonResponse);
-                    MessageBox.Show($"Login failed, most likely because current department already have Chief Authenticated. Ask him to close application and then (after 1 minute max) - open your application. {errorResponse.Message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Вход не успешен, так как начальник для данного отдела уже авторизован. Попросите его закрыть приложение и после этого - спустя минуту авторизуйтесь заного.", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
                     var message = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Login failed: {message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"{message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
@@ -451,11 +451,11 @@ namespace Kotova.Test1.ClientSide
                 if (RememberCredentialsCheckBox.Checked)
                 {
                     File.WriteAllBytes(filePath, encryptedData);
-                    MessageBox.Show("Login Successfull and JWT Token sucessfully encoded");
+                    MessageBox.Show("Вход с запоминанем данных успешен.");
                 }
                 else
                 {
-                    MessageBox.Show("Login Successfull");
+                    MessageBox.Show("Вход успешен.");
                 }
                 return true;
             }

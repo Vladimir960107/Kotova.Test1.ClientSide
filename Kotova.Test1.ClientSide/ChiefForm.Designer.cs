@@ -52,8 +52,6 @@
             buttonSyncManualyInstrWithDB = new Button();
             label5 = new Label();
             label4 = new Label();
-            Download_file_excel = new Button();
-            buttonTest = new Button();
             ListOfInstructionsForUser = new ListBox();
             ChiefTabControl = new TabControl();
             tabPage3 = new TabPage();
@@ -68,10 +66,10 @@
             Passed = new DataGridViewTextBoxColumn();
             listBoxOfNotPassedByInstructions = new ListBox();
             TestButtonForInstructions = new Button();
+            tabPage5 = new TabPage();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
-            tabPage5 = new TabPage();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -82,7 +80,7 @@
             // 
             // submitInstructionToPeople
             // 
-            submitInstructionToPeople.Location = new Point(398, 226);
+            submitInstructionToPeople.Location = new Point(193, 232);
             submitInstructionToPeople.Margin = new Padding(3, 2, 3, 2);
             submitInstructionToPeople.Name = "submitInstructionToPeople";
             submitInstructionToPeople.Size = new Size(216, 71);
@@ -93,10 +91,10 @@
             // 
             // SyncNamesWithDB
             // 
-            SyncNamesWithDB.Location = new Point(349, 59);
+            SyncNamesWithDB.Location = new Point(349, 43);
             SyncNamesWithDB.Margin = new Padding(3, 2, 3, 2);
             SyncNamesWithDB.Name = "SyncNamesWithDB";
-            SyncNamesWithDB.Size = new Size(265, 22);
+            SyncNamesWithDB.Size = new Size(265, 38);
             SyncNamesWithDB.TabIndex = 26;
             SyncNamesWithDB.Text = "Синхронизировать ФИО с Базой Данных";
             SyncNamesWithDB.UseVisualStyleBackColor = true;
@@ -105,7 +103,7 @@
             // checkBoxIsForDrivers
             // 
             checkBoxIsForDrivers.AutoSize = true;
-            checkBoxIsForDrivers.Location = new Point(388, 33);
+            checkBoxIsForDrivers.Location = new Point(349, 194);
             checkBoxIsForDrivers.Margin = new Padding(3, 2, 3, 2);
             checkBoxIsForDrivers.Name = "checkBoxIsForDrivers";
             checkBoxIsForDrivers.Size = new Size(152, 19);
@@ -269,9 +267,7 @@
             tabPage1.Controls.Add(label5);
             tabPage1.Controls.Add(SyncNamesWithDB);
             tabPage1.Controls.Add(label4);
-            tabPage1.Controls.Add(Download_file_excel);
             tabPage1.Controls.Add(checkBoxIsForDrivers);
-            tabPage1.Controls.Add(buttonTest);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
@@ -285,26 +281,26 @@
             checkedListBoxNamesOfPeople.CheckOnClick = true;
             checkedListBoxNamesOfPeople.FormattingEnabled = true;
             checkedListBoxNamesOfPeople.HorizontalScrollbar = true;
-            checkedListBoxNamesOfPeople.Location = new Point(325, 86);
+            checkedListBoxNamesOfPeople.Location = new Point(349, 86);
             checkedListBoxNamesOfPeople.Name = "checkedListBoxNamesOfPeople";
-            checkedListBoxNamesOfPeople.Size = new Size(289, 94);
+            checkedListBoxNamesOfPeople.Size = new Size(265, 94);
             checkedListBoxNamesOfPeople.TabIndex = 34;
             // 
             // ListOfInstructions
             // 
             ListOfInstructions.FormattingEnabled = true;
             ListOfInstructions.ItemHeight = 15;
-            ListOfInstructions.Location = new Point(20, 57);
+            ListOfInstructions.Location = new Point(20, 86);
             ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(232, 79);
+            ListOfInstructions.Size = new Size(237, 94);
             ListOfInstructions.TabIndex = 33;
             // 
             // buttonSyncManualyInstrWithDB
             // 
-            buttonSyncManualyInstrWithDB.Location = new Point(27, 10);
+            buttonSyncManualyInstrWithDB.Location = new Point(20, 43);
             buttonSyncManualyInstrWithDB.Margin = new Padding(3, 2, 3, 2);
             buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrWithDB";
-            buttonSyncManualyInstrWithDB.Size = new Size(216, 38);
+            buttonSyncManualyInstrWithDB.Size = new Size(237, 38);
             buttonSyncManualyInstrWithDB.TabIndex = 32;
             buttonSyncManualyInstrWithDB.Text = "Синхронизировать инструктажи с Базой Данных";
             buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
@@ -313,7 +309,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(150, 142);
+            label5.Location = new Point(150, 194);
             label5.Name = "label5";
             label5.Size = new Size(74, 15);
             label5.TabIndex = 31;
@@ -322,31 +318,11 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(20, 142);
+            label4.Location = new Point(20, 194);
             label4.Name = "label4";
             label4.Size = new Size(124, 15);
             label4.TabIndex = 30;
             label4.Text = "Дата инструктажа до:";
-            // 
-            // Download_file_excel
-            // 
-            Download_file_excel.Location = new Point(20, 226);
-            Download_file_excel.Margin = new Padding(3, 2, 3, 2);
-            Download_file_excel.Name = "Download_file_excel";
-            Download_file_excel.Size = new Size(216, 71);
-            Download_file_excel.TabIndex = 24;
-            Download_file_excel.Text = "Скачать Excel файл для отдела";
-            Download_file_excel.UseVisualStyleBackColor = true;
-            // 
-            // buttonTest
-            // 
-            buttonTest.Location = new Point(20, 166);
-            buttonTest.Margin = new Padding(3, 2, 3, 2);
-            buttonTest.Name = "buttonTest";
-            buttonTest.Size = new Size(131, 22);
-            buttonTest.TabIndex = 22;
-            buttonTest.Text = "Тест сервера";
-            buttonTest.UseVisualStyleBackColor = true;
             // 
             // ListOfInstructionsForUser
             // 
@@ -494,6 +470,16 @@
             TestButtonForInstructions.UseVisualStyleBackColor = true;
             TestButtonForInstructions.Click += TestButtonForInstructions_Click;
             // 
+            // tabPage5
+            // 
+            tabPage5.Location = new Point(4, 24);
+            tabPage5.Name = "tabPage5";
+            tabPage5.Padding = new Padding(3);
+            tabPage5.Size = new Size(667, 588);
+            tabPage5.TabIndex = 4;
+            tabPage5.Text = "Учёт сотрудников";
+            tabPage5.UseVisualStyleBackColor = true;
+            // 
             // LogOutButton
             // 
             LogOutButton.Location = new Point(928, 47);
@@ -513,16 +499,6 @@
             consoleTextBox.ScrollBars = ScrollBars.Both;
             consoleTextBox.Size = new Size(340, 529);
             consoleTextBox.TabIndex = 35;
-            // 
-            // tabPage5
-            // 
-            tabPage5.Location = new Point(4, 24);
-            tabPage5.Name = "tabPage5";
-            tabPage5.Padding = new Padding(3);
-            tabPage5.Size = new Size(667, 588);
-            tabPage5.TabIndex = 4;
-            tabPage5.Text = "Учёт сотрудников";
-            tabPage5.UseVisualStyleBackColor = true;
             // 
             // ChiefForm
             // 

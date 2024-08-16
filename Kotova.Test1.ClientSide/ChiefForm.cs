@@ -53,12 +53,12 @@ namespace Kotova.Test1.ClientSide
             _signUpForm = signUpForm;
             InitializeComponent();
 
+            ChiefTabControl_SelectedIndexChanged(null, EventArgs.Empty);
+
             PingServer();
             myTimer.Interval = 30000;  // 30 seconds
             myTimer.Tick += new EventHandler(TimerEventProcessor);
             myTimer.Start();
-
-
         }
 
         private async void TimerEventProcessor(Object myObject, EventArgs myEventArgs)
@@ -304,6 +304,10 @@ namespace Kotova.Test1.ClientSide
 
         private async void buttonSyncManualyInstrWithDB_Click(object sender, EventArgs e)
         {
+            await SyncManuallyInstrWithDBInternal();
+        }
+        private async Task SyncManuallyInstrWithDBInternal()
+        {
             try
             {
                 buttonSyncManualyInstrWithDB.Enabled = false;
@@ -326,8 +330,7 @@ namespace Kotova.Test1.ClientSide
 
                         string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
                         ListOfInstructions.Items.AddRange(resultArray);
-                        //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
@@ -353,7 +356,11 @@ namespace Kotova.Test1.ClientSide
 
 
 
-        private async void SyncNamesWithDB_Click(object sender, EventArgs e) //ПРОДОЛЖАЙ ЭТОТ КОД! С 28.05.2024
+        private async void SyncNamesWithDB_Click(object sender, EventArgs e)
+        {
+            await SyncNamesWithDBInternal();
+        }
+        private async Task SyncNamesWithDBInternal()
         {
             try
             {
@@ -381,8 +388,7 @@ namespace Kotova.Test1.ClientSide
                         //ListBoxNamesOfPeople.Items.AddRange(resultArray);
                         checkedListBoxNamesOfPeople.Items.AddRange(resultArray);
                         // Successfully called the ImportIntoDB endpoint, handle accordingly
-                        //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
@@ -552,8 +558,11 @@ namespace Kotova.Test1.ClientSide
                 {
                     MessageBox.Show("All the instructions passed!");
                 }
-
-
+            }
+            if (ChiefTabControl.SelectedTab.Text == "Обработка инструктажей")
+            {
+                await SyncManuallyInstrWithDBInternal();
+                await SyncNamesWithDBInternal();
             }
 
             if (ChiefTabControl.SelectedTab.Text == "Создание инструктажа")
