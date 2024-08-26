@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Diagnostics;
 using Kotova.CommonClasses;
 using System.Net.Http;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -28,13 +29,14 @@ namespace Kotova.Test1.ClientSide
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
         const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
 
-        public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
+        public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 3 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
         public const string db_typeOfInstruction = "type_of_instruction";
 
         System.Windows.Forms.Timer myTimer = new System.Windows.Forms.Timer();
 
         private static readonly HttpClient _client = new HttpClient();
+        private HubConnection? _hubConnection = null;
 
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
@@ -55,100 +57,33 @@ namespace Kotova.Test1.ClientSide
 
             ChiefTabControl_SelectedIndexChanged(null, EventArgs.Empty);
 
-            PingServer();
-            myTimer.Interval = 30000;  // 30 seconds
-            myTimer.Tick += new EventHandler(TimerEventProcessor);
-            myTimer.Start();
+            InitializeSignalRConnection();
+
         }
 
-        private async void TimerEventProcessor(Object myObject, EventArgs myEventArgs)
+        private async void InitializeSignalRConnection()
         {
-            myTimer.Stop();
-            if (!(await PingServer()))
-            {
-                LogOutForm_Click(myObject, myEventArgs);
-            }
-
-            myTimer.Start();
-        }
-
-        private async Task<bool> PingServer()
-        {
-            try
-            {
-                string jwtToken = _loginForm._jwtToken;
-                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                var response = await _client.GetAsync($"{GetDepartmentIdByUserName}/{Uri.EscapeDataString(_userName)}");
-                if (response.IsSuccessStatusCode)
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(ConfigurationClass.BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT, options =>
                 {
-                    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    options.AccessTokenProvider = () => Task.FromResult(_loginForm._jwtToken);
+                })
+            .Build();
 
-                    int departmentId = Int32.Parse(await response.Content.ReadAsStringAsync());
-                    response = await _client.GetAsync($"{PingToServerIsOnlineURL}/{departmentId}"); // посмотри чтобы возвращалось время апдейта в БД. чтобы не дай бог в будущем в разных часовых поясах не путать.
-                    if (response.IsSuccessStatusCode)
-                    {
-                        consoleTextBox.AppendText("пинг на сервер отправлен успешно");
-                        //consoleTextBox.AppendText("pinged successfully"); // вместо message box сделать чтобы в консоль писалась или textbox или подобном. 
-                        consoleTextBox.AppendText(Environment.NewLine);
-                        return true;
-                    }
-                    consoleTextBox.AppendText("Получен DepartmentId, но пинг на сервер не успешен. Status code:" + $"{response.StatusCode}");
-                    //consoleTextBox.AppendText("got DepartmentId, but ping failed. Status code:" + $"{response.StatusCode}");
-                    consoleTextBox.AppendText(Environment.NewLine);
-                    return true;
-                }
-                else
-                {
-                    MessageBox.Show("Пинг на сервер провален. Сервер не работает? Status code:" + $"{response.StatusCode}");
-                    //MessageBox.Show("Ping failed. Server is not working? Status code:" + $"{response.StatusCode}");
-                    return false;
-                }
-            }
-            catch (Exception ex)
+            _hubConnection.On<string, string>("Получено сообщение", (user, message) =>
             {
-                MessageBox.Show($"Произошла ошибка во время пинга: {ex.Message}");
-
-                //MessageBox.Show($"Error occurred while pinging: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async Task<bool> PingToServerThatChiefIsOffline()
-        {
+                // Handle incoming messages from the SignalR hub
+                MessageBox.Show($"{user}: {message}", "Message from Hub");
+            });
 
             try
             {
-                string jwtToken = _loginForm._jwtToken;
-                _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                var response = await _client.GetAsync($"{GetDepartmentIdByUserName}/{Uri.EscapeDataString(_userName)}");
-                if (response.IsSuccessStatusCode)
-                {
-                    _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                    int departmentId = Int32.Parse(await response.Content.ReadAsStringAsync());
-                    response = await _client.GetAsync($"{PingToServerIsOfflineURL}/{departmentId}");
-                    if (response.IsSuccessStatusCode)
-                    {
-                        //MessageBox.Show("Response about closing send successfully");
-                        //consoleTextBox.AppendText(Environment.NewLine);
-                        return true;
-                    }
-                    MessageBox.Show("Получен DepartmentId, Не отправлено уведомление на сервер о закрытии формы. Status code:" + $"{response.StatusCode}");
-                    //MessageBox.Show("got DepartmentId, but didn't get response about closing form. Status code:" + $"{response.StatusCode}");
-                    return true;
-                }
-                else
-                {
-                    MessageBox.Show("Не удалось отправить запрос на закрытие формы. Сервер не работает? Status code:" + $"{response.StatusCode}");
-                    return false;
-                }
+                await _hubConnection.StartAsync();
+                MessageBox.Show("Подключено к SignalR hub.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Произошла ошибка при отправке запроса на сервер о статусе \"оффлайн\": {ex.Message}");
-                return false;
+                MessageBox.Show($"Не удалось подключиться к SignalR hub: {ex.Message}");
             }
         }
 
@@ -175,9 +110,9 @@ namespace Kotova.Test1.ClientSide
 
             FullCustomInstruction? fullCustomInstruction = await CreateInstructionInternal();
 
-           
 
-            if (fullCustomInstruction is null) 
+
+            if (fullCustomInstruction is null)
             {
                 return;
             }
@@ -198,7 +133,7 @@ namespace Kotova.Test1.ClientSide
                 {
                     listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
                 }
-                
+
                 string instructionNameString = causeOfCreatedInstruction.ToString();
                 InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
                 string jsonData = JsonConvert.SerializeObject(package);
@@ -215,25 +150,24 @@ namespace Kotova.Test1.ClientSide
 
                         // Prepare the content to send
                         var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
-                        MessageBox.Show($"Send data to server: {encryptedJsonData}");
                         // Send a POST request with the serialized JSON content
                         var response = await httpClient.PostAsync(uri, content);
 
 
                         if (response.IsSuccessStatusCode)
                         {
-                            MessageBox.Show("Data successfully sent to the server and Instructions added to User.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен пользователям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
                             var errorMessage = await response.Content.ReadAsStringAsync();
-                            MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"An error occurred while sending data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {
@@ -242,7 +176,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Some error occurred during Submit:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Произошли ошибка, проверь эту строчку:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -381,7 +315,7 @@ namespace Kotova.Test1.ClientSide
                         List<Tuple<string, string>>? result = JsonConvert.DeserializeObject<List<Tuple<string, string>>>(responseBody);
                         if (result is null)
                         {
-                            throw new Exception("responseBody is empty");
+                            throw new Exception("тело ответа пусто");
                         }
                         string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
 
@@ -394,7 +328,7 @@ namespace Kotova.Test1.ClientSide
                     {
                         string errorMessage = await response.Content.ReadAsStringAsync();
                         //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Не удалось синхронизировать имена с базой данных. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -419,14 +353,14 @@ namespace Kotova.Test1.ClientSide
             List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
             if (listOfNames.Count == 0)
             {
-                MessageBox.Show("People not selected!");
+                MessageBox.Show("Люди не выбраны!");
                 submitInstructionToPeople.Enabled = true;
                 return;
             }
             var selectedInstruction = ListOfInstructions.SelectedItem;
             if (selectedInstruction is null)
             {
-                MessageBox.Show("Instruction not selected!");
+                MessageBox.Show("Инструкция не выбрана!");
                 submitInstructionToPeople.Enabled = true;
                 return;
             }
@@ -458,18 +392,18 @@ namespace Kotova.Test1.ClientSide
 
                         if (response.IsSuccessStatusCode)
                         {
-                            MessageBox.Show("Data successfully sent to the server and Instructions added to User.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен людям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
                             var errorMessage = await response.Content.ReadAsStringAsync();
-                            MessageBox.Show($"Failed to send data to server. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show($"Не получилось отправить данные не сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"An error occurred while sending data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {
@@ -478,7 +412,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Some error occurred during Submit:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Какая-то ошибка произошла при назначении инструктажа:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -512,34 +446,24 @@ namespace Kotova.Test1.ClientSide
         }
         public async void LogOutForm_Click_Internal()
         {
+            if (_signUpForm != null)
+            {
+                _signUpForm.Dispose();
+            }
             Decryption_stuff.DeleteJWTToken();
+            this.Dispose(true);
+            _loginForm.activeForm = _loginForm;
             _loginForm.Show();
-            this.Dispose();
-            myTimer.Stop();
-            myTimer.Tick -= new EventHandler(TimerEventProcessor);
-            await PingToServerThatChiefIsOffline();
-
         }
 
-        private async void ChiefForm_FormClosed(object sender, FormClosedEventArgs e) //РАЗБЕРИСЬ ПОЧЕМУ ПРИ ЗАКРЫТИИ ФОРМЫ, ВСЕ РАВНО НЕ ЗАКРЫВАЕТСЯ VISUAL STUDIO (УТЕЧКА). Уже закрывается?
+
+        private void ChiefForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            e.Cancel = true;
+            this.Hide();
+            this.ShowInTaskbar = false;
 
-            _loginForm.Dispose();
-            myTimer.Stop();
-            myTimer.Tick -= new EventHandler(TimerEventProcessor);
-            await PingToServerThatChiefIsOffline();
-            this.Dispose();
         }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -586,7 +510,7 @@ namespace Kotova.Test1.ClientSide
                             List<Tuple<string, string>>? result = JsonConvert.DeserializeObject<List<Tuple<string, string>>>(responseBody);
                             if (result is null)
                             {
-                                throw new Exception("responseBody is empty");
+                                throw new Exception("тело ответа пусто");
                             }
                             string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
 
@@ -600,14 +524,14 @@ namespace Kotova.Test1.ClientSide
                         {
                             string errorMessage = await response.Content.ReadAsStringAsync();
                             //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show($"Не получилось синхронизировать имена с базой данных. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     // Exception handling for networking errors, etc.
-                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {
@@ -656,7 +580,7 @@ namespace Kotova.Test1.ClientSide
             catch (HttpRequestException ex)
             {
                 // Handle any exceptions here
-                MessageBox.Show($"Error: {ex.Message}");
+                MessageBox.Show($"Ошибка: {ex.Message}");
                 throw ex;
             }
         }
@@ -667,7 +591,7 @@ namespace Kotova.Test1.ClientSide
             HyperLinkForInstructionsFolder.Enabled = true;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
                 HyperLinkForInstructionsFolder.Enabled = false;
                 return;
@@ -708,7 +632,7 @@ namespace Kotova.Test1.ClientSide
             HyperLinkForInstructionsFolder.Enabled = false;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -717,7 +641,7 @@ namespace Kotova.Test1.ClientSide
 
             if (pathStr is null || pathStr.Length == 0)
             {
-                MessageBox.Show("Path is null or empty.");
+                MessageBox.Show("Путь пуст или отсутствует.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -730,7 +654,7 @@ namespace Kotova.Test1.ClientSide
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                MessageBox.Show("Provided path is null or empty.");
+                MessageBox.Show("Указанный путь пуст или отсутствует.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -739,7 +663,7 @@ namespace Kotova.Test1.ClientSide
             string fullPath = Path.GetFullPath(path);
             if (!Directory.Exists(fullPath))
             {
-                MessageBox.Show($"The path '{fullPath}' does not exist.");
+                MessageBox.Show($"Путь '{fullPath}' не существует.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -751,7 +675,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open the folder: {ex.Message}");
+                MessageBox.Show($"Не получилось открыть папку: {ex.Message}");
                 PassInstruction.Enabled = false;
             }
         }
@@ -776,11 +700,11 @@ namespace Kotova.Test1.ClientSide
             if (!PassInstruction.Checked) { return; }
             if (ConfirmAction())
             {
-                MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Вы согласились с прохождением инструктажа.", "Действите подтверждено", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
                 if (ListOfInstructionsForUser.SelectedItem == null)
                 {
-                    MessageBox.Show("You haven't select the Instruction.");
+                    MessageBox.Show("Вы не выбрали инструктаж.");
                     PassInstruction.Enabled = false;
                     return;
                 }
@@ -790,7 +714,7 @@ namespace Kotova.Test1.ClientSide
             }
             else
             {
-                MessageBox.Show("You did not agree with the action.", "Action Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Вы не согласились с прохождением инструктажа.", "Действие отменено", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 PassInstruction.Checked = false;
                 return;
             }
@@ -798,7 +722,7 @@ namespace Kotova.Test1.ClientSide
 
         private bool ConfirmAction()
         {
-            var result = MessageBox.Show("Do you agree with the action?", "Confirm Action", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show("Вы прошли инструктаж?", "Подтвердить действие", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
@@ -830,7 +754,7 @@ namespace Kotova.Test1.ClientSide
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Everyting is fine, updating the listbox of instructions");
+                        MessageBox.Show("Все хорошо, обновляем лист инструктажей.");
                         ListOfInstructionsForUser.Items.Clear();
                         DownloadInstructionsForUserFromServer(_userName);
                     }
@@ -1097,7 +1021,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open file: {ex.Message}");
+                MessageBox.Show($"Не получилось открыть файл: {ex.Message}");
             }
         }
 
@@ -1118,9 +1042,15 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Синхронизация с базой данных непройденных инструктажей успешно", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         var jsonResponse = await response.Content.ReadAsStringAsync();
                         var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChief>>(jsonResponse);
+
+                        if (result is null)
+                        {
+                            MessageBox.Show("Произошла ошибка при получении данных с сервера!");
+                            return;
+                        }
+
                         if (result.Count == 0)
                         {
                             MessageBox.Show("Похоже все инструктажи всеми пройдены!");
@@ -1145,7 +1075,7 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 // Exception handling for networking errors, etc.
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1201,5 +1131,7 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("Invalid format.");
             }
         }
+
+        
     }
 }

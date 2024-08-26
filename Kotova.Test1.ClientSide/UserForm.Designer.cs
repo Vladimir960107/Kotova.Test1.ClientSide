@@ -11,11 +11,17 @@
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        protected async override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
             {
                 components.Dispose();
+            }
+            if (_hubConnection != null)
+            {
+                await _hubConnection.StopAsync();
+                await _hubConnection.DisposeAsync();
+                _hubConnection = null;
             }
             base.Dispose(disposing);
         }
@@ -37,6 +43,8 @@
             PassInstruction = new CheckBox();
             SignOut = new Button();
             FilesOfInstructionCheckedListBox = new CheckedListBox();
+            SendMessageButton = new Button();
+            ExitTheProgrammEntirelyButton = new Button();
             SuspendLayout();
             // 
             // CheckForNewInstructions
@@ -128,11 +136,33 @@
             FilesOfInstructionCheckedListBox.TabIndex = 30;
             FilesOfInstructionCheckedListBox.ItemCheck += FilesOfInstructionCheckedListBox_ItemCheck;
             // 
+            // SendMessageButton
+            // 
+            SendMessageButton.Location = new Point(531, 112);
+            SendMessageButton.Name = "SendMessageButton";
+            SendMessageButton.Size = new Size(124, 44);
+            SendMessageButton.TabIndex = 31;
+            SendMessageButton.Text = "Отправить всем сообщение";
+            SendMessageButton.UseVisualStyleBackColor = true;
+            SendMessageButton.Click += SendMessageButton_Click;
+            // 
+            // ExitTheProgrammEntirelyButton
+            // 
+            ExitTheProgrammEntirelyButton.Location = new Point(678, 57);
+            ExitTheProgrammEntirelyButton.Name = "ExitTheProgrammEntirelyButton";
+            ExitTheProgrammEntirelyButton.Size = new Size(110, 51);
+            ExitTheProgrammEntirelyButton.TabIndex = 32;
+            ExitTheProgrammEntirelyButton.Text = "Выйти из программы";
+            ExitTheProgrammEntirelyButton.UseVisualStyleBackColor = true;
+            ExitTheProgrammEntirelyButton.Click += ExitTheProgrammEntirelyButton_Click;
+            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(800, 450);
+            Controls.Add(ExitTheProgrammEntirelyButton);
+            Controls.Add(SendMessageButton);
             Controls.Add(FilesOfInstructionCheckedListBox);
             Controls.Add(SignOut);
             Controls.Add(PassInstruction);
@@ -144,7 +174,7 @@
             Controls.Add(CheckForNewInstructions);
             Name = "UserForm";
             Text = "User";
-            FormClosed += UserForm_FormClosed;
+            FormClosing += UserForm_FormClosing;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -160,5 +190,7 @@
         private CheckBox PassInstruction;
         private Button SignOut;
         private CheckedListBox FilesOfInstructionCheckedListBox;
+        private Button SendMessageButton;
+        private Button ExitTheProgrammEntirelyButton;
     }
 }

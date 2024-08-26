@@ -14,6 +14,10 @@ using static Kotova.Test1.ClientSide.Login_Russian;
 using System.Text.Json;
 using System.Diagnostics;
 using Kotova.CommonClasses;
+using Microsoft.AspNetCore.SignalR.Client;
+using System.Reflection;
+using System.Configuration;
+using System.Timers;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -25,6 +29,7 @@ namespace Kotova.Test1.ClientSide
         public const string dB_pos_users_pathToInstruction = "path_to_instruction";
 
 
+
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
         public const string db_typeOfInstruction = "type_of_instruction";
@@ -34,26 +39,111 @@ namespace Kotova.Test1.ClientSide
 
         private List<Dictionary<string, object>> listOfInstructions_global;
 
+        private NotifyIcon notifyIcon;
+
+        private static bool canYouCloseTheApplication = false;
+        
+
         public Login_Russian? _loginForm;
         public SignUpForm _signUpForm;
         string? _userName;
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+
+        private HubConnection? _hubConnection = null;
+
         public UserForm()
         {
             InitializeComponent();
+            InitializeSignalRConnection();
         }
 
         public UserForm(Login_Russian loginForm, string userName)
         {
+            StartTimer();
             InitializeComponent();
+            ExitTheProgrammEntirelyButton.Enabled = false;
             _loginForm = loginForm;
             _userName = userName;
             UserLabel.Text = _userName;
             PassInstruction.Enabled = false;
 
+            InitializeSignalRConnection();
+
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
+        }
+
+        public void EnableExitTheProgrammEntirelyButton()
+        {
+            if (ExitTheProgrammEntirelyButton.InvokeRequired)
+            {
+                // If we're not on the UI thread, invoke the method on the UI thread
+                ExitTheProgrammEntirelyButton.Invoke(new Action(EnableExitTheProgrammEntirelyButton));
+            }
+            else
+            {
+                // We're on the UI thread, so we can directly modify the control
+                ExitTheProgrammEntirelyButton.Enabled = true;
+            }
+        }
+
+        public void StartTimer()
+        {
+            System.Timers.Timer timer = new System.Timers.Timer(6000); // 6 seconds. Cause because if not initialized properly everything - this will cause the programm to throw exception. so we wait :)
+            timer.Elapsed += (sender, e) =>
+            {
+                EnableExitTheProgrammEntirelyButton();
+                timer.Dispose();
+            };
+            timer.AutoReset = false;
+            timer.Start();
+        }
+
+
+        private async void InitializeSignalRConnection()
+        {
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(ConfigurationClass.BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT, options =>
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(_loginForm._jwtToken);
+                })
+                .Build();
+
+            _hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+            {
+                // Handle incoming messages from the SignalR hub
+                MessageBox.Show($"{user}: {message}", "Message from Hub");
+            });
+
+            try
+            {
+                await _hubConnection.StartAsync();
+                MessageBox.Show("Connected to the SignalR hub.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to connect to SignalR hub: {ex.Message}");
+            }
+        }
+
+        private async void SendMessageButton_Click(object sender, EventArgs e)
+        {
+            if (_hubConnection.State == HubConnectionState.Connected)
+            {
+                try
+                {
+                    await _hubConnection.InvokeAsync("SendMessage", _userName, "Hello from the client!");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to send message: {ex.Message}");
+                }
+            }
+            else
+            {
+                MessageBox.Show("You are not connected to the SignalR hub.");
+            }
         }
 
         private async void CheckForNewInstructions_Click(object sender, EventArgs e)
@@ -138,12 +228,12 @@ namespace Kotova.Test1.ClientSide
                         }
                         else
                         {
-                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!"); 
+                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
                             PassInstruction.Enabled = false;
                             HyperLinkForInstructionsFolder.Enabled = false;
                             return;
                         }
-                            
+
                     }
                     FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
                 }
@@ -304,24 +394,24 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-
-        private void UserForm_FormClosed(object sender, FormClosedEventArgs e)
+        private void UserForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            _loginForm.Dispose();
-            this.Dispose();
+            e.Cancel = true;
+            this.Hide();
+            this.ShowInTaskbar = false;
         }
 
-        private void SignOut_Click(object sender, EventArgs e)
-        {
 
+        private async void SignOut_Click(object sender, EventArgs e)
+        {
             if (_signUpForm != null)
             {
                 _signUpForm.Dispose();
             }
             Decryption_stuff.DeleteJWTToken();
-
-            _loginForm.Show();
             this.Dispose(true);
+            _loginForm.activeForm = _loginForm;
+            _loginForm.Show();
         }
 
         private void FilesOfInstructionCheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
@@ -373,6 +463,12 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show($"Failed to open file: {ex.Message}");
             }
+        }
+
+        private async void ExitTheProgrammEntirelyButton_Click(object sender, EventArgs e)
+        {
+            this.Dispose(true);
+            _loginForm.ExitApplication();
         }
     }
 }

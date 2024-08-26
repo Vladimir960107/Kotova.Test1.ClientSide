@@ -12,6 +12,8 @@ namespace Kotova.Test1.ClientSide
 
         public const string BASE_INSTRUCTIONS_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT+"/Instructions";
 
+        public const string BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT + "/notificationHub";
+
         public const string DEFAULT_PATH_TO_INITIAL_INSTRUCTIONS = @"C:\Initial\Folder\Path";
     }
 }

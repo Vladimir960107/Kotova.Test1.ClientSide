@@ -11,11 +11,17 @@
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        protected async override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
             {
                 components.Dispose();
+            }
+            if (_hubConnection != null)
+            {
+                await _hubConnection.StopAsync();
+                await _hubConnection.DisposeAsync();
+                _hubConnection = null;
             }
             base.Dispose(disposing);
         }
@@ -70,6 +76,9 @@
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
+            TrayOfTasksListView = new ListView();
+            LabelTray = new Label();
+            button1 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -242,10 +251,10 @@
             // 
             typeOfInstructionListBox.FormattingEnabled = true;
             typeOfInstructionListBox.ItemHeight = 15;
-            typeOfInstructionListBox.Items.AddRange(new object[] { "Первичный;", "Повторный;", "Целевой;" });
+            typeOfInstructionListBox.Items.AddRange(new object[] { "Первичный;", "Повторный;", "Повторный (для водителей);", "Целевой;" });
             typeOfInstructionListBox.Location = new Point(47, 49);
             typeOfInstructionListBox.Name = "typeOfInstructionListBox";
-            typeOfInstructionListBox.Size = new Size(120, 49);
+            typeOfInstructionListBox.Size = new Size(168, 64);
             typeOfInstructionListBox.TabIndex = 0;
             // 
             // testButton
@@ -436,6 +445,7 @@
             dataGridViewPeopleThatNotPassedInstr.Columns.AddRange(new DataGridViewColumn[] { Names, Passed });
             dataGridViewPeopleThatNotPassedInstr.Location = new Point(324, 59);
             dataGridViewPeopleThatNotPassedInstr.Name = "dataGridViewPeopleThatNotPassedInstr";
+            dataGridViewPeopleThatNotPassedInstr.ReadOnly = true;
             dataGridViewPeopleThatNotPassedInstr.RowTemplate.Height = 25;
             dataGridViewPeopleThatNotPassedInstr.Size = new Size(322, 184);
             dataGridViewPeopleThatNotPassedInstr.TabIndex = 2;
@@ -444,11 +454,13 @@
             // 
             Names.HeaderText = "ФИО";
             Names.Name = "Names";
+            Names.ReadOnly = true;
             // 
             // Passed
             // 
             Passed.HeaderText = "Пройден ли инструктаж?";
             Passed.Name = "Passed";
+            Passed.ReadOnly = true;
             // 
             // listBoxOfNotPassedByInstructions
             // 
@@ -500,18 +512,47 @@
             consoleTextBox.Size = new Size(340, 529);
             consoleTextBox.TabIndex = 35;
             // 
+            // TrayOfTasksListView
+            // 
+            TrayOfTasksListView.Location = new Point(129, 685);
+            TrayOfTasksListView.Name = "TrayOfTasksListView";
+            TrayOfTasksListView.Size = new Size(554, 182);
+            TrayOfTasksListView.TabIndex = 36;
+            TrayOfTasksListView.UseCompatibleStateImageBehavior = false;
+            // 
+            // LabelTray
+            // 
+            LabelTray.AutoSize = true;
+            LabelTray.Location = new Point(25, 685);
+            LabelTray.Name = "LabelTray";
+            LabelTray.Size = new Size(87, 15);
+            LabelTray.TabIndex = 37;
+            LabelTray.Text = "!Список задач:";
+            // 
+            // button1
+            // 
+            button1.Location = new Point(316, 656);
+            button1.Name = "button1";
+            button1.Size = new Size(184, 23);
+            button1.TabIndex = 38;
+            button1.Text = "Обновить список задач";
+            button1.UseVisualStyleBackColor = true;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1102, 765);
+            ClientSize = new Size(1102, 901);
+            Controls.Add(button1);
+            Controls.Add(LabelTray);
+            Controls.Add(TrayOfTasksListView);
             Controls.Add(testButton);
             Controls.Add(consoleTextBox);
             Controls.Add(LogOutButton);
             Controls.Add(ChiefTabControl);
             Name = "ChiefForm";
             Text = "ChiefOfDepartment";
-            FormClosed += ChiefForm_FormClosed;
+            FormClosing += ChiefForm_FormClosing;
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
             tabPage1.ResumeLayout(false);
@@ -569,5 +610,8 @@
         private ListBox listBoxOfPassedInstructions;
         private TreeViewWithoutDoubleClick treeView1;
         private TabPage tabPage5;
+        private ListView TrayOfTasksListView;
+        private Label LabelTray;
+        private Button button1;
     }
 }

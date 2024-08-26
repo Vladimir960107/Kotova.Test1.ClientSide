@@ -537,7 +537,7 @@ namespace Kotova.Test1.ClientSide
                 bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
                 if (IsEmpty == true)
                 {
-                    MessageBox.Show("All the instructions passed!");
+                    MessageBox.Show("Все инструктажи пройдены!");
                 }
             }
             if (CoordinatorTabControl.SelectedTab.Text == "Данные сотрудника")
@@ -613,7 +613,7 @@ namespace Kotova.Test1.ClientSide
             HyperLinkForInstructionsFolder.Enabled = true;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstructionAsUser.Enabled = false;
                 HyperLinkForInstructionsFolder.Enabled = false;
                 return;
@@ -637,7 +637,7 @@ namespace Kotova.Test1.ClientSide
             HyperLinkForInstructionsFolder.Enabled = false;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstructionAsUser.Enabled = false;
                 return;
             }
@@ -646,7 +646,7 @@ namespace Kotova.Test1.ClientSide
 
             if (pathStr is null || pathStr.Length == 0)
             {
-                MessageBox.Show("Path is null or empty.");
+                MessageBox.Show("путь отсутствует или пуст.");
                 PassInstructionAsUser.Enabled = false;
                 return;
             }
@@ -659,7 +659,7 @@ namespace Kotova.Test1.ClientSide
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                MessageBox.Show("Provided path is null or empty.");
+                MessageBox.Show("Указанный пусть отсутствует или пуст.");
                 PassInstructionAsUser.Enabled = false;
                 return;
             }
@@ -668,7 +668,7 @@ namespace Kotova.Test1.ClientSide
             string fullPath = Path.GetFullPath(path);
             if (!Directory.Exists(fullPath))
             {
-                MessageBox.Show($"The path '{fullPath}' does not exist.");
+                MessageBox.Show($"Путь '{fullPath}' не существует.");
                 PassInstructionAsUser.Enabled = false;
                 return;
             }
@@ -680,7 +680,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open the folder: {ex.Message}");
+                MessageBox.Show($"Не удалось открыть указанную папку: {ex.Message}");
                 PassInstructionAsUser.Enabled = false;
             }
         }
@@ -759,7 +759,7 @@ namespace Kotova.Test1.ClientSide
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Everyting is fine, updating the listbox of instructions");
+                        MessageBox.Show("Всё хорошо, обновляем список инструкций.");
                         ListOfInstructionsForUser.Items.Clear();
                         await DownloadInstructionsForUserFromServer(_userName);
                     }
@@ -924,7 +924,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open file: {ex.Message}");
+                MessageBox.Show($"Не получилось открыть файл: {ex.Message}");
             }
         }
 

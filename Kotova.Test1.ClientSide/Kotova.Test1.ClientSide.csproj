@@ -14,7 +14,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="static\favicon.ico" />
+    <None Remove="static\technology.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="static\favicon.ico" />
+    <EmbeddedResource Include="static\technology.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="6.0.33" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />

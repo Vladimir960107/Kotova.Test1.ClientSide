@@ -298,6 +298,7 @@
             Margin = new Padding(3, 2, 3, 2);
             Name = "Login_Russian";
             Text = "Login";
+            FormClosing += Login_Russian_FormClosing;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
