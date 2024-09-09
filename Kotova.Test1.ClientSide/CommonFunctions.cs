@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace Kotova.Test1.ClientSide
 {
+    public static class Constants
+    {
+        public static string favicon_path = "Kotova.Test1.ClientSide.static.LynKS_favicon.ico";
+        public static string logo_path = "Kotova.Test1.ClientSide.static.LynKS_logo.png";
+    }
     public class TreeViewWithoutDoubleClick : TreeView
     {
         protected override void WndProc(ref Message m)
@@ -28,4 +33,6 @@ namespace Kotova.Test1.ClientSide
             base.WndProc(ref m);
         }
     }
+
+
 }

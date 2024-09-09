@@ -1,11 +1,14 @@
 ﻿using Kotova.CommonClasses;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -25,6 +28,7 @@ namespace Kotova.Test1.ClientSide
         private const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         private const string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
         private const string DownloadNamesForInitialInstrUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-list-of-people-init-instructions";
+        private const string SubmitUnplannedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-unplanned-instruction-to-chiefs";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
         private Login_Russian? _loginForm;
         private string? _userName;
@@ -102,6 +106,37 @@ namespace Kotova.Test1.ClientSide
 
         #region Вкладка создания инструктажей для отдела/конкретных людей
 
+
+        private void buttonChoosePathToInstruction_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
+            {
+                // Optionally set the initial directory
+                // folderBrowserDialog.SelectedPath = @"C:\Initial\Folder\Path";
+
+                DialogResult result = folderBrowserDialog.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                {
+                    // Store the selected folder path in a variable
+                    selectedFolderPath = folderBrowserDialog.SelectedPath;
+
+                    PathToFolderOfInstruction.Text = selectedFolderPath;
+
+                    buttonCreateInstruction.Enabled = true;
+
+                    treeView1.Nodes.Clear();  // Clear the existing items in the TreeView
+                    TreeNode rootNode = new TreeNode(selectedFolderPath);
+                    treeView1.Nodes.Add(rootNode);  // Add a root node with the selected folder
+                    PopulateTreeView(selectedFolderPath, rootNode);  // Populate the TreeView
+                    //rootNode.Expand();  // Optionally expand the root node, enable if want to all the rootNode be collapsed (чтобы было видно все вложенные файлы сразу, не нажимая плюсик :))
+
+                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
+
+
+                }
+            }
+        }
 
         private async Task<bool> refreshDepartmentsFromDB(ListBox departmentForNewcomer) // Эта функция повторяется в CoordinatorForm.cs, поэтому попробуй их объединить в один файл мб.
         {
@@ -249,13 +284,13 @@ namespace Kotova.Test1.ClientSide
         {
             if (typeOfInstructionListBox.SelectedItem.ToString() == "Внеплановый;")
             {
-                DepartmentsCheckedListBox.Enabled = false;
-                PeopleAndDepartmentsTreeView.Enabled = true;
+                DepartmentsCheckedListBox.Enabled = true;
+                PeopleAndDepartmentsTreeView.Enabled = false;
             }
             else
             {
-                DepartmentsCheckedListBox.Enabled = true;
-                PeopleAndDepartmentsTreeView.Enabled = false;
+                DepartmentsCheckedListBox.Enabled = false;
+                PeopleAndDepartmentsTreeView.Enabled = true;
             }
 
         }
@@ -649,5 +684,146 @@ namespace Kotova.Test1.ClientSide
         #endregion
 
 
+
+        private async void buttonCreateInstruction_Click(object sender, EventArgs e)
+        {
+            buttonCreateInstruction.Enabled = false;
+
+            if (selectedFolderPath is null)
+            {
+                MessageBox.Show("Путь до инструктажа не выбран!");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+
+            DateTime startDateTime = DateTime.Now;
+            DateTime endDateTime = datePickerEnd.Value.Date;
+            if (endDateTime <= startDateTime)
+            {
+                MessageBox.Show("До какой даты должно быть больше текущего времени!");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+            List<string?> paths = GetSelectedFilePaths(treeView1);
+            if (paths.Count == 0)
+            {
+                MessageBox.Show("Не выбраны файлы для инструктажа");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+            string causeOfInstruction = InstructionTextBox.Text;
+            if (string.IsNullOrWhiteSpace(causeOfInstruction))
+            {
+                MessageBox.Show("Причина инструктажа пуста. Исправьте это пожалуйста.");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+            var checkedDepartmentsItemCollection = DepartmentsCheckedListBox.CheckedItems;
+            if (checkedDepartmentsItemCollection.Count == 0) 
+            {
+                MessageBox.Show("Отделы для внепланнового инструктажа не выбраны");
+                buttonCreateInstruction.Enabled = true;
+                return;
+            }
+
+            var departmentsList = new List<string>();
+            foreach (var item in checkedDepartmentsItemCollection)
+            {
+                departmentsList.Add(item.ToString());
+            }
+
+            try
+            {
+
+                string causeOfInstructionString = causeOfInstruction.ToString();
+
+                Instruction instruction = new Instruction(causeOfInstructionString, startDateTime, endDateTime, selectedFolderPath, 1);
+                FullCustomInstruction fullInstruction = new FullCustomInstruction(instruction, paths);
+                UnplannedInstructionPackage package = new UnplannedInstructionPackage(departmentsList, fullInstruction);
+
+                string jsonData = JsonConvert.SerializeObject(package);
+                string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                try
+                {
+                    using (var httpClient = new HttpClient())
+                    {
+                        string jwtToken = _loginForm._jwtToken;
+                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                        // Set the URI of your server endpoint
+                        var uri = new Uri(SubmitUnplannedInstructionURL);
+
+                        // Prepare the content to send
+                        var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+                        // Send a POST request with the serialized JSON content
+                        var response = await httpClient.PostAsync(uri, content);
+
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен начальникам.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            var errorMessage = await response.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    buttonCreateInstruction.Enabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошли ошибка, проверь эту строчку:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                //Обнуляем все данные по инструткажу на странице внеплановых инструктажей для следующего инструктажа.
+                InstructionTextBox.Text = "";
+                treeView1.Nodes.Clear();
+            }
+
+        }
+
+        private void treeView1_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
+            {
+                treeView1.Enabled = false;
+
+                try
+                {
+                    // Perform the checking/unchecking synchronously
+                    CheckAllChildNodes(e.Node, e.Node.Checked);
+                    UpdateParentNodes(e.Node, e.Node.Checked);
+                }
+                finally
+                {
+                    treeView1.Enabled = true;
+                }
+            }
+        }
+        public static List<string> GetSelectedFilePaths(System.Windows.Forms.TreeView treeView)
+        {
+            HashSet<string> uniqueFilePaths = new HashSet<string>();
+
+            foreach (TreeNode node in treeView.Nodes)
+            {
+                CollectFilePaths(node, uniqueFilePaths);
+            }
+
+            // Sort the paths
+            List<string> sortedFilePaths = uniqueFilePaths.ToList();
+            sortedFilePaths.Sort();
+
+            return sortedFilePaths;
+        }
     }
 }

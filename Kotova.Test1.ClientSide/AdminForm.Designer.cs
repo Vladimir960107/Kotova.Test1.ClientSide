@@ -29,6 +29,10 @@
         private void InitializeComponent()
         {
             panel2 = new Panel();
+            label7 = new Label();
+            label6 = new Label();
+            Download_file_excel = new Button();
+            label2 = new Label();
             button9 = new Button();
             button10 = new Button();
             DepartmentsComboBox1 = new ComboBox();
@@ -42,16 +46,15 @@
             label4 = new Label();
             checkBoxIsForDrivers = new CheckBox();
             button1 = new Button();
-            label2 = new Label();
-            Download_file_excel = new Button();
-            label6 = new Label();
-            label7 = new Label();
             tabControl1 = new TabControl();
             tabPage1 = new TabPage();
             tabPage2 = new TabPage();
+            MessageTextBox = new TextBox();
+            SendMessageToEveryoneButton = new Button();
             panel2.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
             SuspendLayout();
             // 
             // panel2
@@ -66,6 +69,43 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(766, 143);
             panel2.TabIndex = 25;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(617, 9);
+            label7.Name = "label7";
+            label7.Size = new Size(51, 15);
+            label7.TabIndex = 27;
+            label7.Text = "Скачать";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(51, 9);
+            label6.Name = "label6";
+            label6.Size = new Size(126, 15);
+            label6.TabIndex = 26;
+            label6.Text = "Загрузить (на сервер)";
+            // 
+            // Download_file_excel
+            // 
+            Download_file_excel.Location = new Point(538, 34);
+            Download_file_excel.Margin = new Padding(3, 2, 3, 2);
+            Download_file_excel.Name = "Download_file_excel";
+            Download_file_excel.Size = new Size(216, 94);
+            Download_file_excel.TabIndex = 25;
+            Download_file_excel.Text = "Скачать Excel выписку для отдела";
+            Download_file_excel.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(345, 9);
+            label2.Name = "label2";
+            label2.Size = new Size(66, 15);
+            label2.TabIndex = 13;
+            label2.Text = "Excel файл";
             // 
             // button9
             // 
@@ -191,43 +231,6 @@
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
             // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(345, 9);
-            label2.Name = "label2";
-            label2.Size = new Size(66, 15);
-            label2.TabIndex = 13;
-            label2.Text = "Excel файл";
-            // 
-            // Download_file_excel
-            // 
-            Download_file_excel.Location = new Point(538, 34);
-            Download_file_excel.Margin = new Padding(3, 2, 3, 2);
-            Download_file_excel.Name = "Download_file_excel";
-            Download_file_excel.Size = new Size(216, 94);
-            Download_file_excel.TabIndex = 25;
-            Download_file_excel.Text = "Скачать Excel выписку для отдела";
-            Download_file_excel.UseVisualStyleBackColor = true;
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new Point(51, 9);
-            label6.Name = "label6";
-            label6.Size = new Size(126, 15);
-            label6.TabIndex = 26;
-            label6.Text = "Загрузить (на сервер)";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(617, 9);
-            label7.Name = "label7";
-            label7.Size = new Size(51, 15);
-            label7.TabIndex = 27;
-            label7.Text = "Скачать";
-            // 
             // tabControl1
             // 
             tabControl1.Controls.Add(tabPage1);
@@ -262,6 +265,8 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(MessageTextBox);
+            tabPage2.Controls.Add(SendMessageToEveryoneButton);
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
@@ -269,6 +274,24 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "tabPage2";
             tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // MessageTextBox
+            // 
+            MessageTextBox.Location = new Point(20, 29);
+            MessageTextBox.Multiline = true;
+            MessageTextBox.Name = "MessageTextBox";
+            MessageTextBox.Size = new Size(503, 118);
+            MessageTextBox.TabIndex = 1;
+            // 
+            // SendMessageToEveryoneButton
+            // 
+            SendMessageToEveryoneButton.Location = new Point(688, 51);
+            SendMessageToEveryoneButton.Name = "SendMessageToEveryoneButton";
+            SendMessageToEveryoneButton.Size = new Size(125, 63);
+            SendMessageToEveryoneButton.TabIndex = 0;
+            SendMessageToEveryoneButton.Text = "Отправить всем сообщение";
+            SendMessageToEveryoneButton.UseVisualStyleBackColor = true;
+            SendMessageToEveryoneButton.Click += SendMessageToEveryoneButton_Click;
             // 
             // AdminForm
             // 
@@ -283,6 +306,8 @@
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -308,5 +333,7 @@
         private TabControl tabControl1;
         private TabPage tabPage1;
         private TabPage tabPage2;
+        private TextBox MessageTextBox;
+        private Button SendMessageToEveryoneButton;
     }
 }

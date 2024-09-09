@@ -11,6 +11,7 @@ using System.Diagnostics;
 using Kotova.CommonClasses;
 using System.Net.Http;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.IO;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -23,11 +24,10 @@ namespace Kotova.Test1.ClientSide
         const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
         const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
-        const string PingToServerIsOnlineURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping-is-online";
-        const string PingToServerIsOfflineURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/ping-is-offline";
-        const string CheckStatusOfChiefOnServerURL = ConfigurationClass.BASE_URL_DEVELOPMENT + "/status";
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
         const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
+
+        const string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 3 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
@@ -76,6 +76,11 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"{user}: {message}", "Message from Hub");
             });
 
+            _hubConnection.On<string>("ReceiveAlert", message =>
+            {
+                Notifications.ShowWindowsNotification("Alert", message);
+            });
+
             try
             {
                 await _hubConnection.StartAsync();
@@ -92,6 +97,12 @@ namespace Kotova.Test1.ClientSide
         private async void testButton_Click(object sender, EventArgs e)
         {
             string url = urlTest;
+            await Test.connectionToUrlGet(url, _loginForm._jwtToken);
+        }
+
+        private async void testButtonForTask_Click(object sender, EventArgs e)
+        {
+            string url = urlTaskTest;
             await Test.connectionToUrlGet(url, _loginForm._jwtToken);
         }
 
@@ -210,12 +221,23 @@ namespace Kotova.Test1.ClientSide
                     return null;
                 }
                 List<string> paths = GetSelectedFilePaths(treeView1);
-
+                if (paths.Count == 0)
+                {
+                    MessageBox.Show("Не выбраны файлы для инструктажа");
+                    buttonCreateInstruction.Enabled = true;
+                    return null;
+                }
 
                 bool isForDrivers = checkBoxIsForDrivers.Checked;
                 int bitValueIsForDrivers = isForDrivers ? 1 : 0;
                 string causeOfInstruction = InstructionTextBox.Text;
-                Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox!
+                if (string.IsNullOrWhiteSpace(causeOfInstruction))
+                {
+                    MessageBox.Show("Причина инструктажа пуста. Исправьте это пожалуйста.");
+                    buttonCreateInstruction.Enabled = true;
+                    return null;
+                }
+                Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox! 0 - вводный, 1 - внеплановый
                 Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
                 FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
                 string json = JsonConvert.SerializeObject(fullCustomInstr);
@@ -483,7 +505,7 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("All the instructions passed!");
                 }
             }
-            if (ChiefTabControl.SelectedTab.Text == "Обработка инструктажей")
+            if (ChiefTabControl.SelectedTab.Text == "Внеплановые инструктажи")
             {
                 await SyncManuallyInstrWithDBInternal();
                 await SyncNamesWithDBInternal();
@@ -1132,6 +1154,9 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        
+        private void RefreshTasksButton_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

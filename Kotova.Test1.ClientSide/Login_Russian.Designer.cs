@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Login_Russian));
             panel1 = new Panel();
             label2 = new Label();
             label1 = new Label();
@@ -76,7 +77,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            label2.Font = new Font("Palatino Linotype", 9F);
             label2.ForeColor = Color.White;
             label2.Location = new Point(28, 507);
             label2.Name = "label2";
@@ -89,20 +90,20 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.Font = new Font("Palatino Linotype", 16.2F);
             label1.ForeColor = Color.White;
-            label1.Location = new Point(32, 186);
+            label1.Location = new Point(44, 182);
             label1.Name = "label1";
-            label1.Size = new Size(247, 87);
+            label1.Size = new Size(228, 174);
             label1.TabIndex = 0;
-            label1.Text = "Добро пожаловать\r\nВ Систему Управления\r\nИнструктажей";
-            label1.TextAlign = ContentAlignment.TopRight;
+            label1.Text = "Добро пожаловать в\r LynKS \r\n(ЛинКС)\r\n- \r\nСистему Управления\r\nИнструктажей";
+            label1.TextAlign = ContentAlignment.MiddleCenter;
             label1.UseMnemonic = false;
             // 
             // pictureBox1
             // 
             pictureBox1.Image = Properties.Resources.nanotechnology_white;
-            pictureBox1.Location = new Point(111, 57);
+            pictureBox1.Location = new Point(88, 30);
             pictureBox1.Margin = new Padding(3, 2, 3, 2);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(141, 123);
@@ -126,7 +127,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
+            label3.Font = new Font("Palatino Linotype", 16.2F);
             label3.ForeColor = Color.FromArgb(41, 128, 185);
             label3.Location = new Point(42, 151);
             label3.Name = "label3";
@@ -148,7 +149,7 @@
             // PasswordTextBox
             // 
             PasswordTextBox.BackColor = SystemColors.Control;
-            PasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            PasswordTextBox.Font = new Font("Palatino Linotype", 12F);
             PasswordTextBox.Location = new Point(82, 10);
             PasswordTextBox.Name = "PasswordTextBox";
             PasswordTextBox.Size = new Size(520, 29);
@@ -194,7 +195,7 @@
             // LoginTextBox
             // 
             LoginTextBox.BackColor = SystemColors.Control;
-            LoginTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            LoginTextBox.Font = new Font("Palatino Linotype", 12F);
             LoginTextBox.Location = new Point(82, 10);
             LoginTextBox.Name = "LoginTextBox";
             LoginTextBox.Size = new Size(520, 29);
@@ -204,7 +205,7 @@
             // LogInButton
             // 
             LogInButton.BackColor = Color.FromArgb(41, 128, 185);
-            LogInButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            LogInButton.Font = new Font("Palatino Linotype", 12F);
             LogInButton.ForeColor = Color.White;
             LogInButton.Location = new Point(135, 344);
             LogInButton.Name = "LogInButton";
@@ -217,7 +218,7 @@
             // ForgotPasswordLabel
             // 
             ForgotPasswordLabel.AutoSize = true;
-            ForgotPasswordLabel.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            ForgotPasswordLabel.Font = new Font("Palatino Linotype", 12F);
             ForgotPasswordLabel.LinkColor = Color.FromArgb(41, 128, 185);
             ForgotPasswordLabel.Location = new Point(412, 503);
             ForgotPasswordLabel.Name = "ForgotPasswordLabel";
@@ -230,7 +231,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            label4.Font = new Font("Palatino Linotype", 9F);
             label4.ForeColor = SystemColors.ControlDark;
             label4.Location = new Point(6, 507);
             label4.Name = "label4";
@@ -295,6 +296,7 @@
             ClientSize = new Size(921, 589);
             Controls.Add(panel2);
             Controls.Add(panel1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(3, 2, 3, 2);
             Name = "Login_Russian";
             Text = "Login";

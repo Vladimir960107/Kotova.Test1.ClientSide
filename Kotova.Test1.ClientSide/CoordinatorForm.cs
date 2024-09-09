@@ -17,6 +17,8 @@ using Newtonsoft.Json.Linq;
 using Microsoft.IdentityModel.Tokens;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Diagnostics;
+using System.Net.Http;
+using System.IO;
 
 
 namespace Kotova.Test1.ClientSide
@@ -157,7 +159,7 @@ namespace Kotova.Test1.ClientSide
         private List<string>? RolesDBToRoleNames(List<string>? list)
         {
             var roles = new List<string>();
-            if (list.IsNullOrEmpty()) { return list; }
+            if (list == null || !list.Any()) { return list; }
             {
                 foreach (var role in list)
                 {

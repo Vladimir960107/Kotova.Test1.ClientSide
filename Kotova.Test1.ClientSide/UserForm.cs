@@ -18,6 +18,11 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System.Reflection;
 using System.Configuration;
 using System.Timers;
+using System.Net.Http;
+using System.IO;
+using Microsoft.Toolkit.Uwp.Notifications;
+using Windows.UI.Notifications;
+
 
 namespace Kotova.Test1.ClientSide
 {
@@ -42,7 +47,7 @@ namespace Kotova.Test1.ClientSide
         private NotifyIcon notifyIcon;
 
         private static bool canYouCloseTheApplication = false;
-        
+
 
         public Login_Russian? _loginForm;
         public SignUpForm _signUpForm;
@@ -56,6 +61,27 @@ namespace Kotova.Test1.ClientSide
         {
             InitializeComponent();
             InitializeSignalRConnection();
+            ToastNotificationManagerCompat.OnActivated += ToastNotificationManagerCompat_OnActivated;
+        }
+
+        private void ToastNotificationManagerCompat_OnActivated(ToastNotificationActivatedEventArgsCompat e)
+        {
+            MessageBox.Show("I've got something!");
+            // Parse the arguments from the toast
+            var args = ToastArguments.Parse(e.Argument);
+
+            // Check if the action argument is "openApp"
+            if (args["action"] == "openApp")
+            {
+                // Bring the application to the foreground
+                Application.OpenForms[0]?.Invoke(new Action(() =>
+                {
+                    this.Show();
+                    this.WindowState = FormWindowState.Normal;
+                    this.BringToFront();
+                    this.Activate();
+                }));
+            }
         }
 
         public UserForm(Login_Russian loginForm, string userName)
@@ -116,6 +142,11 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"{user}: {message}", "Message from Hub");
             });
 
+            _hubConnection.On<string>("ReceiveAlert", message =>
+            {
+                Notifications.ShowWindowsNotification("Alert", message);
+            });
+
             try
             {
                 await _hubConnection.StartAsync();
@@ -124,25 +155,6 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to connect to SignalR hub: {ex.Message}");
-            }
-        }
-
-        private async void SendMessageButton_Click(object sender, EventArgs e)
-        {
-            if (_hubConnection.State == HubConnectionState.Connected)
-            {
-                try
-                {
-                    await _hubConnection.InvokeAsync("SendMessage", _userName, "Hello from the client!");
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Failed to send message: {ex.Message}");
-                }
-            }
-            else
-            {
-                MessageBox.Show("You are not connected to the SignalR hub.");
             }
         }
 
@@ -416,7 +428,7 @@ namespace Kotova.Test1.ClientSide
 
         private void FilesOfInstructionCheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
         {
-            this.BeginInvoke((MethodInvoker)delegate
+            this.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
                 if (AreAllItemsChecked(FilesOfInstructionCheckedListBox))
                 {
@@ -470,5 +482,13 @@ namespace Kotova.Test1.ClientSide
             this.Dispose(true);
             _loginForm.ExitApplication();
         }
+
+        private void showNotification_Click(object sender, EventArgs e)
+        {
+            Notifications.ShowWindowsNotification("Уведомление", "Проверка.");
+
+        }
+
+
     }
 }

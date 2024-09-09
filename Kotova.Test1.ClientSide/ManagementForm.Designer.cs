@@ -32,19 +32,18 @@
             label1 = new Label();
             ManagementTabControl = new TabControl();
             tabPage1 = new TabPage();
+            PathToFolderOfInstruction = new Label();
+            treeView1 = new TreeViewWithoutDoubleClick();
+            buttonChoosePathToInstruction = new Button();
+            InstructionTextBox = new TextBox();
             datePickerEnd = new DateTimePicker();
             PeopleAndDepartmentsTreeView = new TreeViewWithoutDoubleClick();
             label5 = new Label();
             typeOfInstructionListBox = new ListBox();
             DepartmentsCheckedListBox = new CheckedListBox();
             button5 = new Button();
-            button2 = new Button();
+            buttonCreateInstruction = new Button();
             label9 = new Label();
-            textBox11 = new TextBox();
-            label8 = new Label();
-            textBox10 = new TextBox();
-            label7 = new Label();
-            CauseOfInstructionTextBox = new TextBox();
             label4 = new Label();
             label3 = new Label();
             label2 = new Label();
@@ -92,19 +91,18 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(PathToFolderOfInstruction);
+            tabPage1.Controls.Add(treeView1);
+            tabPage1.Controls.Add(buttonChoosePathToInstruction);
+            tabPage1.Controls.Add(InstructionTextBox);
             tabPage1.Controls.Add(datePickerEnd);
             tabPage1.Controls.Add(PeopleAndDepartmentsTreeView);
             tabPage1.Controls.Add(label5);
             tabPage1.Controls.Add(typeOfInstructionListBox);
             tabPage1.Controls.Add(DepartmentsCheckedListBox);
             tabPage1.Controls.Add(button5);
-            tabPage1.Controls.Add(button2);
+            tabPage1.Controls.Add(buttonCreateInstruction);
             tabPage1.Controls.Add(label9);
-            tabPage1.Controls.Add(textBox11);
-            tabPage1.Controls.Add(label8);
-            tabPage1.Controls.Add(textBox10);
-            tabPage1.Controls.Add(label7);
-            tabPage1.Controls.Add(CauseOfInstructionTextBox);
             tabPage1.Controls.Add(label4);
             tabPage1.Controls.Add(label3);
             tabPage1.Controls.Add(label2);
@@ -116,9 +114,48 @@
             tabPage1.Text = "Создание инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
             // 
+            // PathToFolderOfInstruction
+            // 
+            PathToFolderOfInstruction.AutoSize = true;
+            PathToFolderOfInstruction.Location = new Point(306, 282);
+            PathToFolderOfInstruction.Name = "PathToFolderOfInstruction";
+            PathToFolderOfInstruction.Size = new Size(94, 15);
+            PathToFolderOfInstruction.TabIndex = 40;
+            PathToFolderOfInstruction.Text = "Путь не выбран";
+            // 
+            // treeView1
+            // 
+            treeView1.CheckBoxes = true;
+            treeView1.Location = new Point(306, 326);
+            treeView1.Name = "treeView1";
+            treeView1.Size = new Size(247, 178);
+            treeView1.TabIndex = 39;
+            treeView1.AfterCheck += treeView1_AfterCheck;
+            // 
+            // buttonChoosePathToInstruction
+            // 
+            buttonChoosePathToInstruction.Location = new Point(306, 191);
+            buttonChoosePathToInstruction.Margin = new Padding(3, 2, 3, 2);
+            buttonChoosePathToInstruction.Name = "buttonChoosePathToInstruction";
+            buttonChoosePathToInstruction.Size = new Size(172, 56);
+            buttonChoosePathToInstruction.TabIndex = 38;
+            buttonChoosePathToInstruction.Text = "Указать папку для инструктажа";
+            buttonChoosePathToInstruction.UseVisualStyleBackColor = true;
+            buttonChoosePathToInstruction.Click += buttonChoosePathToInstruction_Click;
+            // 
+            // InstructionTextBox
+            // 
+            InstructionTextBox.Location = new Point(38, 503);
+            InstructionTextBox.Margin = new Padding(3, 2, 3, 2);
+            InstructionTextBox.Multiline = true;
+            InstructionTextBox.Name = "InstructionTextBox";
+            InstructionTextBox.Size = new Size(219, 51);
+            InstructionTextBox.TabIndex = 36;
+            InstructionTextBox.Text = "Работа в зоне железнодорожных путей СТО-357";
+            // 
             // datePickerEnd
             // 
-            datePickerEnd.Location = new Point(38, 67);
+            datePickerEnd.Location = new Point(38, 422);
             datePickerEnd.Margin = new Padding(3, 2, 3, 2);
             datePickerEnd.Name = "datePickerEnd";
             datePickerEnd.Size = new Size(219, 23);
@@ -127,7 +164,7 @@
             // PeopleAndDepartmentsTreeView
             // 
             PeopleAndDepartmentsTreeView.CheckBoxes = true;
-            PeopleAndDepartmentsTreeView.Location = new Point(470, 240);
+            PeopleAndDepartmentsTreeView.Location = new Point(670, 230);
             PeopleAndDepartmentsTreeView.Name = "PeopleAndDepartmentsTreeView";
             PeopleAndDepartmentsTreeView.Size = new Size(261, 130);
             PeopleAndDepartmentsTreeView.TabIndex = 32;
@@ -170,70 +207,29 @@
             button5.Text = "Сформировать excel форму об инструктажах";
             button5.UseVisualStyleBackColor = true;
             // 
-            // button2
+            // buttonCreateInstruction
             // 
-            button2.Location = new Point(486, 440);
-            button2.Name = "button2";
-            button2.Size = new Size(214, 74);
-            button2.TabIndex = 26;
-            button2.Text = "Отправить инструктаж сотрудникам";
-            button2.UseVisualStyleBackColor = true;
+            buttonCreateInstruction.Location = new Point(670, 450);
+            buttonCreateInstruction.Name = "buttonCreateInstruction";
+            buttonCreateInstruction.Size = new Size(214, 74);
+            buttonCreateInstruction.TabIndex = 26;
+            buttonCreateInstruction.Text = "Отправить инструктаж сотрудникам";
+            buttonCreateInstruction.UseVisualStyleBackColor = true;
+            buttonCreateInstruction.Click += buttonCreateInstruction_Click;
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(470, 212);
+            label9.Location = new Point(670, 202);
             label9.Name = "label9";
             label9.Size = new Size(295, 15);
             label9.TabIndex = 24;
             label9.Text = "ОТДЕЛЫ И ФИО людей, отвечающих за инструктаж:";
             // 
-            // textBox11
-            // 
-            textBox11.Location = new Point(38, 507);
-            textBox11.Name = "textBox11";
-            textBox11.Size = new Size(213, 23);
-            textBox11.TabIndex = 23;
-            textBox11.Text = "Выбирается автоматически из БД";
-            // 
-            // label8
-            // 
-            label8.AutoSize = true;
-            label8.Location = new Point(38, 489);
-            label8.Name = "label8";
-            label8.Size = new Size(206, 15);
-            label8.TabIndex = 22;
-            label8.Text = "Должность проводившего(автомат)";
-            // 
-            // textBox10
-            // 
-            textBox10.Location = new Point(38, 458);
-            textBox10.Name = "textBox10";
-            textBox10.Size = new Size(213, 23);
-            textBox10.TabIndex = 21;
-            textBox10.Text = "Выбирается из списка базы данных";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(38, 440);
-            label7.Name = "label7";
-            label7.Size = new Size(186, 15);
-            label7.TabIndex = 20;
-            label7.Text = "ФИО проводившего инструктаж";
-            // 
-            // CauseOfInstructionTextBox
-            // 
-            CauseOfInstructionTextBox.Location = new Point(38, 397);
-            CauseOfInstructionTextBox.Name = "CauseOfInstructionTextBox";
-            CauseOfInstructionTextBox.Size = new Size(213, 23);
-            CauseOfInstructionTextBox.TabIndex = 19;
-            CauseOfInstructionTextBox.Text = "Причина инструктажа такая-то";
-            // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(38, 379);
+            label4.Location = new Point(38, 468);
             label4.Name = "label4";
             label4.Size = new Size(133, 15);
             label4.TabIndex = 18;
@@ -251,7 +247,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(38, 39);
+            label2.Location = new Point(38, 394);
             label2.Name = "label2";
             label2.Size = new Size(239, 15);
             label2.TabIndex = 15;
@@ -373,10 +369,7 @@
         private TabControl ManagementTabControl;
         private TabPage tabPage1;
         private Button button5;
-        private Button button2;
-        private TextBox textBox11;
-        private Label label8;
-        private TextBox CauseOfInstructionTextBox;
+        private Button buttonCreateInstruction;
         private Label label4;
         private Label label3;
         private Label label2;
@@ -394,7 +387,9 @@
         private TreeViewWithoutDoubleClick PeopleAndDepartmentsTreeView;
         private Button LogOutButton;
         private DateTimePicker datePickerEnd;
-        private TextBox textBox10;
-        private Label label7;
+        private TreeViewWithoutDoubleClick treeView1;
+        private Button buttonChoosePathToInstruction;
+        private TextBox InstructionTextBox;
+        private Label PathToFolderOfInstruction;
     }
 }

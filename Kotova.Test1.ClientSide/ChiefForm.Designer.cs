@@ -78,7 +78,8 @@
             consoleTextBox = new TextBox();
             TrayOfTasksListView = new ListView();
             LabelTray = new Label();
-            button1 = new Button();
+            RefreshTasksButton = new Button();
+            testButtonForTask = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -282,7 +283,7 @@
             tabPage1.Padding = new Padding(3);
             tabPage1.Size = new Size(667, 588);
             tabPage1.TabIndex = 0;
-            tabPage1.Text = "Обработка инструктажей";
+            tabPage1.Text = "Внеплановые инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
             // 
             // checkedListBoxNamesOfPeople
@@ -446,7 +447,6 @@
             dataGridViewPeopleThatNotPassedInstr.Location = new Point(324, 59);
             dataGridViewPeopleThatNotPassedInstr.Name = "dataGridViewPeopleThatNotPassedInstr";
             dataGridViewPeopleThatNotPassedInstr.ReadOnly = true;
-            dataGridViewPeopleThatNotPassedInstr.RowTemplate.Height = 25;
             dataGridViewPeopleThatNotPassedInstr.Size = new Size(322, 184);
             dataGridViewPeopleThatNotPassedInstr.TabIndex = 2;
             // 
@@ -529,21 +529,33 @@
             LabelTray.TabIndex = 37;
             LabelTray.Text = "!Список задач:";
             // 
-            // button1
+            // RefreshTasksButton
             // 
-            button1.Location = new Point(316, 656);
-            button1.Name = "button1";
-            button1.Size = new Size(184, 23);
-            button1.TabIndex = 38;
-            button1.Text = "Обновить список задач";
-            button1.UseVisualStyleBackColor = true;
+            RefreshTasksButton.Location = new Point(316, 656);
+            RefreshTasksButton.Name = "RefreshTasksButton";
+            RefreshTasksButton.Size = new Size(184, 23);
+            RefreshTasksButton.TabIndex = 38;
+            RefreshTasksButton.Text = "Обновить список задач";
+            RefreshTasksButton.UseVisualStyleBackColor = true;
+            RefreshTasksButton.Click += RefreshTasksButton_Click;
+            // 
+            // testButtonForTask
+            // 
+            testButtonForTask.Location = new Point(738, 677);
+            testButtonForTask.Name = "testButtonForTask";
+            testButtonForTask.Size = new Size(124, 23);
+            testButtonForTask.TabIndex = 39;
+            testButtonForTask.Text = "Generate Task";
+            testButtonForTask.UseVisualStyleBackColor = true;
+            testButtonForTask.Click += testButtonForTask_Click;
             // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1102, 901);
-            Controls.Add(button1);
+            Controls.Add(testButtonForTask);
+            Controls.Add(RefreshTasksButton);
             Controls.Add(LabelTray);
             Controls.Add(TrayOfTasksListView);
             Controls.Add(testButton);
@@ -612,6 +624,7 @@
         private TabPage tabPage5;
         private ListView TrayOfTasksListView;
         private Label LabelTray;
-        private Button button1;
+        private Button RefreshTasksButton;
+        private Button testButtonForTask;
     }
 }

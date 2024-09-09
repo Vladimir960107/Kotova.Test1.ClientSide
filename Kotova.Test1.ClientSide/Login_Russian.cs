@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using System.CodeDom;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -48,7 +49,7 @@ namespace Kotova.Test1.ClientSide
         {
             notifyIcon = new NotifyIcon();
 
-            Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Kotova.Test1.ClientSide.static.favicon.ico");
+            Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(Constants.favicon_path);
             if (iconStream != null)
             {
                 using (iconStream)
@@ -148,13 +149,13 @@ namespace Kotova.Test1.ClientSide
         private void DarkThemeItem_Click(object sender, EventArgs e)
         {
             // Logic for enabling dark theme
-            MessageBox.Show("Dark Theme включена.");
+            MessageBox.Show("Тёмная тема включена.");
         }
 
         private void LightThemeItem_Click(object sender, EventArgs e)
         {
             // Logic for enabling light theme
-            MessageBox.Show("Light Theme включена.");
+            MessageBox.Show("Светлая тема включена.");
         }
 
         private void pictureBox5_Click(object sender, EventArgs e)
@@ -235,13 +236,15 @@ namespace Kotova.Test1.ClientSide
                     case "Management":
                         OpenManagementForm(username);
                         break;
+                    case "Administrator":
+                        OpenAdminForm(username);
+                        break;
                     default:
                         MessageBox.Show("Упс, роль не валидна. Попросите кого-то из тех. поддержки разрешить ситуацию :I");
                         break;
                 }
             }
         }
-
 
         private void OpenUserForm(string username)
         {
@@ -287,6 +290,14 @@ namespace Kotova.Test1.ClientSide
             {
                 userForm._signUpForm?.Show();
             }
+        }
+        private void OpenAdminForm(string username)
+        {
+            AdminForm adminForm = new AdminForm(this, username);
+            activeForm = adminForm;
+            adminForm.Location = this.Location;
+            adminForm.Show();
+            this.Hide();
         }
 
 
@@ -427,6 +438,16 @@ namespace Kotova.Test1.ClientSide
                                             managementForm._signUpForm.Show();
                                         }
                                     }
+                                    break;
+                                case "Administrator":
+                                    AdminForm adminForm = new AdminForm(this, GetUserNameFromToken(_jwtToken));
+                                    activeForm = adminForm;
+                                    adminForm.Location = this.Location;
+                                    adminForm.Show();
+                                    this.Hide();
+
+                                    await DelayforRegistrationForm();
+                                    await DelayforRegistrationForm();
                                     break;
                                 default:
                                     MessageBox.Show("Ваша роль не подходящая. Обратитесь в поддержку для разрешения этого вопроса :I");
