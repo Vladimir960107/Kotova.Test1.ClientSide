@@ -376,7 +376,7 @@ namespace Kotova.Test1.ClientSide
                     {
                         MessageBox.Show("Everyting is fine, updating the listbox of instructions");
                         ListOfInstructionsForUser.Items.Clear();
-                        DownloadInstructionsForUserFromServer(_userName);
+                        await DownloadInstructionsForUserFromServer(_userName);
                     }
                 }
             }

@@ -11,11 +11,17 @@
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        protected async override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
             {
                 components.Dispose();
+            }
+            if (_hubConnection != null)
+            {
+                await _hubConnection.StopAsync();
+                await _hubConnection.DisposeAsync();
+                _hubConnection = null;
             }
             base.Dispose(disposing);
         }
@@ -353,6 +359,7 @@
             Controls.Add(label1);
             Name = "ManagementForm";
             Text = "ManagementForm";
+            FormClosing += ManagementForm_FormClosing;
             ManagementTabControl.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();

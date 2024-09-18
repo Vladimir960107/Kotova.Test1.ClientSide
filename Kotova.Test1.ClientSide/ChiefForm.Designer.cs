@@ -37,7 +37,6 @@
             components = new System.ComponentModel.Container();
             submitInstructionToPeople = new Button();
             SyncNamesWithDB = new Button();
-            checkBoxIsForDrivers = new CheckBox();
             tabPage2 = new TabPage();
             checkedListBoxNamesOfPeopleCreatingInstr = new CheckedListBox();
             treeView1 = new TreeViewWithoutDoubleClick();
@@ -73,6 +72,12 @@
             listBoxOfNotPassedByInstructions = new ListBox();
             TestButtonForInstructions = new Button();
             tabPage5 = new TabPage();
+            checkedListBoxTypesOfInstruction = new CheckedListBoxWithoutDoubleClick();
+            label9 = new Label();
+            endDateInstructionExportRequest = new DateTimePicker();
+            label3 = new Label();
+            startDateInstructionExportRequest = new DateTimePicker();
+            ExportInstructionRequestButton = new Button();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             consoleTextBox = new TextBox();
@@ -86,6 +91,7 @@
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).BeginInit();
+            tabPage5.SuspendLayout();
             SuspendLayout();
             // 
             // submitInstructionToPeople
@@ -109,17 +115,6 @@
             SyncNamesWithDB.Text = "Синхронизировать ФИО с Базой Данных";
             SyncNamesWithDB.UseVisualStyleBackColor = true;
             SyncNamesWithDB.Click += SyncNamesWithDB_Click;
-            // 
-            // checkBoxIsForDrivers
-            // 
-            checkBoxIsForDrivers.AutoSize = true;
-            checkBoxIsForDrivers.Location = new Point(349, 194);
-            checkBoxIsForDrivers.Margin = new Padding(3, 2, 3, 2);
-            checkBoxIsForDrivers.Name = "checkBoxIsForDrivers";
-            checkBoxIsForDrivers.Size = new Size(152, 19);
-            checkBoxIsForDrivers.TabIndex = 20;
-            checkBoxIsForDrivers.Text = "Только для водителей?";
-            checkBoxIsForDrivers.UseVisualStyleBackColor = true;
             // 
             // tabPage2
             // 
@@ -277,7 +272,6 @@
             tabPage1.Controls.Add(label5);
             tabPage1.Controls.Add(SyncNamesWithDB);
             tabPage1.Controls.Add(label4);
-            tabPage1.Controls.Add(checkBoxIsForDrivers);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
@@ -484,6 +478,12 @@
             // 
             // tabPage5
             // 
+            tabPage5.Controls.Add(checkedListBoxTypesOfInstruction);
+            tabPage5.Controls.Add(label9);
+            tabPage5.Controls.Add(endDateInstructionExportRequest);
+            tabPage5.Controls.Add(label3);
+            tabPage5.Controls.Add(startDateInstructionExportRequest);
+            tabPage5.Controls.Add(ExportInstructionRequestButton);
             tabPage5.Location = new Point(4, 24);
             tabPage5.Name = "tabPage5";
             tabPage5.Padding = new Padding(3);
@@ -491,6 +491,57 @@
             tabPage5.TabIndex = 4;
             tabPage5.Text = "Учёт сотрудников";
             tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // checkedListBoxTypesOfInstruction
+            // 
+            checkedListBoxTypesOfInstruction.FormattingEnabled = true;
+            checkedListBoxTypesOfInstruction.Items.AddRange(new object[] { "Внеплановые;", "Первичные;", "Повторные;", "Повторные(для водителей);", "Целевые;" });
+            checkedListBoxTypesOfInstruction.Location = new Point(43, 116);
+            checkedListBoxTypesOfInstruction.Name = "checkedListBoxTypesOfInstruction";
+            checkedListBoxTypesOfInstruction.Size = new Size(334, 94);
+            checkedListBoxTypesOfInstruction.TabIndex = 5;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(369, 28);
+            label9.Name = "label9";
+            label9.Size = new Size(105, 15);
+            label9.TabIndex = 4;
+            label9.Text = "По такую-то дату:";
+            // 
+            // endDateInstructionExportRequest
+            // 
+            endDateInstructionExportRequest.Location = new Point(369, 56);
+            endDateInstructionExportRequest.Name = "endDateInstructionExportRequest";
+            endDateInstructionExportRequest.Size = new Size(200, 23);
+            endDateInstructionExportRequest.TabIndex = 3;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(43, 28);
+            label3.Name = "label3";
+            label3.Size = new Size(98, 15);
+            label3.TabIndex = 2;
+            label3.Text = "С такой-то даты:";
+            // 
+            // startDateInstructionExportRequest
+            // 
+            startDateInstructionExportRequest.Location = new Point(43, 56);
+            startDateInstructionExportRequest.Name = "startDateInstructionExportRequest";
+            startDateInstructionExportRequest.Size = new Size(200, 23);
+            startDateInstructionExportRequest.TabIndex = 1;
+            // 
+            // ExportInstructionRequestButton
+            // 
+            ExportInstructionRequestButton.Location = new Point(234, 237);
+            ExportInstructionRequestButton.Name = "ExportInstructionRequestButton";
+            ExportInstructionRequestButton.Size = new Size(162, 23);
+            ExportInstructionRequestButton.TabIndex = 0;
+            ExportInstructionRequestButton.Text = "Экспортировать данные";
+            ExportInstructionRequestButton.UseVisualStyleBackColor = true;
+            ExportInstructionRequestButton.Click += ExportInstructionRequestButton_Click;
             // 
             // LogOutButton
             // 
@@ -553,7 +604,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1102, 901);
+            ClientSize = new Size(1102, 845);
             Controls.Add(testButtonForTask);
             Controls.Add(RefreshTasksButton);
             Controls.Add(LabelTray);
@@ -574,6 +625,8 @@
             tabPage3.PerformLayout();
             tabPage4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).EndInit();
+            tabPage5.ResumeLayout(false);
+            tabPage5.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -626,5 +679,11 @@
         private Label LabelTray;
         private Button RefreshTasksButton;
         private Button testButtonForTask;
+        private Label label3;
+        private DateTimePicker startDateInstructionExportRequest;
+        private Button ExportInstructionRequestButton;
+        private CheckedListBoxWithoutDoubleClick checkedListBoxTypesOfInstruction;
+        private Label label9;
+        private DateTimePicker endDateInstructionExportRequest;
     }
 }

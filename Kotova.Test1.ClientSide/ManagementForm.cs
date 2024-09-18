@@ -1,4 +1,5 @@
 ﻿using Kotova.CommonClasses;
+using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -38,9 +39,12 @@ namespace Kotova.Test1.ClientSide
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
 
+        private HubConnection? _hubConnection = null;
 
-        public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
+
+        public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 3 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
+        public const string db_typeOfInstruction = "type_of_instruction";
 
         public ManagementForm(Login_Russian loginForm, string userName)
         {
@@ -53,6 +57,8 @@ namespace Kotova.Test1.ClientSide
             PeopleAndDepartmentsTreeView.Enabled = false;
             refreshDepartmentsAndnPeopleFromDBInternal();
 
+            InitializeSignalRConnection();
+
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
         }
@@ -60,6 +66,37 @@ namespace Kotova.Test1.ClientSide
         public ManagementForm()
         {
             InitializeComponent();
+        }
+
+        private async void InitializeSignalRConnection()
+        {
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(ConfigurationClass.BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT, options =>
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(_loginForm._jwtToken);
+                })
+            .Build();
+
+            _hubConnection.On<string, string>("Получено сообщение", (user, message) =>
+            {
+                // Handle incoming messages from the SignalR hub
+                MessageBox.Show($"{user}: {message}", "Message from Hub");
+            });
+
+            _hubConnection.On<string>("ReceiveAlert", message =>
+            {
+                Notifications.ShowWindowsNotification("Alert", message);
+            });
+
+            try
+            {
+                await _hubConnection.StartAsync();
+                MessageBox.Show("Подключено к SignalR hub.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось подключиться к SignalR hub: {ex.Message}");
+            }
         }
 
 
@@ -361,6 +398,23 @@ namespace Kotova.Test1.ClientSide
             {
                 if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
                 {
+                    if (listOfPaths[db_filePath] == null)
+                    {
+                        if (selectedDict[db_typeOfInstruction].ToString() == "0") // Проверка что мы входим в вводный инструктаж только!
+                        {
+                            PassInstructionAsUser.Enabled = true;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
+                            PassInstructionAsUser.Enabled = true;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+
+                    }
                     FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
                 }
             }
@@ -672,14 +726,21 @@ namespace Kotova.Test1.ClientSide
 
         private void LogOutButton_Click(object sender, EventArgs e)
         {
-            Decryption_stuff.DeleteJWTToken();
-            if (_signUpForm is not null)
+            LogOutForm_Click_Internal();
+        }
+
+        public async void LogOutForm_Click_Internal()
+        {
+            if (_signUpForm != null)
             {
                 _signUpForm.Dispose();
             }
-            _loginForm.Show();
+            Decryption_stuff.DeleteJWTToken();
             this.Dispose(true);
+            _loginForm.activeForm = _loginForm;
+            _loginForm.Show();
         }
+
 
         #endregion
 
@@ -719,7 +780,7 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
             var checkedDepartmentsItemCollection = DepartmentsCheckedListBox.CheckedItems;
-            if (checkedDepartmentsItemCollection.Count == 0) 
+            if (checkedDepartmentsItemCollection.Count == 0)
             {
                 MessageBox.Show("Отделы для внепланнового инструктажа не выбраны");
                 buttonCreateInstruction.Enabled = true;
@@ -824,6 +885,13 @@ namespace Kotova.Test1.ClientSide
             sortedFilePaths.Sort();
 
             return sortedFilePaths;
+        }
+
+        private void ManagementForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+            this.ShowInTaskbar = false;
         }
     }
 }

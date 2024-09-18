@@ -51,10 +51,23 @@
             tabPage2 = new TabPage();
             MessageTextBox = new TextBox();
             SendMessageToEveryoneButton = new Button();
+            tabPage3 = new TabPage();
+            label10 = new Label();
+            label9 = new Label();
+            textBox1 = new TextBox();
+            DueDateTimePicker = new DateTimePicker();
+            label8 = new Label();
+            label25 = new Label();
+            RoleOfNewcomerListBox = new ListBox();
+            label17 = new Label();
+            DepartmentForNewcomer = new ListBox();
+            CustomTaskDescriptionTextBox = new TextBox();
+            PostCustomTaskButton = new Button();
             panel2.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
+            tabPage3.SuspendLayout();
             SuspendLayout();
             // 
             // panel2
@@ -235,6 +248,7 @@
             // 
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(tabPage3);
             tabControl1.Location = new Point(25, 23);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -293,6 +307,122 @@
             SendMessageToEveryoneButton.UseVisualStyleBackColor = true;
             SendMessageToEveryoneButton.Click += SendMessageToEveryoneButton_Click;
             // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(label10);
+            tabPage3.Controls.Add(label9);
+            tabPage3.Controls.Add(textBox1);
+            tabPage3.Controls.Add(DueDateTimePicker);
+            tabPage3.Controls.Add(label8);
+            tabPage3.Controls.Add(label25);
+            tabPage3.Controls.Add(RoleOfNewcomerListBox);
+            tabPage3.Controls.Add(label17);
+            tabPage3.Controls.Add(DepartmentForNewcomer);
+            tabPage3.Controls.Add(CustomTaskDescriptionTextBox);
+            tabPage3.Controls.Add(PostCustomTaskButton);
+            tabPage3.Location = new Point(4, 24);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new Padding(3);
+            tabPage3.Size = new Size(873, 468);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Создание кастомных заданий";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(430, 220);
+            label10.Name = "label10";
+            label10.Size = new Size(42, 15);
+            label10.TabIndex = 36;
+            label10.Text = "Status:";
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(430, 108);
+            label9.Name = "label9";
+            label9.Size = new Size(58, 15);
+            label9.TabIndex = 35;
+            label9.Text = "Due Date:";
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(430, 252);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new Size(309, 23);
+            textBox1.TabIndex = 34;
+            // 
+            // DueDateTimePicker
+            // 
+            DueDateTimePicker.Location = new Point(430, 147);
+            DueDateTimePicker.Name = "DueDateTimePicker";
+            DueDateTimePicker.Size = new Size(160, 23);
+            DueDateTimePicker.TabIndex = 33;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(24, 23);
+            label8.Name = "label8";
+            label8.Size = new Size(111, 15);
+            label8.TabIndex = 32;
+            label8.Text = "Описание задания:";
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Location = new Point(24, 297);
+            label25.Name = "label25";
+            label25.Size = new Size(153, 15);
+            label25.TabIndex = 31;
+            label25.Text = "Выбрать роль сотрудника:";
+            // 
+            // RoleOfNewcomerListBox
+            // 
+            RoleOfNewcomerListBox.FormattingEnabled = true;
+            RoleOfNewcomerListBox.ItemHeight = 15;
+            RoleOfNewcomerListBox.Location = new Point(24, 315);
+            RoleOfNewcomerListBox.Name = "RoleOfNewcomerListBox";
+            RoleOfNewcomerListBox.Size = new Size(281, 64);
+            RoleOfNewcomerListBox.TabIndex = 30;
+            // 
+            // label17
+            // 
+            label17.AutoSize = true;
+            label17.Location = new Point(24, 183);
+            label17.Name = "label17";
+            label17.Size = new Size(43, 15);
+            label17.TabIndex = 16;
+            label17.Text = "Отдел:";
+            // 
+            // DepartmentForNewcomer
+            // 
+            DepartmentForNewcomer.FormattingEnabled = true;
+            DepartmentForNewcomer.ItemHeight = 15;
+            DepartmentForNewcomer.Location = new Point(24, 201);
+            DepartmentForNewcomer.Name = "DepartmentForNewcomer";
+            DepartmentForNewcomer.Size = new Size(209, 64);
+            DepartmentForNewcomer.TabIndex = 15;
+            // 
+            // CustomTaskDescriptionTextBox
+            // 
+            CustomTaskDescriptionTextBox.Location = new Point(24, 52);
+            CustomTaskDescriptionTextBox.Multiline = true;
+            CustomTaskDescriptionTextBox.Name = "CustomTaskDescriptionTextBox";
+            CustomTaskDescriptionTextBox.Size = new Size(306, 118);
+            CustomTaskDescriptionTextBox.TabIndex = 2;
+            // 
+            // PostCustomTaskButton
+            // 
+            PostCustomTaskButton.Location = new Point(627, 339);
+            PostCustomTaskButton.Name = "PostCustomTaskButton";
+            PostCustomTaskButton.Size = new Size(168, 53);
+            PostCustomTaskButton.TabIndex = 0;
+            PostCustomTaskButton.Text = "Опубликовать кастомное задание";
+            PostCustomTaskButton.UseVisualStyleBackColor = true;
+            PostCustomTaskButton.Click += PostCustomTaskButton_Click;
+            // 
             // AdminForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -308,6 +438,8 @@
             tabPage1.PerformLayout();
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
+            tabPage3.ResumeLayout(false);
+            tabPage3.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -335,5 +467,17 @@
         private TabPage tabPage2;
         private TextBox MessageTextBox;
         private Button SendMessageToEveryoneButton;
+        private TabPage tabPage3;
+        private Button PostCustomTaskButton;
+        private TextBox CustomTaskDescriptionTextBox;
+        private ListBox DepartmentForNewcomer;
+        private Label label17;
+        private Label label8;
+        private Label label25;
+        private ListBox RoleOfNewcomerListBox;
+        private DateTimePicker DueDateTimePicker;
+        private Label label10;
+        private Label label9;
+        private TextBox textBox1;
     }
 }

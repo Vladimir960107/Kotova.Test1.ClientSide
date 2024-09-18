@@ -8,10 +8,12 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Text.Json;
 using System.Diagnostics;
-using Kotova.CommonClasses;
 using System.Net.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.IO;
+using System.Windows.Controls;
+using ClosedXML.Excel;
+using System.Collections.Generic;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -26,6 +28,7 @@ namespace Kotova.Test1.ClientSide
         const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
         const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
+        const string instructionDataExportURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instructions-data-export";
 
         const string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
@@ -430,6 +433,7 @@ namespace Kotova.Test1.ClientSide
                 finally
                 {
                     submitInstructionToPeople.Enabled = true;
+                    await SyncManuallyInstrWithDBInternal();
                 }
             }
             catch (Exception ex)
@@ -918,7 +922,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        public static List<string> GetSelectedFilePaths(TreeView treeView)
+        public static List<string> GetSelectedFilePaths(System.Windows.Forms.TreeView treeView)
         {
             HashSet<string> uniqueFilePaths = new HashSet<string>();
 
@@ -1157,6 +1161,183 @@ namespace Kotova.Test1.ClientSide
         private void RefreshTasksButton_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private async void ExportInstructionRequestButton_Click(object sender, EventArgs e)
+        {
+            DateTime startDate = startDateInstructionExportRequest.Value.Date;
+            DateTime endDate = endDateInstructionExportRequest.Value.Date;
+            List<int> selectedIndices = checkedListBoxTypesOfInstruction.CheckedIndices.Cast<int>().ToList();
+            List<byte> shiftedIndices = selectedIndices.Select(index => (byte)(index + 1)).ToList();
+
+            try
+            {
+                InstructionExportRequest instructionExportRequest = new InstructionExportRequest(startDate, endDate, shiftedIndices);
+
+                
+
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    string jsonData = JsonConvert.SerializeObject(instructionExportRequest);
+
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                    var uri = new Uri(instructionDataExportURL);
+                    var response = await httpClient.PostAsync(uri, content);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Данные успешно отправлены на сервер и инструктажи скачаны.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        var errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var result = JsonConvert.DeserializeObject<List<InstructionExportInstance>>(jsonResponse);
+
+                    if (result == null||!result.Any())
+                    {
+                        MessageBox.Show("Нет инструктажей за этот период.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    result = result.OrderBy(i => i.DateWhenPassedByEmployee).ToList();
+                    foreach (var instance in result)
+                    {
+                        instance.DateWhenPassedByEmployee = instance.DateWhenPassedByEmployee.Date;
+                    }
+
+                    ExportToExcelWithSaveDialog(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return;
+            }
+        }
+
+        void ExportToExcelWithSaveDialog(List<InstructionExportInstance> data)
+        {
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx"; // Restrict to Excel files
+                saveFileDialog.Title = "Save Excel File";               // Title of the dialog box
+                saveFileDialog.FileName = "data.xlsx";                 // Default file name
+
+                // Show the save dialog
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    // This is the path where the file will be saved, chosen by the user
+                    string filePath = saveFileDialog.FileName;
+
+                    // Call a method to save the data to the chosen file path
+                    ExportToExcel(data, filePath);
+                }
+            }
+        }
+
+        void ExportToExcel(List<InstructionExportInstance> data, string filePath)
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Data");
+
+                // Add column headers
+                worksheet.Cell(1, 1).Value = "Дата проведения инструктажа по охране труда";
+                worksheet.Cell(1, 2).Value = "Фамилия, имя, отчество (при наличии) работника, прошедшего инструктаж по охране труда";
+                worksheet.Cell(1, 3).Value = "Профессия (должность) работника, прошедшего инструктаж по охране труда";
+                worksheet.Cell(1, 4).Value = "Число, месяц, год рождения работника, прошедшего инструктаж по охране труда";
+                worksheet.Cell(1, 5).Value = "Вид инструктажа по охране труда";
+                worksheet.Cell(1, 6).Value = "Причина проведения инструктажа по охране труда (для внепланового или целевого инструктажа по охране труда)";
+                worksheet.Cell(1, 7).Value = "Фамилия, имя отчество (при наличии), профессия (должность) работника, проводившего инструктаж по охране труда";
+                worksheet.Cell(1, 8).Value = "Наименование локального акта (локальных актов), в объеме требований которого проведён инструктаж по охране труда";
+
+                // Enable wrapping for headers (row 1)
+                for (int col = 1; col <= 8; col++)
+                {
+                    worksheet.Cell(1, col).Style.Alignment.WrapText = true;
+                }
+
+                // Add sample data (for debugging)
+                worksheet.Cell(2, 1).Value = 1;
+                worksheet.Cell(2, 2).Value = 2;
+                worksheet.Cell(2, 3).Value = 3;
+                worksheet.Cell(2, 4).Value = 4;
+                worksheet.Cell(2, 5).Value = 5;
+                worksheet.Cell(2, 6).Value = 6;
+                worksheet.Cell(2, 7).Value = 7;
+                worksheet.Cell(2, 8).Value = 8;
+
+                // Add data to cells
+                for (int i = 0; i < data.Count; i++)
+                {
+                    worksheet.Cell(i + 3, 1).Value = data[i].DateWhenPassedByEmployee;
+                    worksheet.Cell(i + 3, 2).Value = data[i].FullNameOfEmployee;
+                    worksheet.Cell(i + 3, 3).Value = data[i].PositionOfEmployee;
+                    worksheet.Cell(i + 3, 4).Value = data[i].BirthDateOfEmployee;
+                    string? instructionTypeName = InstructionTypeToName(data[i].InstructionType);
+                    worksheet.Cell(i + 3, 5).Value = instructionTypeName ?? "неизвестный тип инструктажа!";
+
+                    if (data[i].InstructionType == 1 || data[i].InstructionType == 5)
+                    {
+                        worksheet.Cell(i + 3, 6).Value = data[i].CauseOfInstruction;
+                    }
+                    else
+                    {
+                        worksheet.Cell(i + 3, 6).Value = "";
+                    }
+                    worksheet.Cell(i + 3, 7).Value = data[i].FullNameOfEmployeeWhoConductedInstruction;
+                    worksheet.Cell(i + 3, 8).Value = data[i].FileNamesOfInstructionInOneString;
+
+                    // Enable text wrapping for each row of data
+                    worksheet.Row(i + 3).Style.Alignment.WrapText = true;
+                }
+
+                // Adjust font size
+                worksheet.Style.Font.FontSize = 12;
+
+                // Auto-fit columns based on content
+                worksheet.Columns().AdjustToContents();
+
+                // Set specific column width for long text headers (if needed)
+                worksheet.Column(2).Width = 50; // Adjust column 2 (Name) width to fit long text
+                worksheet.Column(3).Width = 40; // Adjust column 3 (Job) width to fit long text
+
+                // Set print settings to fit width on one page, but allow multiple pages for height
+                worksheet.PageSetup.PagesWide = 1; // Fit all columns to one page width
+                worksheet.PageSetup.PagesTall = 0; // Allow multiple pages for row height
+
+                // Optional: Set the page orientation to landscape for wider content
+                worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                // Save the workbook
+                workbook.SaveAs(filePath);
+
+                Console.WriteLine("Excel file created and saved.");
+            }
+        }
+
+
+        private string? InstructionTypeToName(byte instructionType)
+        {
+            string? result = instructionType switch
+            {
+                0 => $"Вводный",
+                1 => $"Внеплановый",
+                2 => $"Первичный",
+                3 => "Повторный",
+                4 => $"Повторный (для водителей)",
+                5 => $"Целевой",
+                _ => null
+            };
+            return result;
         }
     }
 }

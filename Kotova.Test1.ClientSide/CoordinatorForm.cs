@@ -19,6 +19,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Diagnostics;
 using System.Net.Http;
 using System.IO;
+using Microsoft.AspNetCore.SignalR.Client;
 
 
 namespace Kotova.Test1.ClientSide
@@ -40,6 +41,8 @@ namespace Kotova.Test1.ClientSide
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
 
+        private HubConnection? _hubConnection = null;
+
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 2 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
@@ -59,20 +62,64 @@ namespace Kotova.Test1.ClientSide
             UserLabel.Text = _userName;
             PassInstruction.Enabled = false;
 
+            InitializeSignalRConnection();
+
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
+
+
+
+        }
+
+
+        private async void InitializeSignalRConnection()
+        {
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(ConfigurationClass.BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT, options =>
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(_loginForm._jwtToken);
+                })
+            .Build();
+
+            _hubConnection.On<string, string>("Получено сообщение", (user, message) =>
+            {
+                // Handle incoming messages from the SignalR hub
+                MessageBox.Show($"{user}: {message}", "Message from Hub");
+            });
+
+            _hubConnection.On<string>("ReceiveAlert", message =>
+            {
+                Notifications.ShowWindowsNotification("Alert", message);
+            });
+
+            try
+            {
+                await _hubConnection.StartAsync();
+                MessageBox.Show("Подключено к SignalR hub.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось подключиться к SignalR hub: {ex.Message}");
+            }
         }
 
         private void LogOut_Click(object sender, EventArgs e)
         {
-            Decryption_stuff.DeleteJWTToken();
-            if (_signUpForm is not null)
+            LogOutForm_Click_Internal();
+        }
+
+        public async void LogOutForm_Click_Internal()
+        {
+            if (_signUpForm != null)
             {
                 _signUpForm.Dispose();
             }
-            _loginForm.Show();
+            Decryption_stuff.DeleteJWTToken();
             this.Dispose(true);
+            _loginForm.activeForm = _loginForm;
+            _loginForm.Show();
         }
+
 
         private void CoordinatorForm_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -312,11 +359,11 @@ namespace Kotova.Test1.ClientSide
                 case "Сотрудник":
                     return "user";
                 case "Руководство ОТДЕЛА":
-                    return("chief of department");
+                    return ("chief of department");
                 case "Охрана труда":
-                    return("coordinator");
+                    return ("coordinator");
                 case "Руководство ФИЛИАЛА":
-                    return("management");
+                    return ("management");
                 default:
                     return null;
             }
@@ -445,7 +492,7 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        
+
 
         private async void buttonSyncNamesForInitialInstrWithDB_Click(object sender, EventArgs e)
         {
@@ -930,5 +977,11 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        private void CoordinatorForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+            this.ShowInTaskbar = false;
+        }
     }
 }
