@@ -80,10 +80,9 @@
             ExportInstructionRequestButton = new Button();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
-            consoleTextBox = new TextBox();
-            TrayOfTasksListView = new ListView();
             LabelTray = new Label();
             RefreshTasksButton = new Button();
+            TrayOfTasksList = new ListBox();
             testButtonForTask = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -553,28 +552,10 @@
             LogOutButton.UseVisualStyleBackColor = true;
             LogOutButton.Click += LogOutForm_Click;
             // 
-            // consoleTextBox
-            // 
-            consoleTextBox.Location = new Point(708, 106);
-            consoleTextBox.Multiline = true;
-            consoleTextBox.Name = "consoleTextBox";
-            consoleTextBox.ReadOnly = true;
-            consoleTextBox.ScrollBars = ScrollBars.Both;
-            consoleTextBox.Size = new Size(340, 529);
-            consoleTextBox.TabIndex = 35;
-            // 
-            // TrayOfTasksListView
-            // 
-            TrayOfTasksListView.Location = new Point(129, 685);
-            TrayOfTasksListView.Name = "TrayOfTasksListView";
-            TrayOfTasksListView.Size = new Size(554, 182);
-            TrayOfTasksListView.TabIndex = 36;
-            TrayOfTasksListView.UseCompatibleStateImageBehavior = false;
-            // 
             // LabelTray
             // 
             LabelTray.AutoSize = true;
-            LabelTray.Location = new Point(25, 685);
+            LabelTray.Location = new Point(16, 660);
             LabelTray.Name = "LabelTray";
             LabelTray.Size = new Size(87, 15);
             LabelTray.TabIndex = 37;
@@ -582,17 +563,26 @@
             // 
             // RefreshTasksButton
             // 
-            RefreshTasksButton.Location = new Point(316, 656);
+            RefreshTasksButton.Location = new Point(833, 609);
             RefreshTasksButton.Name = "RefreshTasksButton";
-            RefreshTasksButton.Size = new Size(184, 23);
+            RefreshTasksButton.Size = new Size(215, 66);
             RefreshTasksButton.TabIndex = 38;
             RefreshTasksButton.Text = "Обновить список задач";
             RefreshTasksButton.UseVisualStyleBackColor = true;
             RefreshTasksButton.Click += RefreshTasksButton_Click;
             // 
+            // TrayOfTasksList
+            // 
+            TrayOfTasksList.FormattingEnabled = true;
+            TrayOfTasksList.ItemHeight = 15;
+            TrayOfTasksList.Location = new Point(16, 688);
+            TrayOfTasksList.Name = "TrayOfTasksList";
+            TrayOfTasksList.Size = new Size(1032, 124);
+            TrayOfTasksList.TabIndex = 40;
+            // 
             // testButtonForTask
             // 
-            testButtonForTask.Location = new Point(738, 677);
+            testButtonForTask.Location = new Point(864, 514);
             testButtonForTask.Name = "testButtonForTask";
             testButtonForTask.Size = new Size(124, 23);
             testButtonForTask.TabIndex = 39;
@@ -605,12 +595,11 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1102, 845);
+            Controls.Add(TrayOfTasksList);
             Controls.Add(testButtonForTask);
             Controls.Add(RefreshTasksButton);
             Controls.Add(LabelTray);
-            Controls.Add(TrayOfTasksListView);
             Controls.Add(testButton);
-            Controls.Add(consoleTextBox);
             Controls.Add(LogOutButton);
             Controls.Add(ChiefTabControl);
             Name = "ChiefForm";
@@ -662,7 +651,6 @@
         private Button HyperLinkForInstructionsFolder;
         private Label label8;
         private ListBox ListOfInstructions;
-        private TextBox consoleTextBox;
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private TabPage tabPage4;
         private Button TestButtonForInstructions;
@@ -675,15 +663,15 @@
         private ListBox listBoxOfPassedInstructions;
         private TreeViewWithoutDoubleClick treeView1;
         private TabPage tabPage5;
-        private ListView TrayOfTasksListView;
         private Label LabelTray;
         private Button RefreshTasksButton;
-        private Button testButtonForTask;
         private Label label3;
         private DateTimePicker startDateInstructionExportRequest;
         private Button ExportInstructionRequestButton;
         private CheckedListBoxWithoutDoubleClick checkedListBoxTypesOfInstruction;
         private Label label9;
         private DateTimePicker endDateInstructionExportRequest;
+        private ListBox TrayOfTasksList;
+        private Button testButtonForTask;
     }
 }

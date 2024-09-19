@@ -29,14 +29,13 @@ namespace Kotova.Test1.ClientSide
         const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
         const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
         const string instructionDataExportURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instructions-data-export";
+        const string RefreshTaskForChiefUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/get-all-current-tasks-for-chief";
 
         const string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 3 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
         public const string db_typeOfInstruction = "type_of_instruction";
-
-        System.Windows.Forms.Timer myTimer = new System.Windows.Forms.Timer();
 
         private static readonly HttpClient _client = new HttpClient();
         private HubConnection? _hubConnection = null;
@@ -1158,8 +1157,58 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private void RefreshTasksButton_Click(object sender, EventArgs e)
+        private async void RefreshTasksButton_Click(object sender, EventArgs e)
         {
+            string url = RefreshTaskForChiefUrl;
+            TrayOfTasksList.Items.Clear();
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    if (string.IsNullOrEmpty(jsonResponse))
+                    {
+                        MessageBox.Show("Новых заданий нет.");
+                        return;
+                    }
+
+                    var tasks = JsonConvert.DeserializeObject<List<TaskDto>>(jsonResponse);
+
+                    // Check for null or empty list
+                    if (tasks != null && tasks.Count > 0)
+                    {
+
+                        // Add tasks to the ListView
+                        foreach (var task in tasks)
+                        {
+                            TrayOfTasksList.Items.Add(task.Description);
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Новых заданий нет!");
+                    }
+
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+            finally
+            {
+                PassInstruction.Checked = false;
+            }
+
 
         }
 
