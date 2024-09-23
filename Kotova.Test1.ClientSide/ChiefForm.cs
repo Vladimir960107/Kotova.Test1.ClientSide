@@ -56,7 +56,7 @@ namespace Kotova.Test1.ClientSide
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
             InitializeComponent();
-
+            usernameLabel.Text = userName;
             ChiefTabControl_SelectedIndexChanged(null, EventArgs.Empty);
 
             InitializeSignalRConnection();
@@ -230,7 +230,7 @@ namespace Kotova.Test1.ClientSide
                     return null;
                 }
 
-                bool isForDrivers = checkBoxIsForDrivers.Checked;
+                bool isForDrivers = false;
                 int bitValueIsForDrivers = isForDrivers ? 1 : 0;
                 string causeOfInstruction = InstructionTextBox.Text;
                 if (string.IsNullOrWhiteSpace(causeOfInstruction))

@@ -38,6 +38,7 @@
             submitInstructionToPeople = new Button();
             SyncNamesWithDB = new Button();
             tabPage2 = new TabPage();
+            checkBox1 = new CheckBox();
             checkedListBoxNamesOfPeopleCreatingInstr = new CheckedListBox();
             treeView1 = new TreeViewWithoutDoubleClick();
             PathToFolderOfInstruction = new Label();
@@ -84,6 +85,8 @@
             RefreshTasksButton = new Button();
             TrayOfTasksList = new ListBox();
             testButtonForTask = new Button();
+            usernameLabel = new Label();
+            label10 = new Label();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -117,6 +120,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(checkBox1);
             tabPage2.Controls.Add(checkedListBoxNamesOfPeopleCreatingInstr);
             tabPage2.Controls.Add(treeView1);
             tabPage2.Controls.Add(PathToFolderOfInstruction);
@@ -136,6 +140,16 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // checkBox1
+            // 
+            checkBox1.AutoSize = true;
+            checkBox1.Location = new Point(410, 306);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Size = new Size(83, 19);
+            checkBox1.TabIndex = 36;
+            checkBox1.Text = "checkBox1";
+            checkBox1.UseVisualStyleBackColor = true;
             // 
             // checkedListBoxNamesOfPeopleCreatingInstr
             // 
@@ -590,11 +604,31 @@
             testButtonForTask.UseVisualStyleBackColor = true;
             testButtonForTask.Click += testButtonForTask_Click;
             // 
+            // usernameLabel
+            // 
+            usernameLabel.AutoSize = true;
+            usernameLabel.Location = new Point(813, 150);
+            usernameLabel.Name = "usernameLabel";
+            usernameLabel.Size = new Size(44, 15);
+            usernameLabel.TabIndex = 41;
+            usernameLabel.Text = "label10";
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(719, 150);
+            label10.Name = "label10";
+            label10.Size = new Size(88, 15);
+            label10.TabIndex = 42;
+            label10.Text = "Вы вошли как:";
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1102, 845);
+            Controls.Add(label10);
+            Controls.Add(usernameLabel);
             Controls.Add(TrayOfTasksList);
             Controls.Add(testButtonForTask);
             Controls.Add(RefreshTasksButton);
@@ -673,5 +707,8 @@
         private DateTimePicker endDateInstructionExportRequest;
         private ListBox TrayOfTasksList;
         private Button testButtonForTask;
+        private CheckBox checkBox1;
+        private Label usernameLabel;
+        private Label label10;
     }
 }
