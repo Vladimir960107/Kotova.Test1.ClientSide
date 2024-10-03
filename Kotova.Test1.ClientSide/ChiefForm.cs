@@ -1204,12 +1204,6 @@ namespace Kotova.Test1.ClientSide
                 // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
             }
-            finally
-            {
-                PassInstruction.Checked = false;
-            }
-
-
         }
 
         private async void ExportInstructionRequestButton_Click(object sender, EventArgs e)

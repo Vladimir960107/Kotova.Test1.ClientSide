@@ -150,11 +150,11 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 await _hubConnection.StartAsync();
-                MessageBox.Show("Connected to the SignalR hub.");
+                MessageBox.Show("Подключён к SignalR hub.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to connect to SignalR hub: {ex.Message}");
+                MessageBox.Show($"Не удалось подключиться к SignalR hub: {ex.Message}");
             }
         }
 
@@ -164,7 +164,7 @@ namespace Kotova.Test1.ClientSide
             bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
             if (IsEmpty)
             {
-                MessageBox.Show("All the instructions passed!");
+                MessageBox.Show("Все инструктажи пройдены!");
             }
         }
 
@@ -217,7 +217,7 @@ namespace Kotova.Test1.ClientSide
             HyperLinkForInstructionsFolder.Enabled = true;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
                 HyperLinkForInstructionsFolder.Enabled = false;
                 return;
@@ -259,7 +259,7 @@ namespace Kotova.Test1.ClientSide
             HyperLinkForInstructionsFolder.Enabled = false;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -273,7 +273,7 @@ namespace Kotova.Test1.ClientSide
 
             if (pathStr is null || pathStr.Length == 0)
             {
-                MessageBox.Show("Path is null or empty.");
+                MessageBox.Show("Путь пуст или отсутствует.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -286,7 +286,7 @@ namespace Kotova.Test1.ClientSide
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                MessageBox.Show("Provided path is null or empty.");
+                MessageBox.Show("Указанный путь отсутствует.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -295,7 +295,7 @@ namespace Kotova.Test1.ClientSide
             string fullPath = Path.GetFullPath(path);
             if (!Directory.Exists(fullPath))
             {
-                MessageBox.Show($"The path '{fullPath}' does not exist.");
+                MessageBox.Show($"Путь '{fullPath}' не существует.");
                 PassInstruction.Enabled = false;
                 return;
             }
@@ -307,7 +307,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open the folder: {ex.Message}");
+                MessageBox.Show($"Не удалось открыть папку: {ex.Message}");
                 PassInstruction.Enabled = false;
             }
         }
@@ -323,7 +323,7 @@ namespace Kotova.Test1.ClientSide
                     return selectedDictionary; // HERE WE DIDN't CHECK  THAT названия инструктажей не повторяется, а просто вернули первое попавшееся. Проверку бы!
                 }
             }
-            throw new Exception("Corresponding Dictionary not found!");
+            throw new Exception("Соответствующий инструктаж не был найден, ошибка!");
         }
 
         private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
@@ -331,13 +331,13 @@ namespace Kotova.Test1.ClientSide
             if (!PassInstruction.Checked) { return; }
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
-                MessageBox.Show("You haven't select the Instruction.");
+                MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
                 return;
             }
             if (ConfirmAction())
             {
-                MessageBox.Show("You agreed with the action.", "Action Confirmed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Вы согласились, что прошли инструктаж.", "Действие подтверждено", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
                 Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
                 await SendInstructionIsPassedToDB(selectedDict);
@@ -346,7 +346,7 @@ namespace Kotova.Test1.ClientSide
             }
             else
             {
-                MessageBox.Show("You did not agree with the action.", "Action Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Вы не подтвердили, что прошли инструктаж.", "Действие отменено", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 PassInstruction.Checked = false;
                 return;
             }
@@ -374,7 +374,7 @@ namespace Kotova.Test1.ClientSide
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Everyting is fine, updating the listbox of instructions");
+                        MessageBox.Show("Всё впорядке, обновляем список инструктажей");
                         ListOfInstructionsForUser.Items.Clear();
                         await DownloadInstructionsForUserFromServer(_userName);
                     }
@@ -394,7 +394,7 @@ namespace Kotova.Test1.ClientSide
 
         private bool ConfirmAction()
         {
-            var result = MessageBox.Show("Do you agree with the action?", "Confirm Action", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show("Вы подтверждаете прохождение инструктажа?", "Подтвердите действие", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
@@ -473,7 +473,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to open file: {ex.Message}");
+                MessageBox.Show($"Не удалось открыть файл: {ex.Message}");
             }
         }
 

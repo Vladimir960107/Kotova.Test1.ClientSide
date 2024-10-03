@@ -44,9 +44,6 @@
             SignOut = new Button();
             FilesOfInstructionCheckedListBox = new CheckedListBox();
             ExitTheProgrammEntirelyButton = new Button();
-            title = new TextBox();
-            text = new TextBox();
-            showNotification = new Button();
             SuspendLayout();
             // 
             // CheckForNewInstructions
@@ -148,38 +145,11 @@
             ExitTheProgrammEntirelyButton.UseVisualStyleBackColor = true;
             ExitTheProgrammEntirelyButton.Click += ExitTheProgrammEntirelyButton_Click;
             // 
-            // title
-            // 
-            title.Location = new Point(541, 70);
-            title.Name = "title";
-            title.Size = new Size(100, 23);
-            title.TabIndex = 33;
-            // 
-            // text
-            // 
-            text.Location = new Point(541, 119);
-            text.Name = "text";
-            text.Size = new Size(100, 23);
-            text.TabIndex = 34;
-            // 
-            // showNotification
-            // 
-            showNotification.Location = new Point(551, 170);
-            showNotification.Name = "showNotification";
-            showNotification.Size = new Size(75, 23);
-            showNotification.TabIndex = 35;
-            showNotification.Text = "button1";
-            showNotification.UseVisualStyleBackColor = true;
-            showNotification.Click += showNotification_Click;
-            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(800, 450);
-            Controls.Add(showNotification);
-            Controls.Add(text);
-            Controls.Add(title);
             Controls.Add(ExitTheProgrammEntirelyButton);
             Controls.Add(FilesOfInstructionCheckedListBox);
             Controls.Add(SignOut);
@@ -210,8 +180,5 @@
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private Button SendMessageButton;
         private Button ExitTheProgrammEntirelyButton;
-        private TextBox title;
-        private TextBox text;
-        private Button showNotification;
     }
 }

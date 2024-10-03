@@ -81,7 +81,7 @@ namespace Kotova.Test1.ClientSide
                 })
             .Build();
 
-            _hubConnection.On<string, string>("Получено сообщение", (user, message) =>
+            _hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
             {
                 // Handle incoming messages from the SignalR hub
                 MessageBox.Show($"{user}: {message}", "Message from Hub");
@@ -612,6 +612,18 @@ namespace Kotova.Test1.ClientSide
                 }
 
             }
+            if (CoordinatorTabControl.SelectedTab.Text == "Контроль")
+            {
+                if (await refreshDepartmentsFromDB(DepartmentsListBox))
+                {
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
+                }
+
+            }
         }
 
         private async Task<bool> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в User.cs в совершенно отдельном файле.
@@ -982,6 +994,11 @@ namespace Kotova.Test1.ClientSide
             e.Cancel = true;
             this.Hide();
             this.ShowInTaskbar = false;
+        }
+
+        private void ExcelExportForCoordinatorButton_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

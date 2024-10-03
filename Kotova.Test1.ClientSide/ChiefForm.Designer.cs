@@ -38,7 +38,6 @@
             submitInstructionToPeople = new Button();
             SyncNamesWithDB = new Button();
             tabPage2 = new TabPage();
-            checkBox1 = new CheckBox();
             checkedListBoxNamesOfPeopleCreatingInstr = new CheckedListBox();
             treeView1 = new TreeViewWithoutDoubleClick();
             PathToFolderOfInstruction = new Label();
@@ -84,9 +83,9 @@
             LabelTray = new Label();
             RefreshTasksButton = new Button();
             TrayOfTasksList = new ListBox();
-            testButtonForTask = new Button();
             usernameLabel = new Label();
             label10 = new Label();
+            button1 = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -120,7 +119,6 @@
             // 
             // tabPage2
             // 
-            tabPage2.Controls.Add(checkBox1);
             tabPage2.Controls.Add(checkedListBoxNamesOfPeopleCreatingInstr);
             tabPage2.Controls.Add(treeView1);
             tabPage2.Controls.Add(PathToFolderOfInstruction);
@@ -140,16 +138,6 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // checkBox1
-            // 
-            checkBox1.AutoSize = true;
-            checkBox1.Location = new Point(410, 306);
-            checkBox1.Name = "checkBox1";
-            checkBox1.Size = new Size(83, 19);
-            checkBox1.TabIndex = 36;
-            checkBox1.Text = "checkBox1";
-            checkBox1.UseVisualStyleBackColor = true;
             // 
             // checkedListBoxNamesOfPeopleCreatingInstr
             // 
@@ -591,18 +579,8 @@
             TrayOfTasksList.ItemHeight = 15;
             TrayOfTasksList.Location = new Point(16, 688);
             TrayOfTasksList.Name = "TrayOfTasksList";
-            TrayOfTasksList.Size = new Size(1032, 124);
+            TrayOfTasksList.Size = new Size(1032, 94);
             TrayOfTasksList.TabIndex = 40;
-            // 
-            // testButtonForTask
-            // 
-            testButtonForTask.Location = new Point(864, 514);
-            testButtonForTask.Name = "testButtonForTask";
-            testButtonForTask.Size = new Size(124, 23);
-            testButtonForTask.TabIndex = 39;
-            testButtonForTask.Text = "Generate Task";
-            testButtonForTask.UseVisualStyleBackColor = true;
-            testButtonForTask.Click += testButtonForTask_Click;
             // 
             // usernameLabel
             // 
@@ -622,15 +600,24 @@
             label10.TabIndex = 42;
             label10.Text = "Вы вошли как:";
             // 
+            // button1
+            // 
+            button1.Location = new Point(380, 811);
+            button1.Name = "button1";
+            button1.Size = new Size(205, 23);
+            button1.TabIndex = 43;
+            button1.Text = "Задание выполнено";
+            button1.UseVisualStyleBackColor = true;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1102, 845);
+            ClientSize = new Size(1102, 908);
+            Controls.Add(button1);
             Controls.Add(label10);
             Controls.Add(usernameLabel);
             Controls.Add(TrayOfTasksList);
-            Controls.Add(testButtonForTask);
             Controls.Add(RefreshTasksButton);
             Controls.Add(LabelTray);
             Controls.Add(testButton);
@@ -706,9 +693,8 @@
         private Label label9;
         private DateTimePicker endDateInstructionExportRequest;
         private ListBox TrayOfTasksList;
-        private Button testButtonForTask;
-        private CheckBox checkBox1;
         private Label usernameLabel;
         private Label label10;
+        private Button button1;
     }
 }

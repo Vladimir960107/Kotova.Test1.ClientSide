@@ -29,7 +29,7 @@ namespace Kotova.Test1.ClientSide
         public string? _jwtToken = null;
         public bool _jwtRemembered = false;
         private TaskCompletionSource<bool> _initTaskCompletionSource;
-        private int timeForBeingAuthenticated = 30;
+        private int timeForBeingAuthenticated = 600;
 
         public Form activeForm;
         private NotifyIcon notifyIcon;

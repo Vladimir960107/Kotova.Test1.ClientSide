@@ -34,7 +34,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             tabPage1 = new TabPage();
             PassInstruction = new CheckBox();
             button6 = new Button();
@@ -80,16 +79,15 @@
             tabPage5 = new TabPage();
             listBox5 = new ListBox();
             label16 = new Label();
-            button7 = new Button();
-            listBox4 = new ListBox();
+            ExcelExportForCoordinatorButton = new Button();
+            DepartmentsListBox = new ListBox();
             label15 = new Label();
-            listBox3 = new ListBox();
+            typesOfInstructionListBox = new ListBox();
             label14 = new Label();
             label13 = new Label();
             label12 = new Label();
-            dateTimePicker4 = new DateTimePicker();
-            dateTimePicker3 = new DateTimePicker();
-            contextMenuStrip1 = new ContextMenuStrip(components);
+            EndDateOfPassedInstructions = new DateTimePicker();
+            BeginingDateOfPassedInstructions = new DateTimePicker();
             button1 = new Button();
             UserLabel = new Label();
             label11 = new Label();
@@ -525,15 +523,15 @@
             // 
             tabPage5.Controls.Add(listBox5);
             tabPage5.Controls.Add(label16);
-            tabPage5.Controls.Add(button7);
-            tabPage5.Controls.Add(listBox4);
+            tabPage5.Controls.Add(ExcelExportForCoordinatorButton);
+            tabPage5.Controls.Add(DepartmentsListBox);
             tabPage5.Controls.Add(label15);
-            tabPage5.Controls.Add(listBox3);
+            tabPage5.Controls.Add(typesOfInstructionListBox);
             tabPage5.Controls.Add(label14);
             tabPage5.Controls.Add(label13);
             tabPage5.Controls.Add(label12);
-            tabPage5.Controls.Add(dateTimePicker4);
-            tabPage5.Controls.Add(dateTimePicker3);
+            tabPage5.Controls.Add(EndDateOfPassedInstructions);
+            tabPage5.Controls.Add(BeginingDateOfPassedInstructions);
             tabPage5.Location = new Point(4, 24);
             tabPage5.Name = "tabPage5";
             tabPage5.Padding = new Padding(3);
@@ -561,24 +559,25 @@
             label16.TabIndex = 9;
             label16.Text = "Выбор сотрудника (опционально)";
             // 
-            // button7
+            // ExcelExportForCoordinatorButton
             // 
-            button7.Location = new Point(630, 34);
-            button7.Name = "button7";
-            button7.Size = new Size(299, 272);
-            button7.TabIndex = 8;
-            button7.Text = "Сформировать Excel отчёт";
-            button7.UseVisualStyleBackColor = true;
+            ExcelExportForCoordinatorButton.Location = new Point(630, 34);
+            ExcelExportForCoordinatorButton.Name = "ExcelExportForCoordinatorButton";
+            ExcelExportForCoordinatorButton.Size = new Size(299, 272);
+            ExcelExportForCoordinatorButton.TabIndex = 8;
+            ExcelExportForCoordinatorButton.Text = "Сформировать Excel отчёт";
+            ExcelExportForCoordinatorButton.UseVisualStyleBackColor = true;
+            ExcelExportForCoordinatorButton.Click += ExcelExportForCoordinatorButton_Click;
             // 
-            // listBox4
+            // DepartmentsListBox
             // 
-            listBox4.FormattingEnabled = true;
-            listBox4.ItemHeight = 15;
-            listBox4.Items.AddRange(new object[] { "Тех. Отдел", "Общестрой" });
-            listBox4.Location = new Point(240, 212);
-            listBox4.Name = "listBox4";
-            listBox4.Size = new Size(127, 94);
-            listBox4.TabIndex = 7;
+            DepartmentsListBox.FormattingEnabled = true;
+            DepartmentsListBox.ItemHeight = 15;
+            DepartmentsListBox.Items.AddRange(new object[] { "Тех. Отдел", "Общестрой" });
+            DepartmentsListBox.Location = new Point(240, 212);
+            DepartmentsListBox.Name = "DepartmentsListBox";
+            DepartmentsListBox.Size = new Size(127, 94);
+            DepartmentsListBox.TabIndex = 7;
             // 
             // label15
             // 
@@ -589,15 +588,15 @@
             label15.TabIndex = 6;
             label15.Text = "Отдел";
             // 
-            // listBox3
+            // typesOfInstructionListBox
             // 
-            listBox3.FormattingEnabled = true;
-            listBox3.ItemHeight = 15;
-            listBox3.Items.AddRange(new object[] { "Вводный", "Первичный", "Повторный", "Внеплановый", "Целевой" });
-            listBox3.Location = new Point(57, 212);
-            listBox3.Name = "listBox3";
-            listBox3.Size = new Size(127, 94);
-            listBox3.TabIndex = 5;
+            typesOfInstructionListBox.FormattingEnabled = true;
+            typesOfInstructionListBox.ItemHeight = 15;
+            typesOfInstructionListBox.Items.AddRange(new object[] { "Вводный", "Внеплановый", "Первичный", "Повторный", "Повторный (для водителей)", "Целевой" });
+            typesOfInstructionListBox.Location = new Point(57, 212);
+            typesOfInstructionListBox.Name = "typesOfInstructionListBox";
+            typesOfInstructionListBox.Size = new Size(127, 94);
+            typesOfInstructionListBox.TabIndex = 5;
             // 
             // label14
             // 
@@ -626,24 +625,19 @@
             label12.TabIndex = 2;
             label12.Text = "Начало периода";
             // 
-            // dateTimePicker4
+            // EndDateOfPassedInstructions
             // 
-            dateTimePicker4.Location = new Point(57, 125);
-            dateTimePicker4.Name = "dateTimePicker4";
-            dateTimePicker4.Size = new Size(245, 23);
-            dateTimePicker4.TabIndex = 1;
+            EndDateOfPassedInstructions.Location = new Point(57, 125);
+            EndDateOfPassedInstructions.Name = "EndDateOfPassedInstructions";
+            EndDateOfPassedInstructions.Size = new Size(245, 23);
+            EndDateOfPassedInstructions.TabIndex = 1;
             // 
-            // dateTimePicker3
+            // BeginingDateOfPassedInstructions
             // 
-            dateTimePicker3.Location = new Point(57, 52);
-            dateTimePicker3.Name = "dateTimePicker3";
-            dateTimePicker3.Size = new Size(245, 23);
-            dateTimePicker3.TabIndex = 0;
-            // 
-            // contextMenuStrip1
-            // 
-            contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(61, 4);
+            BeginingDateOfPassedInstructions.Location = new Point(57, 52);
+            BeginingDateOfPassedInstructions.Name = "BeginingDateOfPassedInstructions";
+            BeginingDateOfPassedInstructions.Size = new Size(245, 23);
+            BeginingDateOfPassedInstructions.TabIndex = 0;
             // 
             // button1
             // 
@@ -719,16 +713,15 @@
         private Button uploadNewcommer;
         private Button button6;
         private TabPage tabPage5;
-        private ListBox listBox3;
+        private ListBox typesOfInstructionListBox;
         private Label label14;
         private Label label13;
         private Label label12;
-        private DateTimePicker dateTimePicker4;
-        private DateTimePicker dateTimePicker3;
-        private Button button7;
-        private ListBox listBox4;
+        private DateTimePicker EndDateOfPassedInstructions;
+        private DateTimePicker BeginingDateOfPassedInstructions;
+        private Button ExcelExportForCoordinatorButton;
+        private ListBox DepartmentsListBox;
         private Label label15;
-        private ContextMenuStrip contextMenuStrip1;
         private ListBox listBox5;
         private Label label16;
         private Label label17;
