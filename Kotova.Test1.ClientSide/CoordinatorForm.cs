@@ -36,7 +36,6 @@ namespace Kotova.Test1.ClientSide
         private Login_Russian? _loginForm;
         private string? _userName;
         public SignUpForm _signUpForm;
-        private string? selectedFolderPath;
         List<InstructionDto>? namesOfUsersOfInitInstr = new List<InstructionDto>();
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
@@ -308,7 +307,7 @@ namespace Kotova.Test1.ClientSide
 
                 if (response.IsSuccessStatusCode)
                 {
-                    MessageBox.Show("Employee inserted into DB", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Сотрудник добавлен в базу данных", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     try
                     {
                         response = await GetLoginPassword(new List<string> { newEmployee.personnel_number, newEmployee.department, WorkplaceNumberTextBox.Text, roleName, isEmployeeRequireInitInstr }, token);
@@ -319,7 +318,7 @@ namespace Kotova.Test1.ClientSide
                             var login_and_password = System.Text.Json.JsonSerializer.Deserialize<Tuple<string, string>>(jsonResponse);
                             loginTextBox.Text = login_and_password.Item1;
                             PasswordTextBox.Text = login_and_password.Item2;
-                            uploadNewcommer.Enabled = true;
+                            uploadNewcommer.Enabled = false;
                         }
                         else
                         {
@@ -435,61 +434,10 @@ namespace Kotova.Test1.ClientSide
             return Regex.IsMatch(number, @"^\d{10}$");
         }
 
-        private void InitialInstructionButton_Click(object sender, EventArgs e)
+        private void DataIsFilledButton_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
-            {
-                folderBrowserDialog.SelectedPath = ConfigurationClass.DEFAULT_PATH_TO_INITIAL_INSTRUCTIONS;
-
-                DialogResult result = folderBrowserDialog.ShowDialog();
-
-                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
-                {
-                    selectedFolderPath = folderBrowserDialog.SelectedPath;
-
-                    InitialInstructionPathLabel.Text = selectedFolderPath;
-
-
-                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
-
-                }
-            }
+            MessageBox.Show("Проверьте правильность введенных данных пожалуйста.");
             uploadNewcommer.Enabled = true;
-            // Добавить последующий код в функцию! ОНО ВООБЩЕ ДОЛЖНО БЫТЬ ЗДЕСЬ?
-            /*buttonCreateInstruction.Enabled = false;
-            if (selectedFolderPath is null)
-            {
-                MessageBox.Show("Путь до инструктажа не выбран!");
-                buttonCreateInstruction.Enabled = true;
-                return;
-            }
-            DateTime startTime = DateTime.Now;
-            DateTime endDate = datePickerEnd.Value.Date;
-            if (endDate <= startTime)
-            {
-                MessageBox.Show("До какой даты должно быть больше текущего времени!");
-                buttonCreateInstruction.Enabled = true;
-                return;
-            }
-            if (typeOfInstructionListBox.SelectedIndex == -1)
-            {
-                buttonCreateInstruction.Enabled = true;
-                MessageBox.Show("Не выбран тип инструктажа!");
-                return;
-            }
-
-            string causeOfInstruction = "Вводный инструктаж";
-            Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox!
-            Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
-            string json = JsonConvert.SerializeObject(instruction);
-            HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
-            await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.");
-            buttonCreateInstruction.Enabled = true;
-            InstructionTextBox.Text = "";
-            typeOfInstructionListBox.SelectedIndex = -1;
-            selectedFolderPath = null;
-            PathToFolderOfInstruction.Text = "Путь не выбран";*/
-
         }
 
 
@@ -595,7 +543,7 @@ namespace Kotova.Test1.ClientSide
                 {
                     if (await refreshRolesFromDB(RoleOfNewcomerListBox))
                     {
-                        MessageBox.Show("Отделы и роли обновились успешно.");
+                        //MessageBox.Show("Отделы и роли обновились успешно.");
                         return;
 
                     }

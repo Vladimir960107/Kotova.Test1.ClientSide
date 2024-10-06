@@ -50,7 +50,6 @@
             AddInitialInstructionToNewcomer = new CheckBox();
             label25 = new Label();
             RoleOfNewcomerListBox = new ListBox();
-            label24 = new Label();
             InitialInstructionButton = new Button();
             InitialInstructionPathLabel = new Label();
             label23 = new Label();
@@ -226,7 +225,6 @@
             tabPage3.Controls.Add(AddInitialInstructionToNewcomer);
             tabPage3.Controls.Add(label25);
             tabPage3.Controls.Add(RoleOfNewcomerListBox);
-            tabPage3.Controls.Add(label24);
             tabPage3.Controls.Add(InitialInstructionButton);
             tabPage3.Controls.Add(InitialInstructionPathLabel);
             tabPage3.Controls.Add(label23);
@@ -282,24 +280,15 @@
             RoleOfNewcomerListBox.Size = new Size(281, 64);
             RoleOfNewcomerListBox.TabIndex = 28;
             // 
-            // label24
-            // 
-            label24.AutoSize = true;
-            label24.Location = new Point(24, 324);
-            label24.Name = "label24";
-            label24.Size = new Size(163, 15);
-            label24.TabIndex = 27;
-            label24.Text = "Путь вводного инструктажа:";
-            // 
             // InitialInstructionButton
             // 
-            InitialInstructionButton.Location = new Point(24, 240);
+            InitialInstructionButton.Location = new Point(750, 316);
             InitialInstructionButton.Name = "InitialInstructionButton";
             InitialInstructionButton.Size = new Size(210, 53);
             InitialInstructionButton.TabIndex = 26;
-            InitialInstructionButton.Text = "Выбрать папку для вводного инструктажа";
+            InitialInstructionButton.Text = "Данные сотрудника заполнены";
             InitialInstructionButton.UseVisualStyleBackColor = true;
-            InitialInstructionButton.Click += InitialInstructionButton_Click;
+            InitialInstructionButton.Click += DataIsFilledButton_Click;
             // 
             // InitialInstructionPathLabel
             // 
@@ -736,7 +725,6 @@
         private Label label22;
         private Button InitialInstructionButton;
         private Label InitialInstructionPathLabel;
-        private Label label24;
         private Button button1;
         private Label label25;
         private ListBox RoleOfNewcomerListBox;

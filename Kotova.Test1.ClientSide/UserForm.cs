@@ -150,7 +150,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 await _hubConnection.StartAsync();
-                MessageBox.Show("Подключён к SignalR hub.");
+                //MessageBox.Show("Подключён к SignalR hub.");
             }
             catch (Exception ex)
             {

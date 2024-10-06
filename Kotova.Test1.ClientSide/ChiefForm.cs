@@ -86,7 +86,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 await _hubConnection.StartAsync();
-                MessageBox.Show("Подключено к SignalR hub.");
+                //MessageBox.Show("Подключено к SignalR hub.");
             }
             catch (Exception ex)
             {
@@ -371,7 +371,7 @@ namespace Kotova.Test1.ClientSide
         private async void submitInstructionToPeople_Click(object sender, EventArgs e)
         {
             submitInstructionToPeople.Enabled = false;
-            var listOfNames = checkedListBoxNamesOfPeople.SelectedItems;
+            var listOfNames = checkedListBoxNamesOfPeople.CheckedItems;
             //var listOfNames = ListBoxNamesOfPeople.SelectedItems;
 
             List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
@@ -505,7 +505,7 @@ namespace Kotova.Test1.ClientSide
                 bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
                 if (IsEmpty == true)
                 {
-                    MessageBox.Show("All the instructions passed!");
+                    MessageBox.Show("Все инструктажи пройдены!");
                 }
             }
             if (ChiefTabControl.SelectedTab.Text == "Внеплановые инструктажи")

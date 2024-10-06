@@ -244,7 +244,7 @@ namespace Kotova.Test1.ClientSide
                     return 1;
                 case "Технический отдел":
                     return 2;
-                case "Начальство":
+                case "Руководство":
                     return 5;
                 default:
                     return null;

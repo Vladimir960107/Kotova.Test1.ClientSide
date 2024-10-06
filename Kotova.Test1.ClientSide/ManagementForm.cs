@@ -91,7 +91,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 await _hubConnection.StartAsync();
-                MessageBox.Show("Подключено к SignalR hub.");
+                //MessageBox.Show("Подключено к SignalR hub.");
             }
             catch (Exception ex)
             {

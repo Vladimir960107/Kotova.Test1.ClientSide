@@ -12,7 +12,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
-    <ApplicationIcon>LynKS_favicon.ico</ApplicationIcon>
+    <ApplicationIcon>Охрана труда.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="LynKS_favicon.ico" />
+    <Content Include="Охрана труда.ico" />
   </ItemGroup>
 
   <ItemGroup>
