@@ -52,6 +52,7 @@
             typeOfInstructionListBox = new ListBox();
             testButton = new Button();
             tabPage1 = new TabPage();
+            SelectAllThePeopleInListBoxButton = new Button();
             checkedListBoxNamesOfPeople = new CheckedListBox();
             ListOfInstructions = new ListBox();
             buttonSyncManualyInstrWithDB = new Button();
@@ -97,7 +98,7 @@
             // 
             // submitInstructionToPeople
             // 
-            submitInstructionToPeople.Location = new Point(193, 232);
+            submitInstructionToPeople.Location = new Point(196, 488);
             submitInstructionToPeople.Margin = new Padding(3, 2, 3, 2);
             submitInstructionToPeople.Name = "submitInstructionToPeople";
             submitInstructionToPeople.Size = new Size(216, 71);
@@ -266,6 +267,7 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(SelectAllThePeopleInListBoxButton);
             tabPage1.Controls.Add(checkedListBoxNamesOfPeople);
             tabPage1.Controls.Add(ListOfInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
@@ -281,6 +283,16 @@
             tabPage1.Text = "Внеплановые инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
             // 
+            // SelectAllThePeopleInListBoxButton
+            // 
+            SelectAllThePeopleInListBoxButton.Location = new Point(399, 421);
+            SelectAllThePeopleInListBoxButton.Name = "SelectAllThePeopleInListBoxButton";
+            SelectAllThePeopleInListBoxButton.Size = new Size(138, 32);
+            SelectAllThePeopleInListBoxButton.TabIndex = 35;
+            SelectAllThePeopleInListBoxButton.Text = "Выбрать всех людей";
+            SelectAllThePeopleInListBoxButton.UseVisualStyleBackColor = true;
+            SelectAllThePeopleInListBoxButton.Click += SelectAllThePeopleInListBoxButton_Click;
+            // 
             // checkedListBoxNamesOfPeople
             // 
             checkedListBoxNamesOfPeople.CheckOnClick = true;
@@ -288,7 +300,7 @@
             checkedListBoxNamesOfPeople.HorizontalScrollbar = true;
             checkedListBoxNamesOfPeople.Location = new Point(349, 86);
             checkedListBoxNamesOfPeople.Name = "checkedListBoxNamesOfPeople";
-            checkedListBoxNamesOfPeople.Size = new Size(265, 94);
+            checkedListBoxNamesOfPeople.Size = new Size(265, 310);
             checkedListBoxNamesOfPeople.TabIndex = 34;
             // 
             // ListOfInstructions
@@ -297,7 +309,7 @@
             ListOfInstructions.ItemHeight = 15;
             ListOfInstructions.Location = new Point(20, 86);
             ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(237, 94);
+            ListOfInstructions.Size = new Size(237, 304);
             ListOfInstructions.TabIndex = 33;
             // 
             // buttonSyncManualyInstrWithDB
@@ -314,7 +326,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(150, 194);
+            label5.Location = new Point(157, 430);
             label5.Name = "label5";
             label5.Size = new Size(74, 15);
             label5.TabIndex = 31;
@@ -323,7 +335,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(20, 194);
+            label4.Location = new Point(27, 430);
             label4.Name = "label4";
             label4.Size = new Size(124, 15);
             label4.TabIndex = 30;
@@ -613,7 +625,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1102, 908);
+            ClientSize = new Size(1102, 845);
             Controls.Add(button1);
             Controls.Add(label10);
             Controls.Add(usernameLabel);
@@ -696,5 +708,6 @@
         private Label usernameLabel;
         private Label label10;
         private Button button1;
+        private Button SelectAllThePeopleInListBoxButton;
     }
 }

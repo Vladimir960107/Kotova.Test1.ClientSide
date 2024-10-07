@@ -244,10 +244,10 @@
             SupportEmail.AutoSize = true;
             SupportEmail.Location = new Point(6, 560);
             SupportEmail.Name = "SupportEmail";
-            SupportEmail.Size = new Size(199, 15);
+            SupportEmail.Size = new Size(111, 15);
             SupportEmail.TabIndex = 5;
             SupportEmail.TabStop = true;
-            SupportEmail.Text = "loginovvladimirforwork@gmail.com";
+            SupportEmail.Text = "LoginovVS@rzdp.ru";
             SupportEmail.LinkClicked += SupportEmail_LinkClicked;
             // 
             // RememberCredentialsCheckBox

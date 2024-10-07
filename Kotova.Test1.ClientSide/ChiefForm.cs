@@ -1217,7 +1217,7 @@ namespace Kotova.Test1.ClientSide
             {
                 InstructionExportRequest instructionExportRequest = new InstructionExportRequest(startDate, endDate, shiftedIndices);
 
-                
+
 
                 using (var httpClient = new HttpClient())
                 {
@@ -1244,7 +1244,7 @@ namespace Kotova.Test1.ClientSide
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     var result = JsonConvert.DeserializeObject<List<InstructionExportInstance>>(jsonResponse);
 
-                    if (result == null||!result.Any())
+                    if (result == null || !result.Any())
                     {
                         MessageBox.Show("Нет инструктажей за этот период.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
@@ -1381,6 +1381,29 @@ namespace Kotova.Test1.ClientSide
                 _ => null
             };
             return result;
+        }
+
+        private void SelectAllThePeopleInListBoxButton_Click(object sender, EventArgs e)
+        {
+            // Check if all people are selected
+            bool allSelected = true;
+            for (int i = 0; i < checkedListBoxNamesOfPeople.Items.Count; i++)
+            {
+                if (!checkedListBoxNamesOfPeople.GetItemChecked(i))
+                {
+                    allSelected = false;
+                    break;
+                }
+            }
+
+            // Toggle the selection
+            for (int i = 0; i < checkedListBoxNamesOfPeople.Items.Count; i++)
+            {
+                checkedListBoxNamesOfPeople.SetItemChecked(i, !allSelected);
+            }
+
+            // Change button text based on selection state
+            SelectAllThePeopleInListBoxButton.Text = allSelected ? "Выбрать всех людей" : "Не выбрать никого"; 
         }
     }
 }

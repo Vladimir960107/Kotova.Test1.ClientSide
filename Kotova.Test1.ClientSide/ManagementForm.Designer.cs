@@ -123,7 +123,7 @@
             // PathToFolderOfInstruction
             // 
             PathToFolderOfInstruction.AutoSize = true;
-            PathToFolderOfInstruction.Location = new Point(306, 282);
+            PathToFolderOfInstruction.Location = new Point(306, 202);
             PathToFolderOfInstruction.Name = "PathToFolderOfInstruction";
             PathToFolderOfInstruction.Size = new Size(94, 15);
             PathToFolderOfInstruction.TabIndex = 40;
@@ -132,7 +132,7 @@
             // treeView1
             // 
             treeView1.CheckBoxes = true;
-            treeView1.Location = new Point(306, 326);
+            treeView1.Location = new Point(306, 240);
             treeView1.Name = "treeView1";
             treeView1.Size = new Size(247, 178);
             treeView1.TabIndex = 39;
@@ -140,7 +140,7 @@
             // 
             // buttonChoosePathToInstruction
             // 
-            buttonChoosePathToInstruction.Location = new Point(306, 191);
+            buttonChoosePathToInstruction.Location = new Point(306, 118);
             buttonChoosePathToInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonChoosePathToInstruction.Name = "buttonChoosePathToInstruction";
             buttonChoosePathToInstruction.Size = new Size(172, 56);

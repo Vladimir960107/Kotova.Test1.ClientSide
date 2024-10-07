@@ -8,6 +8,7 @@ namespace Kotova.Test1.ClientSide
 {
     internal static class ConfigurationClass
     {
+        //public const string BASE_URL_DEVELOPMENT = "http://172.26.4.62:5239";
         public const string BASE_URL_DEVELOPMENT = "http://192.168.100.71:5239";
 
         public const string BASE_INSTRUCTIONS_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT+"/Instructions";
