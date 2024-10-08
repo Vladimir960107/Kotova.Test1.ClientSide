@@ -14,6 +14,7 @@ using System.IO;
 using System.Windows.Controls;
 using ClosedXML.Excel;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -30,6 +31,7 @@ namespace Kotova.Test1.ClientSide
         const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
         const string instructionDataExportURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instructions-data-export";
         const string RefreshTaskForChiefUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/get-all-current-tasks-for-chief";
+        const string DownloadExcelFileUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/export";
 
         const string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
@@ -1403,7 +1405,56 @@ namespace Kotova.Test1.ClientSide
             }
 
             // Change button text based on selection state
-            SelectAllThePeopleInListBoxButton.Text = allSelected ? "Выбрать всех людей" : "Не выбрать никого"; 
+            SelectAllThePeopleInListBoxButton.Text = allSelected ? "Выбрать всех людей" : "Не выбрать никого";
+        }
+
+        private async void DownloadAllEmployeesInTheDepartment_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var folderDialog = new FolderBrowserDialog())
+                {
+                    DialogResult result = folderDialog.ShowDialog();
+
+                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
+                    {
+                        string selectedFolderPath = folderDialog.SelectedPath;
+
+                        // Download the file from the server
+                        using (var client = new HttpClient())
+                        {
+                            string jwtToken = _loginForm._jwtToken;
+                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                            var response = await client.GetAsync(DownloadExcelFileUrl);
+                            if (response.IsSuccessStatusCode)
+                            {
+                                var fileBytes = await response.Content.ReadAsByteArrayAsync();
+
+                                // Define the file name (you can extract it from the response or hardcode it)
+                                string fileName = "DepartmentEmployees.xlsx";
+
+                                // Save the file to the selected folder
+                                string filePath = Path.Combine(selectedFolderPath, fileName);
+                                File.WriteAllBytes(filePath, fileBytes);
+
+                                MessageBox.Show($"File downloaded successfully to {filePath}");
+                            }
+                            else
+                            {
+                                MessageBox.Show("Failed to download the file.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("No folder selected. Download canceled.");
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("что-то пошло не так при скачке файла");
+            }
         }
     }
 }

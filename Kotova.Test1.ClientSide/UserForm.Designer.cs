@@ -39,7 +39,6 @@
             UserLabel = new Label();
             ListOfInstructionsForUser = new ListBox();
             label3 = new Label();
-            HyperLinkForInstructionsFolder = new Button();
             PassInstruction = new CheckBox();
             SignOut = new Button();
             FilesOfInstructionCheckedListBox = new CheckedListBox();
@@ -48,7 +47,7 @@
             // 
             // CheckForNewInstructions
             // 
-            CheckForNewInstructions.Location = new Point(214, 53);
+            CheckForNewInstructions.Location = new Point(244, 57);
             CheckForNewInstructions.Name = "CheckForNewInstructions";
             CheckForNewInstructions.Size = new Size(273, 55);
             CheckForNewInstructions.TabIndex = 21;
@@ -80,29 +79,18 @@
             ListOfInstructionsForUser.ItemHeight = 15;
             ListOfInstructionsForUser.Location = new Point(12, 170);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
-            ListOfInstructionsForUser.Size = new Size(236, 229);
+            ListOfInstructionsForUser.Size = new Size(351, 229);
             ListOfInstructionsForUser.TabIndex = 24;
             ListOfInstructionsForUser.SelectedValueChanged += ListOfInstructions_SelectedValueChanged;
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(214, 127);
+            label3.Location = new Point(15, 135);
             label3.Name = "label3";
             label3.Size = new Size(201, 15);
             label3.TabIndex = 25;
             label3.Text = "Лист непройденных инструктажей:";
-            // 
-            // HyperLinkForInstructionsFolder
-            // 
-            HyperLinkForInstructionsFolder.Enabled = false;
-            HyperLinkForInstructionsFolder.Location = new Point(662, 170);
-            HyperLinkForInstructionsFolder.Name = "HyperLinkForInstructionsFolder";
-            HyperLinkForInstructionsFolder.Size = new Size(111, 229);
-            HyperLinkForInstructionsFolder.TabIndex = 26;
-            HyperLinkForInstructionsFolder.Text = "Гиперссылка на инструктаж";
-            HyperLinkForInstructionsFolder.UseVisualStyleBackColor = true;
-            HyperLinkForInstructionsFolder.Click += HyperLinkForInstructionsFolder_Click;
             // 
             // PassInstruction
             // 
@@ -129,9 +117,9 @@
             // 
             FilesOfInstructionCheckedListBox.FormattingEnabled = true;
             FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
-            FilesOfInstructionCheckedListBox.Location = new Point(296, 179);
+            FilesOfInstructionCheckedListBox.Location = new Point(392, 170);
             FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
-            FilesOfInstructionCheckedListBox.Size = new Size(213, 220);
+            FilesOfInstructionCheckedListBox.Size = new Size(396, 220);
             FilesOfInstructionCheckedListBox.TabIndex = 30;
             FilesOfInstructionCheckedListBox.ItemCheck += FilesOfInstructionCheckedListBox_ItemCheck;
             // 
@@ -154,7 +142,6 @@
             Controls.Add(FilesOfInstructionCheckedListBox);
             Controls.Add(SignOut);
             Controls.Add(PassInstruction);
-            Controls.Add(HyperLinkForInstructionsFolder);
             Controls.Add(label3);
             Controls.Add(ListOfInstructionsForUser);
             Controls.Add(UserLabel);
@@ -174,7 +161,6 @@
         private Label UserLabel;
         private ListBox ListOfInstructionsForUser;
         private Label label3;
-        private Button HyperLinkForInstructionsFolder;
         private CheckBox PassInstruction;
         private Button SignOut;
         private CheckedListBox FilesOfInstructionCheckedListBox;

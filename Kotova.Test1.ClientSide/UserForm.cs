@@ -98,6 +98,8 @@ namespace Kotova.Test1.ClientSide
 
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
+
+            _ = RefreshNewInstructionsInternal();
         }
 
         public void EnableExitTheProgrammEntirelyButton()
@@ -160,6 +162,10 @@ namespace Kotova.Test1.ClientSide
 
         private async void CheckForNewInstructions_Click(object sender, EventArgs e)
         {
+            await RefreshNewInstructionsInternal();
+        }
+        private async Task RefreshNewInstructionsInternal()
+        {
             ListOfInstructionsForUser.Items.Clear();
             bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
             if (IsEmpty)
@@ -214,12 +220,10 @@ namespace Kotova.Test1.ClientSide
         private void ListOfInstructions_SelectedValueChanged(object sender, EventArgs e)
         {
             FilesOfInstructionCheckedListBox.Items.Clear();
-            HyperLinkForInstructionsFolder.Enabled = true;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
                 MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
-                HyperLinkForInstructionsFolder.Enabled = false;
                 return;
             }
             Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
@@ -235,14 +239,12 @@ namespace Kotova.Test1.ClientSide
                         {
                             _IsInstructionSelected = true;
                             PassInstruction.Enabled = true;
-                            HyperLinkForInstructionsFolder.Enabled = false;
                             return;
                         }
                         else
                         {
                             MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
                             PassInstruction.Enabled = false;
-                            HyperLinkForInstructionsFolder.Enabled = false;
                             return;
                         }
 
@@ -256,7 +258,6 @@ namespace Kotova.Test1.ClientSide
 
         private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
         {
-            HyperLinkForInstructionsFolder.Enabled = false;
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
                 MessageBox.Show("Вы не выбрали инструктаж.");

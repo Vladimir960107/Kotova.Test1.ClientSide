@@ -296,6 +296,8 @@ namespace Kotova.Test1.ClientSide
             newEmployee.group = null;
             newEmployee.birth_date = dateOfBirthDateTimePicker.Value;
             newEmployee.gender = 3;
+            newEmployee.is_working_in_department = true;
+
 
             string? roleName = RoleNameToRoleDB(RoleOfNewcomerListBox.SelectedItem.ToString());
 

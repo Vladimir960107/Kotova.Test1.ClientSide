@@ -750,7 +750,7 @@ namespace Kotova.Test1.ClientSide
         {
             buttonCreateInstruction.Enabled = false;
 
-            if (selectedFolderPath is null)
+            if (selectedFolderPath is null && string.IsNullOrWhiteSpace(UrlInDocsVisionTextBox.Text))
             {
                 MessageBox.Show("Путь до инструктажа не выбран!");
                 buttonCreateInstruction.Enabled = true;
@@ -765,8 +765,8 @@ namespace Kotova.Test1.ClientSide
                 buttonCreateInstruction.Enabled = true;
                 return;
             }
-            List<string?> paths = GetSelectedFilePaths(treeView1);
-            if (paths.Count == 0)
+            List<string>? paths = GetPathsFromFolderOrURLDocsVision();
+            if (paths is null || paths.Count == 0)
             {
                 MessageBox.Show("Не выбраны файлы для инструктажа");
                 buttonCreateInstruction.Enabled = true;
@@ -892,6 +892,20 @@ namespace Kotova.Test1.ClientSide
             e.Cancel = true;
             this.Hide();
             this.ShowInTaskbar = false;
+        }
+
+        private List<string>? GetPathsFromFolderOrURLDocsVision()
+        {
+            List<string>? paths = GetSelectedFilePaths(treeView1);
+            if (paths != null && paths.Any())
+            {
+                return paths;
+            }
+            else if (string.IsNullOrWhiteSpace(UrlInDocsVisionTextBox.Text))
+            {
+                return null;
+            }
+            return new List<string> { UrlInDocsVisionTextBox.Text };
         }
     }
 }

@@ -87,6 +87,7 @@
             usernameLabel = new Label();
             label10 = new Label();
             button1 = new Button();
+            DownloadAllEmployeesInTheDepartment = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -491,6 +492,7 @@
             // 
             // tabPage5
             // 
+            tabPage5.Controls.Add(DownloadAllEmployeesInTheDepartment);
             tabPage5.Controls.Add(checkedListBoxTypesOfInstruction);
             tabPage5.Controls.Add(label9);
             tabPage5.Controls.Add(endDateInstructionExportRequest);
@@ -621,6 +623,16 @@
             button1.Text = "Задание выполнено";
             button1.UseVisualStyleBackColor = true;
             // 
+            // DownloadAllEmployeesInTheDepartment
+            // 
+            DownloadAllEmployeesInTheDepartment.Location = new Point(36, 371);
+            DownloadAllEmployeesInTheDepartment.Name = "DownloadAllEmployeesInTheDepartment";
+            DownloadAllEmployeesInTheDepartment.Size = new Size(207, 71);
+            DownloadAllEmployeesInTheDepartment.TabIndex = 6;
+            DownloadAllEmployeesInTheDepartment.Text = "Скачать данные обо всех сотрудниках";
+            DownloadAllEmployeesInTheDepartment.UseVisualStyleBackColor = true;
+            DownloadAllEmployeesInTheDepartment.Click += DownloadAllEmployeesInTheDepartment_Click;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -709,5 +721,6 @@
         private Label label10;
         private Button button1;
         private Button SelectAllThePeopleInListBoxButton;
+        private Button DownloadAllEmployeesInTheDepartment;
     }
 }

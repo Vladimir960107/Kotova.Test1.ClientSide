@@ -38,6 +38,8 @@
             label1 = new Label();
             ManagementTabControl = new TabControl();
             tabPage1 = new TabPage();
+            label6 = new Label();
+            UrlInDocsVisionTextBox = new TextBox();
             PathToFolderOfInstruction = new Label();
             treeView1 = new TreeViewWithoutDoubleClick();
             buttonChoosePathToInstruction = new Button();
@@ -47,7 +49,6 @@
             label5 = new Label();
             typeOfInstructionListBox = new ListBox();
             DepartmentsCheckedListBox = new CheckedListBox();
-            button5 = new Button();
             buttonCreateInstruction = new Button();
             label9 = new Label();
             label4 = new Label();
@@ -61,9 +62,18 @@
             label10 = new Label();
             signUpButton = new Button();
             LogOutButton = new Button();
+            tabPage3 = new TabPage();
+            label7 = new Label();
+            endDateInstructionExportRequest = new DateTimePicker();
+            label8 = new Label();
+            startDateInstructionExportRequest = new DateTimePicker();
+            checkedListBoxTypesOfInstruction = new CheckedListBoxWithoutDoubleClick();
+            ExportInstructionRequestButton = new Button();
+            label11 = new Label();
             ManagementTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
+            tabPage3.SuspendLayout();
             SuspendLayout();
             // 
             // ManagementLabel
@@ -88,6 +98,7 @@
             // 
             ManagementTabControl.Controls.Add(tabPage1);
             ManagementTabControl.Controls.Add(tabPage2);
+            ManagementTabControl.Controls.Add(tabPage3);
             ManagementTabControl.Location = new Point(42, 79);
             ManagementTabControl.Name = "ManagementTabControl";
             ManagementTabControl.SelectedIndex = 0;
@@ -97,6 +108,9 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(label11);
+            tabPage1.Controls.Add(label6);
+            tabPage1.Controls.Add(UrlInDocsVisionTextBox);
             tabPage1.Controls.Add(PathToFolderOfInstruction);
             tabPage1.Controls.Add(treeView1);
             tabPage1.Controls.Add(buttonChoosePathToInstruction);
@@ -106,7 +120,6 @@
             tabPage1.Controls.Add(label5);
             tabPage1.Controls.Add(typeOfInstructionListBox);
             tabPage1.Controls.Add(DepartmentsCheckedListBox);
-            tabPage1.Controls.Add(button5);
             tabPage1.Controls.Add(buttonCreateInstruction);
             tabPage1.Controls.Add(label9);
             tabPage1.Controls.Add(label4);
@@ -119,6 +132,22 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Создание инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(306, 422);
+            label6.Name = "label6";
+            label6.Size = new Size(176, 15);
+            label6.TabIndex = 42;
+            label6.Text = "Или укажите url в Docs Visions:";
+            // 
+            // UrlInDocsVisionTextBox
+            // 
+            UrlInDocsVisionTextBox.Location = new Point(306, 460);
+            UrlInDocsVisionTextBox.Name = "UrlInDocsVisionTextBox";
+            UrlInDocsVisionTextBox.Size = new Size(635, 23);
+            UrlInDocsVisionTextBox.TabIndex = 41;
             // 
             // PathToFolderOfInstruction
             // 
@@ -134,7 +163,7 @@
             treeView1.CheckBoxes = true;
             treeView1.Location = new Point(306, 240);
             treeView1.Name = "treeView1";
-            treeView1.Size = new Size(247, 178);
+            treeView1.Size = new Size(247, 130);
             treeView1.TabIndex = 39;
             treeView1.AfterCheck += treeView1_AfterCheck;
             // 
@@ -204,18 +233,9 @@
             DepartmentsCheckedListBox.Size = new Size(213, 130);
             DepartmentsCheckedListBox.TabIndex = 28;
             // 
-            // button5
-            // 
-            button5.Location = new Point(970, 67);
-            button5.Name = "button5";
-            button5.Size = new Size(178, 286);
-            button5.TabIndex = 27;
-            button5.Text = "Сформировать excel форму об инструктажах";
-            button5.UseVisualStyleBackColor = true;
-            // 
             // buttonCreateInstruction
             // 
-            buttonCreateInstruction.Location = new Point(670, 450);
+            buttonCreateInstruction.Location = new Point(727, 513);
             buttonCreateInstruction.Name = "buttonCreateInstruction";
             buttonCreateInstruction.Size = new Size(214, 74);
             buttonCreateInstruction.TabIndex = 26;
@@ -347,6 +367,80 @@
             LogOutButton.UseVisualStyleBackColor = true;
             LogOutButton.Click += LogOutButton_Click;
             // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(ExportInstructionRequestButton);
+            tabPage3.Controls.Add(checkedListBoxTypesOfInstruction);
+            tabPage3.Controls.Add(label7);
+            tabPage3.Controls.Add(endDateInstructionExportRequest);
+            tabPage3.Controls.Add(label8);
+            tabPage3.Controls.Add(startDateInstructionExportRequest);
+            tabPage3.Location = new Point(4, 24);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Size = new Size(1172, 605);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Учёт сотрудников";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(416, 60);
+            label7.Name = "label7";
+            label7.Size = new Size(105, 15);
+            label7.TabIndex = 8;
+            label7.Text = "По такую-то дату:";
+            // 
+            // endDateInstructionExportRequest
+            // 
+            endDateInstructionExportRequest.Location = new Point(416, 88);
+            endDateInstructionExportRequest.Name = "endDateInstructionExportRequest";
+            endDateInstructionExportRequest.Size = new Size(200, 23);
+            endDateInstructionExportRequest.TabIndex = 7;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(90, 60);
+            label8.Name = "label8";
+            label8.Size = new Size(98, 15);
+            label8.TabIndex = 6;
+            label8.Text = "С такой-то даты:";
+            // 
+            // startDateInstructionExportRequest
+            // 
+            startDateInstructionExportRequest.Location = new Point(90, 88);
+            startDateInstructionExportRequest.Name = "startDateInstructionExportRequest";
+            startDateInstructionExportRequest.Size = new Size(200, 23);
+            startDateInstructionExportRequest.TabIndex = 5;
+            // 
+            // checkedListBoxTypesOfInstruction
+            // 
+            checkedListBoxTypesOfInstruction.FormattingEnabled = true;
+            checkedListBoxTypesOfInstruction.Items.AddRange(new object[] { "Внеплановые;", "Первичные;", "Повторные;", "Повторные(для водителей);", "Целевые;" });
+            checkedListBoxTypesOfInstruction.Location = new Point(90, 151);
+            checkedListBoxTypesOfInstruction.Name = "checkedListBoxTypesOfInstruction";
+            checkedListBoxTypesOfInstruction.Size = new Size(334, 94);
+            checkedListBoxTypesOfInstruction.TabIndex = 9;
+            // 
+            // ExportInstructionRequestButton
+            // 
+            ExportInstructionRequestButton.Location = new Point(288, 296);
+            ExportInstructionRequestButton.Name = "ExportInstructionRequestButton";
+            ExportInstructionRequestButton.Size = new Size(162, 23);
+            ExportInstructionRequestButton.TabIndex = 10;
+            ExportInstructionRequestButton.Text = "Экспортировать данные";
+            ExportInstructionRequestButton.UseVisualStyleBackColor = true;
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(670, 183);
+            label11.Name = "label11";
+            label11.Size = new Size(354, 15);
+            label11.TabIndex = 43;
+            label11.Text = "(В случае первичного, повторного или целевого инструктажа)";
+            // 
             // ManagementForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -365,6 +459,8 @@
             tabPage1.PerformLayout();
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
+            tabPage3.ResumeLayout(false);
+            tabPage3.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -375,7 +471,6 @@
         private Label label1;
         private TabControl ManagementTabControl;
         private TabPage tabPage1;
-        private Button button5;
         private Button buttonCreateInstruction;
         private Label label4;
         private Label label3;
@@ -398,5 +493,15 @@
         private Button buttonChoosePathToInstruction;
         private TextBox InstructionTextBox;
         private Label PathToFolderOfInstruction;
+        private TextBox UrlInDocsVisionTextBox;
+        private Label label6;
+        private TabPage tabPage3;
+        private Label label7;
+        private DateTimePicker endDateInstructionExportRequest;
+        private Label label8;
+        private DateTimePicker startDateInstructionExportRequest;
+        private CheckedListBoxWithoutDoubleClick checkedListBoxTypesOfInstruction;
+        private Button ExportInstructionRequestButton;
+        private Label label11;
     }
 }
