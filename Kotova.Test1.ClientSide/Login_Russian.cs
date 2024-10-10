@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -31,19 +32,39 @@ namespace Kotova.Test1.ClientSide
         private TaskCompletionSource<bool> _initTaskCompletionSource;
         private int timeForBeingAuthenticated = 600;
 
+        public static Login_Russian Instance { get; private set; }
+
         public Form activeForm;
         private NotifyIcon notifyIcon;
 
         public Login_Russian()
         {
+            Instance = this;
             InitializeComponent();
             InitializeSettingsMenu();
             InitializeNotifyIcon();
 
             activeForm = this;
-
+            this.Text = "Login_Russian";
             this.Load += async (sender, args) => await Login_Russian_LoadAsync(sender, args);
         }
+
+        public void ShowForm()
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => ShowForm()));
+            }
+            else
+            {
+                // Restore the form from tray if minimized or hidden
+                activeForm.Show();
+                activeForm.WindowState = FormWindowState.Normal;
+                activeForm.ShowInTaskbar = true;
+                activeForm.BringToFront();
+            }
+        }
+
 
         private void InitializeNotifyIcon()
         {
@@ -113,15 +134,14 @@ namespace Kotova.Test1.ClientSide
         }
         private void NotifyIcon_DoubleClick(object sender, EventArgs e)
         {
-            ShowForm();
+            // Bring the form back when the tray icon is double-clicked
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+            this.ShowInTaskbar = true;
+            this.BringToFront();
         }
 
-        private void ShowForm()
-        {
-            activeForm.Show();
-            activeForm.WindowState = FormWindowState.Normal;
-            activeForm.ShowInTaskbar = true;
-        }
+
 
         public void ExitApplication()
         {
@@ -573,9 +593,10 @@ namespace Kotova.Test1.ClientSide
 
         private void Login_Russian_FormClosing(object sender, FormClosingEventArgs e)
         {
-            e.Cancel = true;
-            this.Hide();
-            this.ShowInTaskbar = false;
+            e.Cancel = true;  // Prevent the form from closing
+            this.Hide();  // Hide the form
+            this.ShowInTaskbar = false;  // Hide from the taskbar
         }
+
     }
 }

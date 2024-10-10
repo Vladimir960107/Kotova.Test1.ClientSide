@@ -52,12 +52,11 @@
             typeOfInstructionListBox = new ListBox();
             testButton = new Button();
             tabPage1 = new TabPage();
+            MissTheAssignmentOfInstrCheckedBox = new CheckBox();
             SelectAllThePeopleInListBoxButton = new Button();
             checkedListBoxNamesOfPeople = new CheckedListBox();
             ListOfInstructions = new ListBox();
             buttonSyncManualyInstrWithDB = new Button();
-            label5 = new Label();
-            label4 = new Label();
             ListOfInstructionsForUser = new ListBox();
             ChiefTabControl = new TabControl();
             tabPage3 = new TabPage();
@@ -73,6 +72,7 @@
             listBoxOfNotPassedByInstructions = new ListBox();
             TestButtonForInstructions = new Button();
             tabPage5 = new TabPage();
+            DownloadAllEmployeesInTheDepartment = new Button();
             checkedListBoxTypesOfInstruction = new CheckedListBoxWithoutDoubleClick();
             label9 = new Label();
             endDateInstructionExportRequest = new DateTimePicker();
@@ -87,7 +87,6 @@
             usernameLabel = new Label();
             label10 = new Label();
             button1 = new Button();
-            DownloadAllEmployeesInTheDepartment = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -110,7 +109,7 @@
             // 
             // SyncNamesWithDB
             // 
-            SyncNamesWithDB.Location = new Point(349, 43);
+            SyncNamesWithDB.Location = new Point(364, 43);
             SyncNamesWithDB.Margin = new Padding(3, 2, 3, 2);
             SyncNamesWithDB.Name = "SyncNamesWithDB";
             SyncNamesWithDB.Size = new Size(265, 38);
@@ -268,14 +267,13 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(MissTheAssignmentOfInstrCheckedBox);
             tabPage1.Controls.Add(SelectAllThePeopleInListBoxButton);
             tabPage1.Controls.Add(checkedListBoxNamesOfPeople);
             tabPage1.Controls.Add(ListOfInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
             tabPage1.Controls.Add(submitInstructionToPeople);
-            tabPage1.Controls.Add(label5);
             tabPage1.Controls.Add(SyncNamesWithDB);
-            tabPage1.Controls.Add(label4);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
@@ -284,9 +282,20 @@
             tabPage1.Text = "Внеплановые инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
             // 
+            // MissTheAssignmentOfInstrCheckedBox
+            // 
+            MissTheAssignmentOfInstrCheckedBox.AutoSize = true;
+            MissTheAssignmentOfInstrCheckedBox.Location = new Point(20, 429);
+            MissTheAssignmentOfInstrCheckedBox.Name = "MissTheAssignmentOfInstrCheckedBox";
+            MissTheAssignmentOfInstrCheckedBox.Size = new Size(275, 19);
+            MissTheAssignmentOfInstrCheckedBox.TabIndex = 36;
+            MissTheAssignmentOfInstrCheckedBox.Text = "Не выбрать никого для данного инструктажа";
+            MissTheAssignmentOfInstrCheckedBox.UseVisualStyleBackColor = true;
+            MissTheAssignmentOfInstrCheckedBox.CheckedChanged += SkipTheAssignmentOfInstrCheckedBox_CheckedChanged;
+            // 
             // SelectAllThePeopleInListBoxButton
             // 
-            SelectAllThePeopleInListBoxButton.Location = new Point(399, 421);
+            SelectAllThePeopleInListBoxButton.Location = new Point(431, 421);
             SelectAllThePeopleInListBoxButton.Name = "SelectAllThePeopleInListBoxButton";
             SelectAllThePeopleInListBoxButton.Size = new Size(138, 32);
             SelectAllThePeopleInListBoxButton.TabIndex = 35;
@@ -299,7 +308,7 @@
             checkedListBoxNamesOfPeople.CheckOnClick = true;
             checkedListBoxNamesOfPeople.FormattingEnabled = true;
             checkedListBoxNamesOfPeople.HorizontalScrollbar = true;
-            checkedListBoxNamesOfPeople.Location = new Point(349, 86);
+            checkedListBoxNamesOfPeople.Location = new Point(364, 86);
             checkedListBoxNamesOfPeople.Name = "checkedListBoxNamesOfPeople";
             checkedListBoxNamesOfPeople.Size = new Size(265, 310);
             checkedListBoxNamesOfPeople.TabIndex = 34;
@@ -310,7 +319,7 @@
             ListOfInstructions.ItemHeight = 15;
             ListOfInstructions.Location = new Point(20, 86);
             ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(237, 304);
+            ListOfInstructions.Size = new Size(275, 304);
             ListOfInstructions.TabIndex = 33;
             // 
             // buttonSyncManualyInstrWithDB
@@ -318,29 +327,11 @@
             buttonSyncManualyInstrWithDB.Location = new Point(20, 43);
             buttonSyncManualyInstrWithDB.Margin = new Padding(3, 2, 3, 2);
             buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrWithDB";
-            buttonSyncManualyInstrWithDB.Size = new Size(237, 38);
+            buttonSyncManualyInstrWithDB.Size = new Size(275, 38);
             buttonSyncManualyInstrWithDB.TabIndex = 32;
             buttonSyncManualyInstrWithDB.Text = "Синхронизировать инструктажи с Базой Данных";
             buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
             buttonSyncManualyInstrWithDB.Click += buttonSyncManualyInstrWithDB_Click;
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Location = new Point(157, 430);
-            label5.Name = "label5";
-            label5.Size = new Size(74, 15);
-            label5.TabIndex = 31;
-            label5.Text = "Не выбрано";
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(27, 430);
-            label4.Name = "label4";
-            label4.Size = new Size(124, 15);
-            label4.TabIndex = 30;
-            label4.Text = "Дата инструктажа до:";
             // 
             // ListOfInstructionsForUser
             // 
@@ -507,6 +498,16 @@
             tabPage5.Text = "Учёт сотрудников";
             tabPage5.UseVisualStyleBackColor = true;
             // 
+            // DownloadAllEmployeesInTheDepartment
+            // 
+            DownloadAllEmployeesInTheDepartment.Location = new Point(36, 371);
+            DownloadAllEmployeesInTheDepartment.Name = "DownloadAllEmployeesInTheDepartment";
+            DownloadAllEmployeesInTheDepartment.Size = new Size(207, 71);
+            DownloadAllEmployeesInTheDepartment.TabIndex = 6;
+            DownloadAllEmployeesInTheDepartment.Text = "Скачать данные обо всех сотрудниках";
+            DownloadAllEmployeesInTheDepartment.UseVisualStyleBackColor = true;
+            DownloadAllEmployeesInTheDepartment.Click += DownloadAllEmployeesInTheDepartment_Click;
+            // 
             // checkedListBoxTypesOfInstruction
             // 
             checkedListBoxTypesOfInstruction.FormattingEnabled = true;
@@ -623,16 +624,6 @@
             button1.Text = "Задание выполнено";
             button1.UseVisualStyleBackColor = true;
             // 
-            // DownloadAllEmployeesInTheDepartment
-            // 
-            DownloadAllEmployeesInTheDepartment.Location = new Point(36, 371);
-            DownloadAllEmployeesInTheDepartment.Name = "DownloadAllEmployeesInTheDepartment";
-            DownloadAllEmployeesInTheDepartment.Size = new Size(207, 71);
-            DownloadAllEmployeesInTheDepartment.TabIndex = 6;
-            DownloadAllEmployeesInTheDepartment.Text = "Скачать данные обо всех сотрудниках";
-            DownloadAllEmployeesInTheDepartment.UseVisualStyleBackColor = true;
-            DownloadAllEmployeesInTheDepartment.Click += DownloadAllEmployeesInTheDepartment_Click;
-            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -674,9 +665,7 @@
         private ListBox typeOfInstructionListBox;
         private TabPage tabPage1;
         private Button buttonSyncManualyInstrWithDB;
-        private Label label5;
         private ListBox ListOfInstructionsForUser;
-        private Label label4;
         private Button Download_file_excel;
         private Button buttonTest;
         private TabControl ChiefTabControl;
@@ -722,5 +711,6 @@
         private Button button1;
         private Button SelectAllThePeopleInListBoxButton;
         private Button DownloadAllEmployeesInTheDepartment;
+        private CheckBox MissTheAssignmentOfInstrCheckedBox;
     }
 }

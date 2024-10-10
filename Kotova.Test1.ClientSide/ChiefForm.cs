@@ -15,6 +15,9 @@ using System.Windows.Controls;
 using ClosedXML.Excel;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using Windows.Web.Http;
+
+using HttpClient = System.Net.Http.HttpClient;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -32,6 +35,8 @@ namespace Kotova.Test1.ClientSide
         const string instructionDataExportURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instructions-data-export";
         const string RefreshTaskForChiefUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/get-all-current-tasks-for-chief";
         const string DownloadExcelFileUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/export";
+        const string SkipTheUnplannedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/skip-the-unplanned-instruction";
+
 
         const string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
@@ -45,6 +50,7 @@ namespace Kotova.Test1.ClientSide
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
         private List<InstructionForChief> instructionForChiefs_global;
+        private List<Instruction> unplannedInstructions_global;
 
         static string? selectedFolderPath = null;
         private Login_Russian? _loginForm;
@@ -287,7 +293,7 @@ namespace Kotova.Test1.ClientSide
                             throw new Exception("responseBody пуст"); //throw here better something
                         }
                         List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before! so warning maybe suppressed
-
+                        unplannedInstructions_global = result;
                         string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
                         ListOfInstructions.Items.AddRange(resultArray);
                         //MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -583,7 +589,7 @@ namespace Kotova.Test1.ClientSide
                 {
                     string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                    HttpResponseMessage response = await client.GetAsync(url);
+                    System.Net.Http.HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
 
@@ -725,7 +731,7 @@ namespace Kotova.Test1.ClientSide
         private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
         {
             if (!PassInstruction.Checked) { return; }
-            if (ConfirmAction())
+            if (ConfirmAction("Вы прошли инструктаж?"))
             {
                 MessageBox.Show("Вы согласились с прохождением инструктажа.", "Действите подтверждено", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
@@ -747,9 +753,9 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private bool ConfirmAction()
+        private bool ConfirmAction(string message)
         {
-            var result = MessageBox.Show("Вы прошли инструктаж?", "Подтвердить действие", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show(message, "Подтвердить действие", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
@@ -775,7 +781,7 @@ namespace Kotova.Test1.ClientSide
 
                     var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
-                    HttpResponseMessage response = await client.PostAsync(url, content);
+                    System.Net.Http.HttpResponseMessage response = await client.PostAsync(url, content);
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -1170,7 +1176,7 @@ namespace Kotova.Test1.ClientSide
                     string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                    HttpResponseMessage response = await client.GetAsync(url);
+                    System.Net.Http.HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -1454,6 +1460,73 @@ namespace Kotova.Test1.ClientSide
             catch
             {
                 MessageBox.Show("что-то пошло не так при скачке файла");
+            }
+        }
+
+        private async void SkipTheAssignmentOfInstrCheckedBox_CheckedChanged(object sender, EventArgs e)
+        {
+            System.Windows.Forms.CheckBox checkBox = sender as System.Windows.Forms.CheckBox;
+            
+
+            if (checkBox != null && checkBox.Checked)
+            {
+                var selectedInstruction = ListOfInstructions.SelectedItem;
+                if (selectedInstruction is null)
+                {
+                    MessageBox.Show("Инструкция не выбрана!");
+                    checkBox.Checked = false;
+                    return;
+                }
+                if (ConfirmAction("Вы уверены, что хотите не назначить людей для данного инструктажа?"))
+                {
+                    await SkipTheAssignmentOfInstrInternal();
+                }
+                else
+                {
+                    MessageBox.Show("Вы не подтвердили действие");
+                }
+                checkBox.Checked = false;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        private async Task SkipTheAssignmentOfInstrInternal()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string url = SkipTheUnplannedInstructionURL;
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    var selectedInstruction = ListOfInstructions.SelectedItem;
+
+                    Instruction instructionToSkip = unplannedInstructions_global
+        .FirstOrDefault(ins => ins.cause_of_instruction == selectedInstruction.ToString());
+                    string jsonData = JsonConvert.SerializeObject(instructionToSkip);
+
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+                    // Send PUT request to the server
+                    System.Net.Http.HttpResponseMessage response = await httpClient.PatchAsync(url, content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+
+                        MessageBox.Show("Инструктаж успешно пропущен!");
+                        await SyncManuallyInstrWithDBInternal();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Ошибка при пропуске инструктажа: {response.StatusCode}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}");
             }
         }
     }

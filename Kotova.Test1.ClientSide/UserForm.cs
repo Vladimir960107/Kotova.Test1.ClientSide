@@ -490,6 +490,9 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-
+        private void ChangeCredentialsButton_Click(object sender, EventArgs e)
+        {
+            _signUpForm.Show();
+        }
     }
 }

@@ -43,6 +43,7 @@
             SignOut = new Button();
             FilesOfInstructionCheckedListBox = new CheckedListBox();
             ExitTheProgrammEntirelyButton = new Button();
+            ChangeCredentialsButton = new Button();
             SuspendLayout();
             // 
             // CheckForNewInstructions
@@ -77,7 +78,7 @@
             // 
             ListOfInstructionsForUser.FormattingEnabled = true;
             ListOfInstructionsForUser.ItemHeight = 15;
-            ListOfInstructionsForUser.Location = new Point(12, 170);
+            ListOfInstructionsForUser.Location = new Point(12, 231);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
             ListOfInstructionsForUser.Size = new Size(351, 229);
             ListOfInstructionsForUser.TabIndex = 24;
@@ -95,7 +96,7 @@
             // PassInstruction
             // 
             PassInstruction.AutoSize = true;
-            PassInstruction.Location = new Point(214, 419);
+            PassInstruction.Location = new Point(209, 481);
             PassInstruction.Name = "PassInstruction";
             PassInstruction.Size = new Size(245, 19);
             PassInstruction.TabIndex = 28;
@@ -105,9 +106,9 @@
             // 
             // SignOut
             // 
-            SignOut.Location = new Point(678, 12);
+            SignOut.Location = new Point(648, 12);
             SignOut.Name = "SignOut";
-            SignOut.Size = new Size(110, 39);
+            SignOut.Size = new Size(140, 39);
             SignOut.TabIndex = 29;
             SignOut.Text = "Выйти из учётной записи";
             SignOut.UseVisualStyleBackColor = true;
@@ -117,7 +118,7 @@
             // 
             FilesOfInstructionCheckedListBox.FormattingEnabled = true;
             FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
-            FilesOfInstructionCheckedListBox.Location = new Point(392, 170);
+            FilesOfInstructionCheckedListBox.Location = new Point(392, 240);
             FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
             FilesOfInstructionCheckedListBox.Size = new Size(396, 220);
             FilesOfInstructionCheckedListBox.TabIndex = 30;
@@ -125,19 +126,30 @@
             // 
             // ExitTheProgrammEntirelyButton
             // 
-            ExitTheProgrammEntirelyButton.Location = new Point(678, 57);
+            ExitTheProgrammEntirelyButton.Location = new Point(648, 57);
             ExitTheProgrammEntirelyButton.Name = "ExitTheProgrammEntirelyButton";
-            ExitTheProgrammEntirelyButton.Size = new Size(110, 51);
+            ExitTheProgrammEntirelyButton.Size = new Size(140, 72);
             ExitTheProgrammEntirelyButton.TabIndex = 32;
             ExitTheProgrammEntirelyButton.Text = "Выйти из программы";
             ExitTheProgrammEntirelyButton.UseVisualStyleBackColor = true;
             ExitTheProgrammEntirelyButton.Click += ExitTheProgrammEntirelyButton_Click;
             // 
+            // ChangeCredentialsButton
+            // 
+            ChangeCredentialsButton.Location = new Point(648, 135);
+            ChangeCredentialsButton.Name = "ChangeCredentialsButton";
+            ChangeCredentialsButton.Size = new Size(140, 66);
+            ChangeCredentialsButton.TabIndex = 33;
+            ChangeCredentialsButton.Text = "Сменить регистрационные данные";
+            ChangeCredentialsButton.UseVisualStyleBackColor = true;
+            ChangeCredentialsButton.Click += ChangeCredentialsButton_Click;
+            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(829, 527);
+            Controls.Add(ChangeCredentialsButton);
             Controls.Add(ExitTheProgrammEntirelyButton);
             Controls.Add(FilesOfInstructionCheckedListBox);
             Controls.Add(SignOut);
@@ -166,5 +178,6 @@
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private Button SendMessageButton;
         private Button ExitTheProgrammEntirelyButton;
+        private Button ChangeCredentialsButton;
     }
 }
