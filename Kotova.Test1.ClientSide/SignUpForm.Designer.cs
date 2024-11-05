@@ -87,7 +87,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            label2.Font = new Font("Palatino Linotype", 9F);
             label2.ForeColor = Color.White;
             label2.Location = new Point(28, 507);
             label2.Name = "label2";
@@ -100,7 +100,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
+            label1.Font = new Font("Palatino Linotype", 16.2F);
             label1.ForeColor = Color.White;
             label1.Location = new Point(32, 186);
             label1.Name = "label1";
@@ -166,7 +166,7 @@
             // PasswordTextBox
             // 
             PasswordTextBox.BackColor = SystemColors.Control;
-            PasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            PasswordTextBox.Font = new Font("Palatino Linotype", 12F);
             PasswordTextBox.Location = new Point(82, 12);
             PasswordTextBox.Name = "PasswordTextBox";
             PasswordTextBox.Size = new Size(520, 29);
@@ -213,7 +213,7 @@
             // emailTextBox
             // 
             emailTextBox.BackColor = SystemColors.Control;
-            emailTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            emailTextBox.Font = new Font("Palatino Linotype", 12F);
             emailTextBox.Location = new Point(82, 12);
             emailTextBox.Name = "emailTextBox";
             emailTextBox.Size = new Size(520, 29);
@@ -225,7 +225,7 @@
             // skipButton
             // 
             skipButton.BackColor = Color.White;
-            skipButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            skipButton.Font = new Font("Palatino Linotype", 12F);
             skipButton.ForeColor = Color.Black;
             skipButton.Location = new Point(82, 444);
             skipButton.Name = "skipButton";
@@ -249,7 +249,7 @@
             // label4
             // 
             label4.AutoSize = true;
-            label4.Font = new Font("Palatino Linotype", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            label4.Font = new Font("Palatino Linotype", 9F);
             label4.ForeColor = SystemColors.ControlDark;
             label4.Location = new Point(6, 507);
             label4.Name = "label4";
@@ -260,7 +260,7 @@
             // signUpButton
             // 
             signUpButton.BackColor = Color.FromArgb(41, 128, 185);
-            signUpButton.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            signUpButton.Font = new Font("Palatino Linotype", 12F);
             signUpButton.ForeColor = Color.White;
             signUpButton.Location = new Point(82, 380);
             signUpButton.Name = "signUpButton";
@@ -283,7 +283,7 @@
             // loginTextBox
             // 
             loginTextBox.BackColor = SystemColors.Control;
-            loginTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            loginTextBox.Font = new Font("Palatino Linotype", 12F);
             loginTextBox.ForeColor = Color.FromArgb(0, 0, 0, 6);
             loginTextBox.Location = new Point(82, 12);
             loginTextBox.Name = "loginTextBox";
@@ -332,7 +332,7 @@
             // RepeatPasswordTextBox
             // 
             RepeatPasswordTextBox.BackColor = SystemColors.Control;
-            RepeatPasswordTextBox.Font = new Font("Palatino Linotype", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            RepeatPasswordTextBox.Font = new Font("Palatino Linotype", 12F);
             RepeatPasswordTextBox.Location = new Point(82, 12);
             RepeatPasswordTextBox.Name = "RepeatPasswordTextBox";
             RepeatPasswordTextBox.Size = new Size(520, 29);
@@ -357,7 +357,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Font = new Font("Palatino Linotype", 16.2F, FontStyle.Regular, GraphicsUnit.Point);
+            label3.Font = new Font("Palatino Linotype", 16.2F);
             label3.ForeColor = Color.FromArgb(41, 128, 185);
             label3.Location = new Point(46, 25);
             label3.Name = "label3";
@@ -375,6 +375,7 @@
             Margin = new Padding(3, 2, 3, 2);
             Name = "SignUpForm";
             Text = "Login";
+            FormClosing += SignUpForm_FormClosing;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();

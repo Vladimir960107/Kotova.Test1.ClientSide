@@ -38,6 +38,7 @@
             label1 = new Label();
             ManagementTabControl = new TabControl();
             tabPage1 = new TabPage();
+            label11 = new Label();
             label6 = new Label();
             UrlInDocsVisionTextBox = new TextBox();
             PathToFolderOfInstruction = new Label();
@@ -60,16 +61,15 @@
             ListOfInstructionsForUser = new ListBox();
             HyperLinkForInstructionsFolder = new Button();
             label10 = new Label();
-            signUpButton = new Button();
-            LogOutButton = new Button();
             tabPage3 = new TabPage();
+            ExportInstructionRequestButton = new Button();
+            checkedListBoxTypesOfInstruction = new CheckedListBoxWithoutDoubleClick();
             label7 = new Label();
             endDateInstructionExportRequest = new DateTimePicker();
             label8 = new Label();
             startDateInstructionExportRequest = new DateTimePicker();
-            checkedListBoxTypesOfInstruction = new CheckedListBoxWithoutDoubleClick();
-            ExportInstructionRequestButton = new Button();
-            label11 = new Label();
+            signUpButton = new Button();
+            LogOutButton = new Button();
             ManagementTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -132,6 +132,15 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Создание инструктажей";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(670, 183);
+            label11.Name = "label11";
+            label11.Size = new Size(354, 15);
+            label11.TabIndex = 43;
+            label11.Text = "(В случае первичного, повторного или целевого инструктажа)";
             // 
             // label6
             // 
@@ -347,26 +356,6 @@
             label10.TabIndex = 46;
             label10.Text = "Лист непройденных инструктажей:";
             // 
-            // signUpButton
-            // 
-            signUpButton.Location = new Point(629, 23);
-            signUpButton.Name = "signUpButton";
-            signUpButton.Size = new Size(148, 57);
-            signUpButton.TabIndex = 31;
-            signUpButton.Text = "смена регистрационных даных";
-            signUpButton.UseVisualStyleBackColor = true;
-            signUpButton.Click += signUpButton_Click;
-            // 
-            // LogOutButton
-            // 
-            LogOutButton.Location = new Point(1083, 23);
-            LogOutButton.Name = "LogOutButton";
-            LogOutButton.Size = new Size(112, 56);
-            LogOutButton.TabIndex = 32;
-            LogOutButton.Text = "Выйти из учётной записи";
-            LogOutButton.UseVisualStyleBackColor = true;
-            LogOutButton.Click += LogOutButton_Click;
-            // 
             // tabPage3
             // 
             tabPage3.Controls.Add(ExportInstructionRequestButton);
@@ -381,6 +370,25 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Учёт сотрудников";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // ExportInstructionRequestButton
+            // 
+            ExportInstructionRequestButton.Location = new Point(288, 296);
+            ExportInstructionRequestButton.Name = "ExportInstructionRequestButton";
+            ExportInstructionRequestButton.Size = new Size(162, 23);
+            ExportInstructionRequestButton.TabIndex = 10;
+            ExportInstructionRequestButton.Text = "Экспортировать данные";
+            ExportInstructionRequestButton.UseVisualStyleBackColor = true;
+            ExportInstructionRequestButton.Click += ExportInstructionRequestButton_Click;
+            // 
+            // checkedListBoxTypesOfInstruction
+            // 
+            checkedListBoxTypesOfInstruction.FormattingEnabled = true;
+            checkedListBoxTypesOfInstruction.Items.AddRange(new object[] { "Внеплановые;", "Первичные;", "Повторные;", "Повторные(для водителей);", "Целевые;" });
+            checkedListBoxTypesOfInstruction.Location = new Point(90, 151);
+            checkedListBoxTypesOfInstruction.Name = "checkedListBoxTypesOfInstruction";
+            checkedListBoxTypesOfInstruction.Size = new Size(334, 94);
+            checkedListBoxTypesOfInstruction.TabIndex = 9;
             // 
             // label7
             // 
@@ -414,32 +422,25 @@
             startDateInstructionExportRequest.Size = new Size(200, 23);
             startDateInstructionExportRequest.TabIndex = 5;
             // 
-            // checkedListBoxTypesOfInstruction
+            // signUpButton
             // 
-            checkedListBoxTypesOfInstruction.FormattingEnabled = true;
-            checkedListBoxTypesOfInstruction.Items.AddRange(new object[] { "Внеплановые;", "Первичные;", "Повторные;", "Повторные(для водителей);", "Целевые;" });
-            checkedListBoxTypesOfInstruction.Location = new Point(90, 151);
-            checkedListBoxTypesOfInstruction.Name = "checkedListBoxTypesOfInstruction";
-            checkedListBoxTypesOfInstruction.Size = new Size(334, 94);
-            checkedListBoxTypesOfInstruction.TabIndex = 9;
+            signUpButton.Location = new Point(629, 23);
+            signUpButton.Name = "signUpButton";
+            signUpButton.Size = new Size(148, 57);
+            signUpButton.TabIndex = 31;
+            signUpButton.Text = "смена регистрационных даных";
+            signUpButton.UseVisualStyleBackColor = true;
+            signUpButton.Click += signUpButton_Click;
             // 
-            // ExportInstructionRequestButton
+            // LogOutButton
             // 
-            ExportInstructionRequestButton.Location = new Point(288, 296);
-            ExportInstructionRequestButton.Name = "ExportInstructionRequestButton";
-            ExportInstructionRequestButton.Size = new Size(162, 23);
-            ExportInstructionRequestButton.TabIndex = 10;
-            ExportInstructionRequestButton.Text = "Экспортировать данные";
-            ExportInstructionRequestButton.UseVisualStyleBackColor = true;
-            // 
-            // label11
-            // 
-            label11.AutoSize = true;
-            label11.Location = new Point(670, 183);
-            label11.Name = "label11";
-            label11.Size = new Size(354, 15);
-            label11.TabIndex = 43;
-            label11.Text = "(В случае первичного, повторного или целевого инструктажа)";
+            LogOutButton.Location = new Point(1083, 23);
+            LogOutButton.Name = "LogOutButton";
+            LogOutButton.Size = new Size(112, 56);
+            LogOutButton.TabIndex = 32;
+            LogOutButton.Text = "Выйти из учётной записи";
+            LogOutButton.UseVisualStyleBackColor = true;
+            LogOutButton.Click += LogOutButton_Click;
             // 
             // ManagementForm
             // 

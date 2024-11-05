@@ -20,9 +20,9 @@ namespace Kotova.Test1.ClientSide
     public partial class AdminForm : Form
     {
 
-        private const string DownloadDepartmentsForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-departments";
-        private const string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
-        private const string PostCustomTaskUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-custom-task";
+        private static readonly string DownloadDepartmentsForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-departments";
+        private static readonly string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
+        private static readonly string PostCustomTaskUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-custom-task";
 
         private Login_Russian? _loginForm;
         string? _userName;

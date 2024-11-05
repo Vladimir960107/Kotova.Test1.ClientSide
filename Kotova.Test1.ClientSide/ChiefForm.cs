@@ -23,22 +23,22 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class ChiefForm : Form
     {
-        const string urlCreateInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-new-instruction-into-db";
-        const string urlTest = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/greeting";
-        const string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
-        const string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
-        const string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
-        const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
-        const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
-        const string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
-        const string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
-        const string instructionDataExportURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instructions-data-export";
-        const string RefreshTaskForChiefUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/get-all-current-tasks-for-chief";
-        const string DownloadExcelFileUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/export";
-        const string SkipTheUnplannedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/skip-the-unplanned-instruction";
+        public static readonly string urlCreateInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-new-instruction-into-db";
+        public static readonly string urlTest = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/greeting";
+        public static readonly string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
+        public static readonly string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
+        public static readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
+        public static readonly string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
+        public static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        public static readonly string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
+        public static readonly string getNotPassedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief";
+        public static readonly string instructionDataExportURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instructions-data-export";
+        public static readonly string RefreshTaskForChiefUrl = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/get-all-current-tasks-for-chief";
+        public static readonly string DownloadExcelFileUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/export";
+        public static readonly string SkipTheUnplannedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/skip-the-unplanned-instruction";
 
 
-        const string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
+        public static readonly string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 3 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
@@ -1221,6 +1221,7 @@ namespace Kotova.Test1.ClientSide
             List<int> selectedIndices = checkedListBoxTypesOfInstruction.CheckedIndices.Cast<int>().ToList();
             List<byte> shiftedIndices = selectedIndices.Select(index => (byte)(index + 1)).ToList();
 
+            ExportInstructionRequestButton.Enabled = false;
             try
             {
                 InstructionExportRequest instructionExportRequest = new InstructionExportRequest(startDate, endDate, shiftedIndices);
@@ -1240,12 +1241,13 @@ namespace Kotova.Test1.ClientSide
                     var response = await httpClient.PostAsync(uri, content);
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Данные успешно отправлены на сервер и инструктажи скачаны.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show("Данные успешно отправлены на сервер и инструктажи скачаны.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
                         var errorMessage = await response.Content.ReadAsStringAsync();
                         MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        ExportInstructionRequestButton.Enabled = true;
                         return;
                     }
 
@@ -1255,6 +1257,7 @@ namespace Kotova.Test1.ClientSide
                     if (result == null || !result.Any())
                     {
                         MessageBox.Show("Нет инструктажей за этот период.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        ExportInstructionRequestButton.Enabled = true;
                         return;
                     }
 
@@ -1270,7 +1273,10 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                return;
+            }
+            finally
+            {
+                ExportInstructionRequestButton.Enabled = true;
             }
         }
 
@@ -1309,9 +1315,12 @@ namespace Kotova.Test1.ClientSide
                 worksheet.Cell(1, 6).Value = "Причина проведения инструктажа по охране труда (для внепланового или целевого инструктажа по охране труда)";
                 worksheet.Cell(1, 7).Value = "Фамилия, имя отчество (при наличии), профессия (должность) работника, проводившего инструктаж по охране труда";
                 worksheet.Cell(1, 8).Value = "Наименование локального акта (локальных актов), в объеме требований которого проведён инструктаж по охране труда";
+                worksheet.Cell(1, 9).Value = "Подпись работника, проводившего инструктаж по охране труда";
+                worksheet.Cell(1, 10).Value = "Подпись работника, прошедшего инструктаж по охране труда";
+
 
                 // Enable wrapping for headers (row 1)
-                for (int col = 1; col <= 8; col++)
+                for (int col = 1; col <= 10; col++)
                 {
                     worksheet.Cell(1, col).Style.Alignment.WrapText = true;
                 }
@@ -1325,6 +1334,9 @@ namespace Kotova.Test1.ClientSide
                 worksheet.Cell(2, 6).Value = 6;
                 worksheet.Cell(2, 7).Value = 7;
                 worksheet.Cell(2, 8).Value = 8;
+                worksheet.Cell(2, 9).Value = 9;
+                worksheet.Cell(2, 10).Value = 10;
+
 
                 // Add data to cells
                 for (int i = 0; i < data.Count; i++)
@@ -1352,21 +1364,42 @@ namespace Kotova.Test1.ClientSide
                 }
 
                 // Adjust font size
-                worksheet.Style.Font.FontSize = 12;
+                worksheet.Style.Font.FontSize = 10;  // Reduced font size to fit more data
 
                 // Auto-fit columns based on content
                 worksheet.Columns().AdjustToContents();
 
                 // Set specific column width for long text headers (if needed)
-                worksheet.Column(2).Width = 50; // Adjust column 2 (Name) width to fit long text
-                worksheet.Column(3).Width = 40; // Adjust column 3 (Job) width to fit long text
+                worksheet.Column(1).Width = 10;
+                worksheet.Column(2).Width = 30; 
+                worksheet.Column(3).Width = 25;
+                worksheet.Column(4).Width = 10;
+                worksheet.Column(5).Width = 15;
+                worksheet.Column(6).Width = 30;// Опциональная, можно сжимать/разжимать
+                worksheet.Column(7).Width = 30;
+                worksheet.Column(8).Width = 20;
+                worksheet.Column(9).Width = 10;
+                worksheet.Column(10).Width = 10;
 
-                // Set print settings to fit width on one page, but allow multiple pages for height
+
+                // Set paper size to A4
+                worksheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
+
+                // Set print settings to fit width on one page and height
                 worksheet.PageSetup.PagesWide = 1; // Fit all columns to one page width
-                worksheet.PageSetup.PagesTall = 0; // Allow multiple pages for row height
+                worksheet.PageSetup.PagesTall = 1; // Fit all rows to one page height
 
                 // Optional: Set the page orientation to landscape for wider content
                 worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                /*// Set margins to fit more data on the page
+                worksheet.PageSetup.Margins.Top = 0.5;
+                worksheet.PageSetup.Margins.Bottom = 0.5;
+                worksheet.PageSetup.Margins.Left = 0.5;
+                worksheet.PageSetup.Margins.Right = 0.5;*/
+
+                // Optional: Scale down the content if needed
+                //worksheet.PageSetup.Scale = 85;  // Scale down the content slightly to fit more on the page
 
                 // Save the workbook
                 workbook.SaveAs(filePath);
@@ -1416,6 +1449,7 @@ namespace Kotova.Test1.ClientSide
 
         private async void DownloadAllEmployeesInTheDepartment_Click(object sender, EventArgs e)
         {
+            DownloadAllEmployeesInTheDepartment.Enabled = false;
             try
             {
                 using (var folderDialog = new FolderBrowserDialog())
@@ -1460,6 +1494,10 @@ namespace Kotova.Test1.ClientSide
             catch
             {
                 MessageBox.Show("что-то пошло не так при скачке файла");
+            }
+            finally
+            {
+                DownloadAllEmployeesInTheDepartment.Enabled = true;
             }
         }
 

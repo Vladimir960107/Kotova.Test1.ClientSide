@@ -52,8 +52,8 @@ namespace Kotova.Test1.ClientSide
         public Login_Russian? _loginForm;
         public SignUpForm _signUpForm;
         string? _userName;
-        const string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
-        const string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        static readonly string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_instructions_for_user";
+        static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
 
         private HubConnection? _hubConnection = null;
 
@@ -88,7 +88,7 @@ namespace Kotova.Test1.ClientSide
         {
             StartTimer();
             InitializeComponent();
-            ExitTheProgrammEntirelyButton.Enabled = false;
+            exitApplicationToolStripMenuItem.Enabled = false;
             _loginForm = loginForm;
             _userName = userName;
             UserLabel.Text = _userName;
@@ -104,16 +104,8 @@ namespace Kotova.Test1.ClientSide
 
         public void EnableExitTheProgrammEntirelyButton()
         {
-            if (ExitTheProgrammEntirelyButton.InvokeRequired)
-            {
-                // If we're not on the UI thread, invoke the method on the UI thread
-                ExitTheProgrammEntirelyButton.Invoke(new Action(EnableExitTheProgrammEntirelyButton));
-            }
-            else
-            {
-                // We're on the UI thread, so we can directly modify the control
-                ExitTheProgrammEntirelyButton.Enabled = true;
-            }
+            // We're on the UI thread, so we can directly modify the control
+            exitApplicationToolStripMenuItem.Enabled = true;
         }
 
         public void StartTimer()
@@ -375,7 +367,6 @@ namespace Kotova.Test1.ClientSide
                     var jsonResponse = await response.Content.ReadAsStringAsync();
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Всё впорядке, обновляем список инструктажей");
                         ListOfInstructionsForUser.Items.Clear();
                         await DownloadInstructionsForUserFromServer(_userName);
                     }
@@ -412,19 +403,6 @@ namespace Kotova.Test1.ClientSide
             e.Cancel = true;
             this.Hide();
             this.ShowInTaskbar = false;
-        }
-
-
-        private async void SignOut_Click(object sender, EventArgs e)
-        {
-            if (_signUpForm != null)
-            {
-                _signUpForm.Dispose();
-            }
-            Decryption_stuff.DeleteJWTToken();
-            this.Dispose(true);
-            _loginForm.activeForm = _loginForm;
-            _loginForm.Show();
         }
 
         private void FilesOfInstructionCheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
@@ -478,21 +456,49 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async void ExitTheProgrammEntirelyButton_Click(object sender, EventArgs e)
-        {
-            this.Dispose(true);
-            _loginForm.ExitApplication();
-        }
-
         private void showNotification_Click(object sender, EventArgs e)
         {
             Notifications.ShowWindowsNotification("Уведомление", "Проверка.");
 
         }
 
-        private void ChangeCredentialsButton_Click(object sender, EventArgs e)
+        private async void UpdateInstructionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await RefreshNewInstructionsInternal();
+        }
+
+
+
+        private void changeCredentialsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             _signUpForm.Show();
+        }
+
+        private void exitApplicationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Dispose(true);
+            _loginForm.ExitApplication();
+        }
+
+        private void signOutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_signUpForm != null)
+            {
+                _signUpForm.Dispose();
+            }
+            Decryption_stuff.DeleteJWTToken();
+            this.Dispose(true);
+            _loginForm.activeForm = _loginForm;
+            _loginForm.Show();
+        }
+
+        private void AdditionalSettingsPicture_Click(object sender, EventArgs e)
+        {
+            // Get the mouse position relative to the screen
+            Point screenPosition = AdditionalSettingsPicture.PointToScreen(new Point(0, AdditionalSettingsPicture.Height));
+
+            // Show the context menu at the mouse click position
+            AdditionalSettingsForUserContextMenuStrip.Show(screenPosition);
         }
     }
 }

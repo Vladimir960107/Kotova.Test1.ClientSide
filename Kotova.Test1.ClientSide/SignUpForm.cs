@@ -17,8 +17,8 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class SignUpForm : Form
     {
-        private const string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
-        private const string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
+        private static readonly string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
+        private static readonly string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
         private Login_Russian? _loginForm;
         private Form? _userForm;
         const string defaultLoginText = "Введите новый логин";
@@ -63,7 +63,7 @@ namespace Kotova.Test1.ClientSide
             }
             if (string.IsNullOrWhiteSpace(loginTextBox.Text))
 
-            changeAllToSytemColors();
+                changeAllToSytemColors();
             CheckForEmptyStringAndTypeReminders(sender);
             RepeatPasswordTextBox.BackColor = Color.White;
         }
@@ -77,7 +77,7 @@ namespace Kotova.Test1.ClientSide
             changeAllToSytemColors();
             CheckForEmptyStringAndTypeReminders(sender);
             emailTextBox.BackColor = Color.White;
-            
+
         }
         private void changeAllToSytemColors()
         {
@@ -103,21 +103,21 @@ namespace Kotova.Test1.ClientSide
             for (int i = 0; i < listOfObjects.Count; i++)
             {
                 if (listOfObjects[i] != sender)
-                { 
+                {
                     if (string.IsNullOrWhiteSpace(listOfObjects[i].Text))
                     {
                         if (i != 1 && i != 2) //Если не пароль и не повторение пароля короче. Иначе там баг и сложно! Разберись если хочешь
                         {
                             listOfObjects[i].Text = listOfDefaultReminder[i];
                         }
-                        
+
                     }
-                    
+
                 }
             }
 
         }
-        
+
 
         private void changeColorsOfTextBoxesToControl(object sender, MouseEventArgs e)
         {
@@ -201,7 +201,7 @@ namespace Kotova.Test1.ClientSide
                         _userForm.Dispose();
                     }
                     _loginForm.Show();
-                   
+
                     this.Dispose();
                 }
             }
@@ -334,6 +334,16 @@ namespace Kotova.Test1.ClientSide
             RepeatPasswordTextBox.UseSystemPasswordChar = true;
         }
 
+        private void SignUpForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                // Prevent the form from being disposed
+                e.Cancel = true;
 
+                // Hide the form instead of closing it
+                this.Hide();
+            }
+        }
     }
 }

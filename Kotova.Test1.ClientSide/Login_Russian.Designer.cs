@@ -49,6 +49,7 @@
             SupportEmail = new LinkLabel();
             RememberCredentialsCheckBox = new CheckBox();
             panel2 = new Panel();
+            versionLabel = new Label();
             pictureBox5 = new PictureBox();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -262,6 +263,7 @@
             // 
             // panel2
             // 
+            panel2.Controls.Add(versionLabel);
             panel2.Controls.Add(pictureBox5);
             panel2.Controls.Add(RememberCredentialsCheckBox);
             panel2.Controls.Add(SupportEmail);
@@ -277,6 +279,14 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(614, 589);
             panel2.TabIndex = 1;
+            // 
+            // versionLabel
+            // 
+            versionLabel.AutoSize = true;
+            versionLabel.Location = new Point(503, 560);
+            versionLabel.Name = "versionLabel";
+            versionLabel.Size = new Size(0, 15);
+            versionLabel.TabIndex = 7;
             // 
             // pictureBox5
             // 
@@ -339,5 +349,6 @@
         private CheckBox RememberCredentialsCheckBox;
         private Panel panel2;
         private PictureBox pictureBox5;
+        private Label versionLabel;
     }
 }

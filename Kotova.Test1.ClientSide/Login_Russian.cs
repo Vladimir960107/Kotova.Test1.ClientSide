@@ -22,8 +22,8 @@ namespace Kotova.Test1.ClientSide
     {
 
         private static readonly HttpClient _httpClient = new HttpClient();
-        private const string _loginUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/login"; //ADD IT TO THE 
-        private const string _validateTokenUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/validate-token";
+        private static readonly string _loginUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/login"; //ADD IT TO THE 
+        private static readonly string _validateTokenUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/validate-token";
         static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         static string fileName = "encrypted_jwt.dat";
         string filePath = Path.Combine(documentsPath, fileName);
@@ -43,9 +43,11 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
             InitializeSettingsMenu();
             InitializeNotifyIcon();
-
+            versionLabel.Text = GetEmbeddedVersionInfo().version;
             activeForm = this;
             this.Text = "Login_Russian";
+            this.Activate();
+            this.BringToFront();
             this.Load += async (sender, args) => await Login_Russian_LoadAsync(sender, args);
         }
 
@@ -109,6 +111,33 @@ namespace Kotova.Test1.ClientSide
 
         }
 
+        public class VersionInfo
+        {
+            public string version { get; set; }
+            public string versionPath { get; set; }
+            public string filePath { get; set; }
+        }
+
+        public static VersionInfo GetEmbeddedVersionInfo()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "Kotova.Test1.ClientSide.version.json"; // Replace with the actual namespace + filename
+
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream != null)
+                {
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        string jsonContent = reader.ReadToEnd();
+                        return JsonSerializer.Deserialize<VersionInfo>(jsonContent);
+                    }
+                }
+            }
+
+            return null; // Return null if the resource is not found
+        }
+
         private void InitializeSettingsMenu()
         {
             // Create the ContextMenuStrip
@@ -134,11 +163,7 @@ namespace Kotova.Test1.ClientSide
         }
         private void NotifyIcon_DoubleClick(object sender, EventArgs e)
         {
-            // Bring the form back when the tray icon is double-clicked
-            this.Show();
-            this.WindowState = FormWindowState.Normal;
-            this.ShowInTaskbar = true;
-            this.BringToFront();
+            ShowForm();
         }
 
 
