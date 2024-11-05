@@ -36,7 +36,7 @@
     <None Remove="static\LynKS_favicon.ico" />
     <None Remove="static\LynKS_logo.png" />
     <None Remove="static\technology.png" />
-    <None Remove="version.json" />
+    <None Remove="version_dev.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,8 +44,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="version_dev.json" />
     <EmbeddedResource Include="version.json" />
-    <EmbeddedResource Include="version_Release.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -64,6 +64,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="securifybv.ShellLink" Version="0.1.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.2" />

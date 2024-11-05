@@ -1,11 +1,18 @@
-using System.IO.Pipes;
-using System.IO;
-using System.Text.Json;
-using System.Reflection;
+using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using DocumentFormat.OpenXml.Drawing;
+using System.IO;
+using System.IO.Pipes;
 using System.Net;
+using System.Reflection;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Kotova.CommonClasses;
+using ShellLink;
+
+using File = System.IO.File;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -18,74 +25,72 @@ namespace Kotova.Test1.ClientSide
         {
             if (IsUpdateInProgress())
             {
-                MessageBox.Show("Обновление программы в процессе. Пожалуйста дождитесь конца обновления программы.");
+                MessageBox.Show("Обновление программы в процессе. Пожалуйста, дождитесь окончания обновления.");
                 return;
             }
-
 
             if (args.Length > 0)
             {
                 string oldExePath = args[0];
 
+                int oldProcessId = -1;
+                if (args.Length > 1)
+                {
+                    int.TryParse(args[1], out oldProcessId);
+                }
+
+                // Wait for the old process to exit
+                if (oldProcessId > 0)
+                {
+                    try
+                    {
+                        Process oldProcess = Process.GetProcessById(oldProcessId);
+                        oldProcess.WaitForExit();
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Process has already exited
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error while waiting for old process to exit: {ex.Message}");
+                    }
+                }
+
                 // Try to delete the old executable
                 DeleteOldApplication(oldExePath);
-                //File.Delete(oldExePath);
+                CreateNewShortCutForApplicationInTheOldPathAndDesktop(oldExePath);
             }
 
+            string targetDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lynks");
+            string targetPath = Path.Combine(targetDirectory, Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName));
 
-
-
-
-
-
-
-
-
-
-
-            string targetDirectory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lynks");
-            string targetPath = System.IO.Path.Combine(targetDirectory, System.IO.Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName));
             // Check if the current path matches the target path
-
-            if (!string.Equals(AppDomain.CurrentDomain.BaseDirectory, targetDirectory + System.IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar), targetDirectory, StringComparison.OrdinalIgnoreCase))
             {
                 // Ensure the target directory exists
-                if (!Directory.Exists(targetDirectory))
-                {
-                    Directory.CreateDirectory(targetDirectory);
-                }
+                Directory.CreateDirectory(targetDirectory);
 
                 // Copy the executable to the target directory
                 string currentPath = Process.GetCurrentProcess().MainModule.FileName;
-                MessageBox.Show($"currentPath:{currentPath}");
-                MessageBox.Show($"Application.ExecutablePath:{Application.ExecutablePath}");
-                File.Copy(currentPath, targetPath, true);
+                System.IO.File.Copy(currentPath, targetPath, true);
+                DeleteAllShortcutsInCurrentDirectoryAndDesktop(Path.GetDirectoryName(currentPath));
+
+                int oldProcessId = Process.GetCurrentProcess().Id;
 
                 // Start the application from the target directory
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = targetPath,
-                    Arguments = currentPath,
+                    Arguments = $"\"{Application.ExecutablePath}\" {oldProcessId}",
                     UseShellExecute = false
                 });
 
                 // Exit the current instance
-                Environment.Exit(0); // DOn't forget to delete the file that was run and put shortcut instead, silly.
+                Environment.Exit(0);
             }
 
-
-
-
-
-
-
-
-
-
-
-
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
-
 
             if (environment == "Development")
             {
@@ -94,9 +99,7 @@ namespace Kotova.Test1.ClientSide
 
             string currentExePath = Application.ExecutablePath;
 
-
             VersionInfo embeddedVersionInfo = GetEmbeddedVersionInfo();
-
 
             if (environment == "Development")
             {
@@ -105,40 +108,46 @@ namespace Kotova.Test1.ClientSide
 
             string externalJsonPath = embeddedVersionInfo.versionPath;
 
-            VersionInfo? embeddedVersionInfoFromServer = GetEmbeddedVersionInfoFromJson(externalJsonPath);
+            VersionInfo embeddedVersionInfoFromServer = GetEmbeddedVersionInfoFromJson(externalJsonPath);
             if (embeddedVersionInfoFromServer != null)
             {
-                if (environment == "Development") { MessageBox.Show($"Version in external version.json: {embeddedVersionInfoFromServer.version}"); }
-                if (embeddedVersionInfo.filePath != null)
+                if (environment == "Development")
+                {
+                    MessageBox.Show($"Version in external version.json: {embeddedVersionInfoFromServer.version}");
+                }
+
+                if (!string.IsNullOrEmpty(embeddedVersionInfo.filePath))
                 {
                     if (!File.Exists(embeddedVersionInfo.filePath))
                     {
-                        if (environment == "Development") { MessageBox.Show($"File under 'filepath' from json file wasn't found!"); }
+                        if (environment == "Development")
+                        {
+                            MessageBox.Show("File under 'filepath' from json file wasn't found!");
+                        }
                     }
                     else
                     {
                         if (IsNewerVersion(embeddedVersionInfoFromServer.version, embeddedVersionInfo.version))
                         {
                             MessageBox.Show("Доступна новая версия приложения. Скачиваем и обновляем...");
-                            
 
-                            string? newFilePath = UpdateApplication(embeddedVersionInfo.filePath, embeddedVersionInfoFromServer.version);
+                            string newFilePath = UpdateApplication(embeddedVersionInfo.filePath, embeddedVersionInfoFromServer.version);
                             if (newFilePath != null)
                             {
                                 // The application will restart itself after the update
                                 return;
                             }
-
                         }
                     }
                 }
             }
             else
             {
-                if (environment == "Development") {MessageBox.Show("Не удалось загрузить версию из файла .json с сервера для обновления программы.");}
+                if (environment == "Development")
+                {
+                    MessageBox.Show("Не удалось загрузить версию из файла .json с сервера для обновления программы.");
+                }
             }
-
-
 
             const string mutexName = "LynksApp";
             bool isNewInstance = false;
@@ -147,7 +156,7 @@ namespace Kotova.Test1.ClientSide
 
             if (!isNewInstance)
             {
-                NotifyExistingInstance();  // Notify the existing instance and exit
+                NotifyExistingInstance(); // Notify the existing instance and exit
                 return;
             }
 
@@ -163,6 +172,8 @@ namespace Kotova.Test1.ClientSide
 
             GC.KeepAlive(mutex);
         }
+
+        
 
         private static void StartNamedPipeServer()
         {
@@ -187,7 +198,7 @@ namespace Kotova.Test1.ClientSide
             {
                 using (var client = new NamedPipeClientStream(".", "LynksAppPipe", PipeDirection.Out))
                 {
-                    client.Connect(1000);  // Timeout of 1 second
+                    client.Connect(1000); // Timeout of 1 second
                     // Successfully notified the existing instance
                 }
             }
@@ -226,11 +237,11 @@ namespace Kotova.Test1.ClientSide
         }
 
         // Method to extract and read the embedded version.json from another .exe
-        public static VersionInfo? GetEmbeddedVersionInfoFromJson(string jsonFilePath)
+        public static VersionInfo GetEmbeddedVersionInfoFromJson(string jsonFilePath)
         {
             if (File.Exists(jsonFilePath))
             {
-                string jsonContent = File.ReadAllText(jsonFilePath);
+                string jsonContent = System.IO.File.ReadAllText(jsonFilePath);
                 VersionInfo versionInfo = JsonSerializer.Deserialize<VersionInfo>(jsonContent);
 
                 // Output the version info
@@ -249,16 +260,16 @@ namespace Kotova.Test1.ClientSide
             return remote > local;
         }
 
-        private static string? UpdateApplication(string fileUrl, string version)
+        private static string UpdateApplication(string fileUrl, string version)
         {
             CreateUpdateLock();
 
-            string newAppPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"LynKS (v{version}).exe");
+            string newAppPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"LynKS (v{version}).exe");
             UpdateProgressForm progressForm = new UpdateProgressForm();
 
             try
             {
-                progressForm.SetMessage("Скачивается обновление. Пожалуйста подождите...");
+                progressForm.SetMessage("Скачивается обновление. Пожалуйста, подождите...");
                 progressForm.Show();
 
                 // Use WebClient or HttpClient to download the file from the server
@@ -287,7 +298,7 @@ namespace Kotova.Test1.ClientSide
                     TerminateOldInstances(Application.ExecutablePath);
 
                     // Start the new application
-                    RestartApplication(newAppPath, Application.ExecutablePath); //Application.ExecutablePath - gonna be deleted
+                    RestartApplication(newAppPath, Application.ExecutablePath);
                     Process.GetCurrentProcess().Kill();
                     Application.Exit();
                 };
@@ -311,20 +322,23 @@ namespace Kotova.Test1.ClientSide
 
         public static void RestartApplication(string newVersionFilePath, string currentExePath)
         {
+            int oldProcessId = Process.GetCurrentProcess().Id;
+
             // Start the new version of the application
-            Process.Start(newVersionFilePath, $"\"{currentExePath}\"");
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = newVersionFilePath,
+                Arguments = $"\"{currentExePath}\" {oldProcessId}",
+                UseShellExecute = false
+            });
 
             // Optionally: Delete the old executable after exiting the current application
-            
         }
 
         public static void DeleteOldApplication(string oldExePath)
         {
             try
             {
-                // Delay to ensure the old application has completely exited
-                System.Threading.Thread.Sleep(1000);  // Wait for 1 second (adjust as needed)
-
                 if (File.Exists(oldExePath))
                 {
                     File.Delete(oldExePath);
@@ -340,7 +354,7 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                string currentProcessName = System.IO.Path.GetFileNameWithoutExtension(currentExePath);
+                string currentProcessName = Path.GetFileNameWithoutExtension(currentExePath);
                 int currentProcessId = Process.GetCurrentProcess().Id;
 
                 // Get all processes with the same name
@@ -350,11 +364,9 @@ namespace Kotova.Test1.ClientSide
                 {
                     if (process.Id != currentProcessId)
                     {
-                        // Check the version of the process executable
-                        string processExePath = process.MainModule.FileName;
                         // Try to close gracefully first
                         process.CloseMainWindow();
-                        if (!process.WaitForExit(1000))  // Wait for 5 seconds
+                        if (!process.WaitForExit(1000)) // Wait for 1 second
                         {
                             process.Kill();
                         }
@@ -369,24 +381,99 @@ namespace Kotova.Test1.ClientSide
 
         public static bool IsUpdateInProgress()
         {
-            string lockFilePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.lock");
+            string lockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.lock");
             return File.Exists(lockFilePath);
         }
 
         public static void CreateUpdateLock()
         {
-            string lockFilePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.lock");
+            string lockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.lock");
             File.Create(lockFilePath).Dispose();
         }
 
         public static void RemoveUpdateLock()
         {
-            string lockFilePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.lock");
+            string lockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "update.lock");
             if (File.Exists(lockFilePath))
             {
                 File.Delete(lockFilePath);
             }
         }
 
+        private static void DeleteAllShortcutsInCurrentDirectoryAndDesktop(string currentPath)
+        {
+            try
+            {
+                // Get all .lnk (shortcut) files in the current directory
+                string[] shortcutFilesOldPath = Directory.GetFiles(currentPath, "*.lnk");
+                string[] shortcutFilesDesktop = Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "*.lnk");
+                string[] shortcutFiles = shortcutFilesOldPath.Concat(shortcutFilesDesktop).ToArray();
+
+                foreach (string shortcutFile in shortcutFiles)
+                {
+                    string fileName = Path.GetFileName(shortcutFile).ToLower();
+
+                    // Check if the file name contains "kotova" or "lynks"
+                    if (fileName.Contains("Kotova") || fileName.Contains("Lynks"))
+                    {
+                        try
+                        {
+                            File.Delete(shortcutFile);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log or handle individual file deletion exceptions
+                            MessageBox.Show($"Error deleting {shortcutFile}: {ex.Message}");
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions related to directory access
+                MessageBox.Show($"Error accessing directory {currentPath}: {ex.Message}");
+            }
+        }
+        private static void CreateNewShortCutForApplicationInTheOldPathAndDesktop(string oldExePath)
+        {
+            try
+            {
+                string currentExePath = Process.GetCurrentProcess().MainModule.FileName;
+                // Get the application name without extension
+                string appName = Path.GetFileNameWithoutExtension(oldExePath);
+
+                // Define the shortcut file name
+                string shortcutName = appName + ".lnk";
+
+                // Get the directory of the old executable
+                string oldPathDirectory = Path.GetDirectoryName(oldExePath);
+
+                // Paths for the shortcuts
+                string oldPathShortcut = Path.Combine(oldPathDirectory, shortcutName);
+                string desktopShortcut = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), shortcutName);
+
+                // Create the shortcut in the current path directory
+                ShellLink.Shortcut.CreateShortcut(currentExePath)
+                    .WriteToFile(oldPathShortcut);
+                if (oldPathShortcut == desktopShortcut)
+                {
+                    return; //TODO: Проверь работает ли эта штука!
+                            //Пропуск что если файл лежал на рабочем столе, то не нужно создавать на рабочем столе 2 ярлыка (потому что папки совпадают)
+                }
+                // Create the shortcut on the desktop
+                ShellLink.Shortcut.CreateShortcut(currentExePath)
+                    .WriteToFile(desktopShortcut);
+
+                Console.WriteLine("Shortcuts have been created successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating shortcuts: {ex.Message}");
+            }
+        }
+
+
     }
+
 }
