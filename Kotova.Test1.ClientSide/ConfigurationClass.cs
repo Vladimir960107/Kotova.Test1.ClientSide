@@ -59,8 +59,8 @@ namespace Kotova.Test1.ClientSide
 
         private static string GetBaseUrlDevelopment()
         {
-            //return _configuration["ServerURLs:Development"] ?? throw new InvalidOperationException("Development URL not configured."); // ЭТО ДЛЯ РАЗРАБОТКИ!
-            return _configuration["ServerURLs:Release"] ?? throw new InvalidOperationException("Release URL not configured."); // ЭТО ДЛЯ РЕЛИЗА!
+            return _configuration["ServerURLs:Development"] ?? throw new InvalidOperationException("Development URL not configured."); // ЭТО ДЛЯ РАЗРАБОТКИ!
+            //return _configuration["ServerURLs:Release"] ?? throw new InvalidOperationException("Release URL not configured."); // ЭТО ДЛЯ РЕЛИЗА!
         }
     }
 }

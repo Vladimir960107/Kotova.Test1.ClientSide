@@ -55,11 +55,35 @@ namespace Kotova.Test1.ClientSide
                     {
                         MessageBox.Show($"Error while waiting for old process to exit: {ex.Message}");
                     }
+                    finally
+                    {
+                        try
+                        {
+                            Process oldProcess = Process.GetProcessById(oldProcessId);
+                            if (!oldProcess.HasExited)
+                            {
+                                oldProcess.Kill(); // Or decide how you want to handle this scenario
+                                oldProcess.WaitForExit();
+                            }
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Process does not exist
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Error while ensuring old process has exited: {ex.Message}");
+                        }
+
+                        DeleteOldApplication(oldExePath);
+                        DeleteAllShortcutsInCurrentDirectoryAndDesktop(Path.GetDirectoryName(oldExePath));
+                        CreateNewShortCutForApplicationInTheOldPathAndDesktop(oldExePath);
+                    }
+
                 }
 
                 // Try to delete the old executable
-                DeleteOldApplication(oldExePath);
-                CreateNewShortCutForApplicationInTheOldPathAndDesktop(oldExePath);
+
             }
 
             string targetDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lynks");
@@ -260,11 +284,13 @@ namespace Kotova.Test1.ClientSide
             return remote > local;
         }
 
-        private static string UpdateApplication(string fileUrl, string version)
+        private static string? UpdateApplication(string fileUrl, string version)
         {
             CreateUpdateLock();
 
-            string newAppPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"LynKS (v{version}).exe");
+            string applicationDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string newAppFileName = $"LynKS (v{version}).exe";
+            string newAppPath = Path.Combine(applicationDirectory, newAppFileName);
             UpdateProgressForm progressForm = new UpdateProgressForm();
 
             try
@@ -293,6 +319,10 @@ namespace Kotova.Test1.ClientSide
                     progressForm.SetMessage("Обновление скачено и установлено. Перезапускаю...");
                     Thread.Sleep(1000); // Wait to show the message
                     progressForm.Close();
+
+                    // Delete old version files before restarting
+                    DeleteOldVersionFiles(applicationDirectory, newAppFileName);
+
                     RemoveUpdateLock();
 
                     TerminateOldInstances(Application.ExecutablePath);
@@ -319,6 +349,7 @@ namespace Kotova.Test1.ClientSide
                 return null;
             }
         }
+
 
         public static void RestartApplication(string newVersionFilePath, string currentExePath)
         {
@@ -400,6 +431,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+
         private static void DeleteAllShortcutsInCurrentDirectoryAndDesktop(string currentPath)
         {
             try
@@ -414,7 +446,7 @@ namespace Kotova.Test1.ClientSide
                     string fileName = Path.GetFileName(shortcutFile).ToLower();
 
                     // Check if the file name contains "kotova" or "lynks"
-                    if (fileName.Contains("Kotova") || fileName.Contains("Lynks"))
+                    if (fileName.Contains("kotova") || fileName.Contains("lynks"))
                     {
                         try
                         {
@@ -435,6 +467,8 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Error accessing directory {currentPath}: {ex.Message}");
             }
         }
+
+
         private static void CreateNewShortCutForApplicationInTheOldPathAndDesktop(string oldExePath)
         {
             try
@@ -472,6 +506,54 @@ namespace Kotova.Test1.ClientSide
                 Console.WriteLine($"Error creating shortcuts: {ex.Message}");
             }
         }
+
+        private static void DeleteOldVersionFiles(string applicationDirectory, string newVersionFileName)
+        {
+            try
+            {
+                // Get all .exe files in the application directory
+                string[] exeFiles = Directory.GetFiles(applicationDirectory, "*.exe");
+
+                foreach (string exeFile in exeFiles)
+                {
+                    string fileName = Path.GetFileName(exeFile);
+
+                    // Skip the new version executable
+                    if (string.Equals(fileName, newVersionFileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Skip the current running executable
+                    string currentExeName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
+                    if (string.Equals(fileName, currentExeName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Optionally, check if the file matches a versioned executable pattern
+                    if ((fileName.StartsWith("LynKS (v", StringComparison.OrdinalIgnoreCase) && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))||(fileName.StartsWith("Kotova") && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        // Delete the old version file
+                        try
+                        {
+                            File.Delete(exeFile);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Handle exception (e.g., log the error or show a message)
+                            MessageBox.Show($"Error deleting old version file {exeFile}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions related to directory access
+                MessageBox.Show($"Error accessing directory {applicationDirectory}: {ex.Message}");
+            }
+        }
+
 
 
     }

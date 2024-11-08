@@ -36,7 +36,7 @@
     <None Remove="static\LynKS_favicon.ico" />
     <None Remove="static\LynKS_logo.png" />
     <None Remove="static\technology.png" />
-    <None Remove="version_dev.json" />
+    <None Remove="version.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,8 +44,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="version_dev.json" />
     <EmbeddedResource Include="version.json" />
+    <EmbeddedResource Include="version_rel.json" />
   </ItemGroup>
 
   <ItemGroup>
