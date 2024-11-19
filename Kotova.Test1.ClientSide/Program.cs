@@ -499,11 +499,11 @@ namespace Kotova.Test1.ClientSide
                 ShellLink.Shortcut.CreateShortcut(currentExePath)
                     .WriteToFile(desktopShortcut);
 
-                Console.WriteLine("Shortcuts have been created successfully.");
+                //MessageBox.Show("Shortcuts have been created successfully.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error creating shortcuts: {ex.Message}");
+                MessageBox.Show($"Error creating shortcuts: {ex.Message}");
             }
         }
 
