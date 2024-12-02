@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Kotova.Test1.ClientSide": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

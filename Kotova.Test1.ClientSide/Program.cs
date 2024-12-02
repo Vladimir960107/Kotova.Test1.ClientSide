@@ -23,6 +23,8 @@ namespace Kotova.Test1.ClientSide
         [STAThread]
         public static void Main(string[] args)
         {
+            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+
             if (IsUpdateInProgress())
             {
                 MessageBox.Show("Обновление программы в процессе. Пожалуйста, дождитесь окончания обновления.");
@@ -86,35 +88,38 @@ namespace Kotova.Test1.ClientSide
 
             }
 
-            string targetDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lynks");
-            string targetPath = Path.Combine(targetDirectory, Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName));
-
-            // Check if the current path matches the target path
-            if (!string.Equals(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar), targetDirectory, StringComparison.OrdinalIgnoreCase))
+            if (environment != "Development")
             {
-                // Ensure the target directory exists
-                Directory.CreateDirectory(targetDirectory);
+                string targetDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lynks");
+                string targetPath = Path.Combine(targetDirectory, Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName));
 
-                // Copy the executable to the target directory
-                string currentPath = Process.GetCurrentProcess().MainModule.FileName;
-                System.IO.File.Copy(currentPath, targetPath, true);
-                DeleteAllShortcutsInCurrentDirectoryAndDesktop(Path.GetDirectoryName(currentPath));
-
-                int oldProcessId = Process.GetCurrentProcess().Id;
-
-                // Start the application from the target directory
-                Process.Start(new ProcessStartInfo
+                // Check if the current path matches the target path
+                if (!string.Equals(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar), targetDirectory, StringComparison.OrdinalIgnoreCase))
                 {
-                    FileName = targetPath,
-                    Arguments = $"\"{Application.ExecutablePath}\" {oldProcessId}",
-                    UseShellExecute = false
-                });
+                    // Ensure the target directory exists
+                    Directory.CreateDirectory(targetDirectory);
 
-                // Exit the current instance
-                Environment.Exit(0);
+                    // Copy the executable to the target directory
+                    string currentPath = Process.GetCurrentProcess().MainModule.FileName;
+                    System.IO.File.Copy(currentPath, targetPath, true);
+                    DeleteAllShortcutsInCurrentDirectoryAndDesktop(Path.GetDirectoryName(currentPath));
+
+                    int oldProcessId = Process.GetCurrentProcess().Id;
+
+                    // Start the application from the target directory
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = targetPath,
+                        Arguments = $"\"{Application.ExecutablePath}\" {oldProcessId}",
+                        UseShellExecute = false
+                    });
+
+                    // Exit the current instance
+                    Environment.Exit(0);
+                }
             }
 
-            var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+
 
             if (environment == "Development")
             {
