@@ -17,9 +17,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="appsettings.json">
+    <Compile Remove="Cache.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    </Content>
   </ItemGroup>
   
   
@@ -36,16 +40,11 @@
     <None Remove="static\LynKS_favicon.ico" />
     <None Remove="static\LynKS_logo.png" />
     <None Remove="static\technology.png" />
-    <None Remove="version.json" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Cache.cs" />
     <Content Include="Охрана труда.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="version.json" />
-    <EmbeddedResource Include="version_rel.json" />
   </ItemGroup>
 
   <ItemGroup>

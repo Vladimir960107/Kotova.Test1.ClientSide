@@ -1,15 +1,18 @@
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Net;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Kotova.CommonClasses;
+using Microsoft.Extensions.Configuration;
 using ShellLink;
 
 using File = System.IO.File;
@@ -22,7 +25,11 @@ namespace Kotova.Test1.ClientSide
 
         [STAThread]
         public static void Main(string[] args)
-        {
+        { 
+            [DllImport("kernel32.dll")]
+            static extern bool AllocConsole();
+
+
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
 
             if (IsUpdateInProgress())
@@ -124,30 +131,33 @@ namespace Kotova.Test1.ClientSide
             if (environment == "Development")
             {
                 MessageBox.Show("Application is running in Development mode", "Development Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AllocConsole();
+                Console.WriteLine("Development Console is enabled.");
             }
 
             string currentExePath = Application.ExecutablePath;
 
             VersionInfo embeddedVersionInfo = GetEmbeddedVersionInfo();
 
-            if (environment == "Development")
+            if (embeddedVersionInfo is null)
             {
-                MessageBox.Show($"Embedded version of file is {embeddedVersionInfo.version}");
+                MessageBox.Show("embeddedVersionInfo is null");
+                throw new Exception("embeddedVersionInfo is null");
             }
 
-            string externalJsonPath = embeddedVersionInfo.versionPath;
+            string externalJsonPath = embeddedVersionInfo.ServerVersionInternalPath;
 
-            VersionInfo embeddedVersionInfoFromServer = GetEmbeddedVersionInfoFromJson(externalJsonPath);
+            VersionAndReleaseDateInfo embeddedVersionInfoFromServer = VersionChecker.GetEmbeddedVersionInfoFromJson(externalJsonPath);
             if (embeddedVersionInfoFromServer != null)
             {
                 if (environment == "Development")
                 {
-                    MessageBox.Show($"Version in external version.json: {embeddedVersionInfoFromServer.version}");
+                    MessageBox.Show($"Version in external version.json: {embeddedVersionInfoFromServer.Version}");
                 }
 
-                if (!string.IsNullOrEmpty(embeddedVersionInfo.filePath))
+                if (!string.IsNullOrEmpty(embeddedVersionInfo.ServerInternalFilePath))
                 {
-                    if (!File.Exists(embeddedVersionInfo.filePath))
+                    if (!File.Exists(embeddedVersionInfo.ServerInternalFilePath))
                     {
                         if (environment == "Development")
                         {
@@ -156,11 +166,15 @@ namespace Kotova.Test1.ClientSide
                     }
                     else
                     {
-                        if (IsNewerVersion(embeddedVersionInfoFromServer.version, embeddedVersionInfo.version))
+                        if (IsNewerVersion(embeddedVersionInfoFromServer.Version, embeddedVersionInfo.Version))
                         {
                             MessageBox.Show("Доступна новая версия приложения. Скачиваем и обновляем...");
-
-                            string newFilePath = UpdateApplication(embeddedVersionInfo.filePath, embeddedVersionInfoFromServer.version);
+                            if (embeddedVersionInfo.ServerVersionInternalPath == null)
+                            {
+                                MessageBox.Show("embeddedVersionInfo.ServerInternalFilePath is null");
+                                throw new Exception("embeddedVersionInfo.ServerInternalFilePath is null");
+                            }
+                            string newFilePath = UpdateApplication(embeddedVersionInfo.ServerInternalFilePath, embeddedVersionInfoFromServer.Version);
                             if (newFilePath != null)
                             {
                                 // The application will restart itself after the update
@@ -202,7 +216,16 @@ namespace Kotova.Test1.ClientSide
             GC.KeepAlive(mutex);
         }
 
-        
+        private static VersionInfo GetEmbeddedVersionInfo()
+        {
+            var embeddedVersionInfo = new VersionInfo()
+            {
+                Version = ConfigurationClass.BASE_VERSION,
+                ServerVersionInternalPath = ConfigurationClass.BASE_VERSION_FILEPATH,
+                ServerInternalFilePath = ConfigurationClass.BASE_FILEPATH_WHERE_DOWNLOAD_UPDATE_FROM
+            };
+            return embeddedVersionInfo;
+        }
 
         private static void StartNamedPipeServer()
         {
@@ -240,50 +263,131 @@ namespace Kotova.Test1.ClientSide
 
         public class VersionInfo
         {
-            public string version { get; set; }
-            public string versionPath { get; set; }
-            public string filePath { get; set; }
+            public string Version { get; set; }
+            public string ServerVersionInternalPath { get; set; }
+            public string ServerInternalFilePath { get; set; }
         }
 
-        public static VersionInfo GetEmbeddedVersionInfo()
+        public class AppSettings
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "Kotova.Test1.ClientSide.version.json"; // Replace with the actual namespace + filename
+            public ServerURLs ServerURLs { get; set; }
+            public string Version { get; set; }
+            public string ReleaseDate { get; set; }
+            public ServerPaths ServerVersionInternalPath { get; set; }
+            public ServerPaths ServerInternalFilePath { get; set; }
+        }
 
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+        public class ServerURLs
+        {
+            public string Development { get; set; }
+            public string Release { get; set; }
+        }
+
+        public class ServerPaths
+        {
+            public string Development { get; set; }
+            public string Release { get; set; }
+        }
+
+        public class VersionAndReleaseDateInfo
+        {
+            public string Version { get; set; }
+            public string ReleaseDate { get; set; }
+        }
+
+        public static class VersionChecker
+        {
+            public static AppSettings LoadAppSettings(string appSettingsFilePath)
             {
-                if (stream != null)
+                if (File.Exists(appSettingsFilePath))
                 {
-                    using (StreamReader reader = new StreamReader(stream))
+                    try
                     {
-                        string jsonContent = reader.ReadToEnd();
-                        return JsonSerializer.Deserialize<VersionInfo>(jsonContent);
+                        string jsonContent = File.ReadAllText(appSettingsFilePath);
+                        return JsonSerializer.Deserialize<AppSettings>(jsonContent);
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error reading or deserializing appsettings.json: {ex.Message}");
+                        return null;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("appsettings.json file not found.");
+                    return null;
                 }
             }
 
-            return null; // Return null if the resource is not found
+            public static VersionAndReleaseDateInfo GetEmbeddedVersionInfoFromJson(string jsonFilePath)
+            {
+                if (File.Exists(jsonFilePath))
+                {
+                    try
+                    {
+                        string jsonContent = File.ReadAllText(jsonFilePath);
+                        return JsonSerializer.Deserialize<VersionAndReleaseDateInfo>(jsonContent);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error reading or deserializing version file: {ex.Message}");
+                        return null;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Version file not found.");
+                    return null;
+                }
+            }
+
+            /*public static void CheckVersion(string appSettingsFilePath, string environment) // NOT CURRENTLY IN USE, SO COMMENTED. IN CASE OF NEED - CAN DE-COMMENT AND USE :)
+            {
+                // Load appsettings.json
+                var appSettings = LoadAppSettings(appSettingsFilePath);
+                if (appSettings == null)
+                {
+                    Console.WriteLine("Failed to load appsettings.json.");
+                    return;
+                }
+
+                // Determine the version file path based on the environment
+                string versionFilePath = environment switch
+                {
+                    "Development" => appSettings.ServerVersionInternalPath.Development,
+                    "Release" => appSettings.ServerVersionInternalPath.Release,
+                    _ => null
+                };
+
+                if (string.IsNullOrEmpty(versionFilePath))
+                {
+                    Console.WriteLine($"No version file path found for environment: {environment}");
+                    return;
+                }
+
+                // Get version info from the version file
+                var versionInfo = GetEmbeddedVersionInfoFromJson(versionFilePath);
+                if (versionInfo != null)
+                {
+                    Console.WriteLine($"Version: {versionInfo.Version}");
+                    Console.WriteLine($"Release Date: {versionInfo.ReleaseDate}");
+                }
+                else
+                {
+                    Console.WriteLine("Could not retrieve version information.");
+                }
+            }*/
         }
 
-        // Method to extract and read the embedded version.json from another .exe
-        public static VersionInfo GetEmbeddedVersionInfoFromJson(string jsonFilePath)
-        {
-            if (File.Exists(jsonFilePath))
-            {
-                string jsonContent = System.IO.File.ReadAllText(jsonFilePath);
-                VersionInfo versionInfo = JsonSerializer.Deserialize<VersionInfo>(jsonContent);
 
-                // Output the version info
-                return versionInfo;
-            }
-            else
-            {
-                return null;
-            }
-        }
 
         private static bool IsNewerVersion(string remoteVersion, string localVersion)
         {
+            if (remoteVersion == null || remoteVersion.Length == 0)
+            {
+                MessageBox.Show("Удалённая версия файла сервера не найдена. (Скорее всего нет подключения к удалённому серверу)");
+                return false;
+            }
             Version remote = new Version(remoteVersion);
             Version local = new Version(localVersion);
             return remote > local;
@@ -321,7 +425,7 @@ namespace Kotova.Test1.ClientSide
                         return;
                     }
 
-                    progressForm.SetMessage("Обновление скачено и установлено. Перезапускаю...");
+                    progressForm.SetMessage("Обновление скачено и установлено. Перезапуск...");
                     Thread.Sleep(1000); // Wait to show the message
                     progressForm.Close();
 

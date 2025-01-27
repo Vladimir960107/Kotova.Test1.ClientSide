@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using static Kotova.Test1.ClientSide.Program;
 using static System.Net.Mime.MediaTypeNames;
 
 
@@ -43,7 +44,15 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
             InitializeSettingsMenu();
             InitializeNotifyIcon();
-            versionLabel.Text = GetEmbeddedVersionInfo().version;
+            try
+            {
+                versionLabel.Text = ConfigurationClass.BASE_VERSION;
+            }
+            catch (InvalidOperationException ex)
+            {
+                MessageBox.Show($"Error loading version information: {ex.Message}", "Version Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                versionLabel.Text = "Version Unknown";
+            }
             activeForm = this;
             this.Text = "Login_Russian";
             this.Activate();
@@ -111,31 +120,35 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        public class VersionInfo
+        /*public class VersionInfo // TODO: ИСПРАВЬ КЛАСС НА НОВЫЙ ТИП И ВОЗЬМИ ЕГО ИЗ PROGRAM.CS, (А ТАМ ВОЗЬМИ И СДЕЛАЙ ЕГО В ОБЩИЙ ФАЙЛ!)
         {
             public string version { get; set; }
             public string versionPath { get; set; }
             public string filePath { get; set; }
-        }
+        }*/
 
-        public static VersionInfo GetEmbeddedVersionInfo()
+        private static VersionInfo GetEmbeddedVersionInfo() //TODO: Убери, если лишнее.
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "Kotova.Test1.ClientSide.version.json"; // Replace with the actual namespace + filename
+            // Determine if we're in development mode
+            var isDevelopment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Development";
 
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            try
             {
-                if (stream != null)
+                var embeddedVersionInfo = new VersionInfo()
                 {
-                    using (StreamReader reader = new StreamReader(stream))
-                    {
-                        string jsonContent = reader.ReadToEnd();
-                        return JsonSerializer.Deserialize<VersionInfo>(jsonContent);
-                    }
-                }
-            }
+                    // Use the existing configuration methods with the development flag
+                    Version = ConfigurationClass.GetInternalVersion(isDevelopment),
+                    ServerVersionInternalPath = ConfigurationClass.GetInternalVersionFilePath(isDevelopment),
+                    ServerInternalFilePath = ConfigurationClass.GetInternalFilePath(isDevelopment)
+                };
 
-            return null; // Return null if the resource is not found
+                return embeddedVersionInfo;
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Add more context to the configuration error
+                throw new InvalidOperationException($"Failed to initialize version information: {ex.Message}", ex);
+            }
         }
 
         private void InitializeSettingsMenu()

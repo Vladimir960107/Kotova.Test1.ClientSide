@@ -47,8 +47,21 @@
             signOutToolStripMenuItem = new ToolStripMenuItem();
             exitApplicationToolStripMenuItem = new ToolStripMenuItem();
             AdditionalSettingsPicture = new PictureBox();
+            PassedOrNotInstrTabControl = new TabControl();
+            NotPassedInstrTabPage = new TabPage();
+            PassedInstrTabPage = new TabPage();
+            listBoxOfPathsOfPassedInstructions = new ListBox();
+            dataGridViewPassedInstructions = new DataGridView();
+            DateOfPassedInstr = new DataGridViewTextBoxColumn();
+            TypeOfPassedInstr = new DataGridViewTextBoxColumn();
+            CauseOfPassedInstr = new DataGridViewTextBoxColumn();
+            label2 = new Label();
             AdditionalSettingsForUserContextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)AdditionalSettingsPicture).BeginInit();
+            PassedOrNotInstrTabControl.SuspendLayout();
+            NotPassedInstrTabPage.SuspendLayout();
+            PassedInstrTabPage.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewPassedInstructions).BeginInit();
             SuspendLayout();
             // 
             // label1
@@ -73,7 +86,7 @@
             // 
             ListOfInstructionsForUser.FormattingEnabled = true;
             ListOfInstructionsForUser.ItemHeight = 15;
-            ListOfInstructionsForUser.Location = new Point(24, 131);
+            ListOfInstructionsForUser.Location = new Point(15, 67);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
             ListOfInstructionsForUser.Size = new Size(351, 259);
             ListOfInstructionsForUser.TabIndex = 24;
@@ -82,7 +95,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(24, 95);
+            label3.Location = new Point(15, 29);
             label3.Name = "label3";
             label3.Size = new Size(201, 15);
             label3.TabIndex = 25;
@@ -91,7 +104,7 @@
             // PassInstruction
             // 
             PassInstruction.AutoSize = true;
-            PassInstruction.Location = new Point(267, 443);
+            PassInstruction.Location = new Point(236, 346);
             PassInstruction.Name = "PassInstruction";
             PassInstruction.Size = new Size(245, 19);
             PassInstruction.TabIndex = 28;
@@ -103,7 +116,7 @@
             // 
             FilesOfInstructionCheckedListBox.FormattingEnabled = true;
             FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
-            FilesOfInstructionCheckedListBox.Location = new Point(411, 131);
+            FilesOfInstructionCheckedListBox.Location = new Point(395, 67);
             FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
             FilesOfInstructionCheckedListBox.Size = new Size(396, 256);
             FilesOfInstructionCheckedListBox.TabIndex = 30;
@@ -113,7 +126,7 @@
             // 
             AdditionalSettingsForUserContextMenuStrip.Items.AddRange(new ToolStripItem[] { UpdateInstructionsToolStripMenuItem, ChangeCredentialsToolStripMenuItem, signOutToolStripMenuItem, exitApplicationToolStripMenuItem });
             AdditionalSettingsForUserContextMenuStrip.Name = "AdditionalSettingsForUser";
-            AdditionalSettingsForUserContextMenuStrip.Size = new Size(269, 114);
+            AdditionalSettingsForUserContextMenuStrip.Size = new Size(269, 92);
             AdditionalSettingsForUserContextMenuStrip.Text = "Доп. настройки:";
             // 
             // UpdateInstructionsToolStripMenuItem
@@ -155,16 +168,101 @@
             AdditionalSettingsPicture.TabStop = false;
             AdditionalSettingsPicture.Click += AdditionalSettingsPicture_Click;
             // 
+            // PassedOrNotInstrTabControl
+            // 
+            PassedOrNotInstrTabControl.Controls.Add(NotPassedInstrTabPage);
+            PassedOrNotInstrTabControl.Controls.Add(PassedInstrTabPage);
+            PassedOrNotInstrTabControl.Location = new Point(12, 89);
+            PassedOrNotInstrTabControl.Name = "PassedOrNotInstrTabControl";
+            PassedOrNotInstrTabControl.SelectedIndex = 0;
+            PassedOrNotInstrTabControl.Size = new Size(805, 412);
+            PassedOrNotInstrTabControl.TabIndex = 36;
+            PassedOrNotInstrTabControl.TabIndexChanged += PassedOrNotInstrTabControl_TabIndexChanged;
+            // 
+            // NotPassedInstrTabPage
+            // 
+            NotPassedInstrTabPage.Controls.Add(ListOfInstructionsForUser);
+            NotPassedInstrTabPage.Controls.Add(label3);
+            NotPassedInstrTabPage.Controls.Add(FilesOfInstructionCheckedListBox);
+            NotPassedInstrTabPage.Controls.Add(PassInstruction);
+            NotPassedInstrTabPage.Location = new Point(4, 24);
+            NotPassedInstrTabPage.Name = "NotPassedInstrTabPage";
+            NotPassedInstrTabPage.Padding = new Padding(3);
+            NotPassedInstrTabPage.Size = new Size(797, 384);
+            NotPassedInstrTabPage.TabIndex = 0;
+            NotPassedInstrTabPage.Text = "Непройденные инструктажи";
+            NotPassedInstrTabPage.UseVisualStyleBackColor = true;
+            // 
+            // PassedInstrTabPage
+            // 
+            PassedInstrTabPage.Controls.Add(listBoxOfPathsOfPassedInstructions);
+            PassedInstrTabPage.Controls.Add(dataGridViewPassedInstructions);
+            PassedInstrTabPage.Controls.Add(label2);
+            PassedInstrTabPage.Location = new Point(4, 24);
+            PassedInstrTabPage.Name = "PassedInstrTabPage";
+            PassedInstrTabPage.Padding = new Padding(3);
+            PassedInstrTabPage.Size = new Size(797, 384);
+            PassedInstrTabPage.TabIndex = 1;
+            PassedInstrTabPage.Text = "Пройденные инструктажи";
+            PassedInstrTabPage.UseVisualStyleBackColor = true;
+            // 
+            // listBoxOfPathsOfPassedInstructions
+            // 
+            listBoxOfPathsOfPassedInstructions.FormattingEnabled = true;
+            listBoxOfPathsOfPassedInstructions.ItemHeight = 15;
+            listBoxOfPathsOfPassedInstructions.Location = new Point(404, 61);
+            listBoxOfPathsOfPassedInstructions.Name = "listBoxOfPathsOfPassedInstructions";
+            listBoxOfPathsOfPassedInstructions.Size = new Size(359, 259);
+            listBoxOfPathsOfPassedInstructions.TabIndex = 35;
+            listBoxOfPathsOfPassedInstructions.DoubleClick += listBoxOfPathsOfPassedInstructions_DoubleClick;
+            // 
+            // dataGridViewPassedInstructions
+            // 
+            dataGridViewPassedInstructions.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewPassedInstructions.Columns.AddRange(new DataGridViewColumn[] { DateOfPassedInstr, TypeOfPassedInstr, CauseOfPassedInstr });
+            dataGridViewPassedInstructions.Location = new Point(6, 61);
+            dataGridViewPassedInstructions.MultiSelect = false;
+            dataGridViewPassedInstructions.Name = "dataGridViewPassedInstructions";
+            dataGridViewPassedInstructions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewPassedInstructions.Size = new Size(361, 256);
+            dataGridViewPassedInstructions.TabIndex = 34;
+            dataGridViewPassedInstructions.CellClick += dataGridViewPassedInstructions_CellClick;
+            dataGridViewPassedInstructions.SelectionChanged += dataGridViewPassedInstructions_SelectionChanged;
+            // 
+            // DateOfPassedInstr
+            // 
+            DateOfPassedInstr.HeaderText = "Дата инструктажа";
+            DateOfPassedInstr.Name = "DateOfPassedInstr";
+            DateOfPassedInstr.ReadOnly = true;
+            // 
+            // TypeOfPassedInstr
+            // 
+            TypeOfPassedInstr.HeaderText = "Тип инструктажа";
+            TypeOfPassedInstr.Name = "TypeOfPassedInstr";
+            TypeOfPassedInstr.ReadOnly = true;
+            // 
+            // CauseOfPassedInstr
+            // 
+            CauseOfPassedInstr.HeaderText = "Причина инструктажа";
+            CauseOfPassedInstr.Name = "CauseOfPassedInstr";
+            CauseOfPassedInstr.ReadOnly = true;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(6, 23);
+            label2.Name = "label2";
+            label2.Size = new Size(188, 15);
+            label2.TabIndex = 32;
+            label2.Text = "Лист пройденных инструктажей:";
+            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(829, 527);
+            Controls.Add(PassedOrNotInstrTabControl);
             Controls.Add(AdditionalSettingsPicture);
-            Controls.Add(FilesOfInstructionCheckedListBox);
-            Controls.Add(PassInstruction);
-            Controls.Add(label3);
-            Controls.Add(ListOfInstructionsForUser);
             Controls.Add(UserLabel);
             Controls.Add(label1);
             Name = "UserForm";
@@ -172,6 +270,12 @@
             FormClosing += UserForm_FormClosing;
             AdditionalSettingsForUserContextMenuStrip.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)AdditionalSettingsPicture).EndInit();
+            PassedOrNotInstrTabControl.ResumeLayout(false);
+            NotPassedInstrTabPage.ResumeLayout(false);
+            NotPassedInstrTabPage.PerformLayout();
+            PassedInstrTabPage.ResumeLayout(false);
+            PassedInstrTabPage.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewPassedInstructions).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -190,5 +294,14 @@
         private ToolStripMenuItem exitApplicationToolStripMenuItem;
         private ToolStripMenuItem signOutToolStripMenuItem;
         private PictureBox AdditionalSettingsPicture;
+        private TabControl PassedOrNotInstrTabControl;
+        private TabPage NotPassedInstrTabPage;
+        private TabPage PassedInstrTabPage;
+        private Label label2;
+        private DataGridView dataGridViewPassedInstructions;
+        private DataGridViewTextBoxColumn DateOfPassedInstr;
+        private DataGridViewTextBoxColumn TypeOfPassedInstr;
+        private DataGridViewTextBoxColumn CauseOfPassedInstr;
+        private ListBox listBoxOfPathsOfPassedInstructions;
     }
 }
