@@ -96,6 +96,28 @@ namespace Kotova.Test1.ClientSide
 
             }
 
+            VersionInfo embeddedVersionInfo = GetEmbeddedVersionInfo();
+
+            if (embeddedVersionInfo is null)
+            {
+                MessageBox.Show("embeddedVersionInfo is null");
+                throw new Exception("embeddedVersionInfo is null");
+            }
+
+            string currentExePath = Application.ExecutablePath;
+            string currentExeDirectory = Path.GetDirectoryName(currentExePath);
+            string serverExeDirectory = Path.GetDirectoryName(embeddedVersionInfo.ServerInternalFilePath);
+
+            // Compare directories in a case-insensitive way.
+            // Also check if appsettings.json is present in the same folder.
+            if (IsSameDirectory(currentExeDirectory, serverExeDirectory) &&
+                File.Exists(Path.Combine(currentExeDirectory, "appsettings.json")))
+            {
+                // We are running from the server share location
+                CopyExeAndJsonToLocalFolderAndRestart();
+                return; // So we don't continue the rest of Main
+            }
+
             if (environment != "Development")
             {
                 string targetDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lynks");
@@ -136,28 +158,9 @@ namespace Kotova.Test1.ClientSide
                 Console.WriteLine("Development Console is enabled.");
             }
 
-            string currentExePath = Application.ExecutablePath;
+            
 
-            VersionInfo embeddedVersionInfo = GetEmbeddedVersionInfo();
-
-            if (embeddedVersionInfo is null)
-            {
-                MessageBox.Show("embeddedVersionInfo is null");
-                throw new Exception("embeddedVersionInfo is null");
-            }
-
-            string currentExeDirectory = Path.GetDirectoryName(currentExePath);
-            string serverExeDirectory = Path.GetDirectoryName(embeddedVersionInfo.ServerInternalFilePath);
-
-            // Compare directories in a case-insensitive way.
-            // Also check if appsettings.json is present in the same folder.
-            if (IsSameDirectory(currentExeDirectory, serverExeDirectory) &&
-                File.Exists(Path.Combine(currentExeDirectory, "appsettings.json")))
-            {
-                // We are running from the server share location
-                CopyExeAndJsonToLocalFolderAndRestart();
-                return; // So we don't continue the rest of Main
-            }
+            
 
             string externalJsonPath = embeddedVersionInfo.ServerVersionInternalPath;
 
