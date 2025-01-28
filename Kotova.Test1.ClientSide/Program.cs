@@ -14,6 +14,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using Kotova.CommonClasses;
 using Microsoft.Extensions.Configuration;
 using ShellLink;
+using System.Linq;
 
 using File = System.IO.File;
 
@@ -168,16 +169,26 @@ namespace Kotova.Test1.ClientSide
                     {
                         if (IsNewerVersion(embeddedVersionInfoFromServer.Version, embeddedVersionInfo.Version))
                         {
-                            MessageBox.Show("Доступна новая версия приложения. Скачиваем и обновляем...");
+                            // Ask the user if they want to download and install the update
+                            MessageBox.Show(
+                                "Доступна новая версия приложения. Скачиваем и обновляем.",
+                                "Обновление"
+                            );
+                                // The user confirmed to update
                             if (embeddedVersionInfo.ServerVersionInternalPath == null)
                             {
                                 MessageBox.Show("embeddedVersionInfo.ServerInternalFilePath is null");
                                 throw new Exception("embeddedVersionInfo.ServerInternalFilePath is null");
                             }
-                            string newFilePath = UpdateApplication(embeddedVersionInfo.ServerInternalFilePath, embeddedVersionInfoFromServer.Version);
+
+                            string newFilePath = UpdateApplication(
+                                    embeddedVersionInfo.ServerInternalFilePath,
+                                    embeddedVersionInfoFromServer.Version
+                                );
+
                             if (newFilePath != null)
                             {
-                                // The application will restart itself after the update
+                                    // The application will restart itself after the update
                                 return;
                             }
                         }
@@ -400,6 +411,11 @@ namespace Kotova.Test1.ClientSide
             string applicationDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string newAppFileName = $"LynKS (v{version}).exe";
             string newAppPath = Path.Combine(applicationDirectory, newAppFileName);
+
+            // Adjust if your appsettings file name or location differs:
+            string newAppSettingsName = "appsettings.json";
+            string newAppSettingsPath = Path.Combine(applicationDirectory, newAppSettingsName);
+
             UpdateProgressForm progressForm = new UpdateProgressForm();
 
             try
@@ -407,45 +423,79 @@ namespace Kotova.Test1.ClientSide
                 progressForm.SetMessage("Скачивается обновление. Пожалуйста, подождите...");
                 progressForm.Show();
 
-                // Use WebClient or HttpClient to download the file from the server
-                WebClient client = new WebClient();
+                // --- STEP 1: Download the EXE file ---
+                WebClient exeClient = new WebClient();
 
-                client.DownloadProgressChanged += (s, e) =>
+                exeClient.DownloadProgressChanged += (s, e) =>
                 {
                     progressForm.UpdateProgress(e.ProgressPercentage);
                 };
 
-                client.DownloadFileCompleted += (s, e) =>
+                // When the EXE completes, we begin the JSON download
+                exeClient.DownloadFileCompleted += (s, e) =>
                 {
                     if (e.Error != null)
                     {
-                        MessageBox.Show($"Не удалось скачать обновление: {e.Error.Message}");
+                        MessageBox.Show($"Не удалось скачать EXE-файл: {e.Error.Message}");
                         progressForm.Close();
                         RemoveUpdateLock();
                         return;
                     }
 
-                    progressForm.SetMessage("Обновление скачено и установлено. Перезапуск...");
-                    Thread.Sleep(1000); // Wait to show the message
-                    progressForm.Close();
+                    // --- STEP 2: Now download the appsettings.json ---
+                    progressForm.SetMessage("EXE-файл загружен. Скачивается appsettings.json...");
+                    progressForm.UpdateProgress(0);
 
-                    // Delete old version files before restarting
-                    DeleteOldVersionFiles(applicationDirectory, newAppFileName);
+                    WebClient jsonClient = new WebClient();
+                    jsonClient.DownloadProgressChanged += (snd, evt) =>
+                    {
+                        // You could reuse the same progress bar for the JSON download
+                        progressForm.UpdateProgress(evt.ProgressPercentage);
+                    };
 
-                    RemoveUpdateLock();
+                    jsonClient.DownloadFileCompleted += (snd, evt) =>
+                    {
+                        if (evt.Error != null)
+                        {
+                            MessageBox.Show($"Не удалось скачать appsettings.json: {evt.Error.Message}");
+                            progressForm.Close();
+                            RemoveUpdateLock();
+                            return;
+                        }
 
-                    TerminateOldInstances(Application.ExecutablePath);
+                        // --- STEP 3: Both files are now downloaded. Proceed with update steps ---
+                        progressForm.SetMessage("Обновление скачено и установлено. Перезапуск...");
+                        Thread.Sleep(1000); // Show the message briefly
+                        progressForm.Close();
 
-                    // Start the new application
-                    RestartApplication(newAppPath, Application.ExecutablePath);
-                    Process.GetCurrentProcess().Kill();
-                    Application.Exit();
+                        // Delete old version files
+                        DeleteOldVersionFiles(applicationDirectory, newAppFileName);
+
+                        RemoveUpdateLock();
+
+                        // Terminate old instances
+                        TerminateOldInstances(Application.ExecutablePath);
+
+                        // Start the new application
+                        RestartApplication(newAppPath, Application.ExecutablePath);
+
+                        // Kill current process to ensure a clean restart
+                        Process.GetCurrentProcess().Kill();
+                        Application.Exit();
+                    };
+
+                    // Actually start downloading the JSON
+                    // You might build the URL differently if the JSON is on a different path.
+                    // For instance: string jsonUrl = fileUrl.Replace(".exe", ".json");
+                    // or pass the JSON URL as a parameter. Here, assume same server folder:
+                    string jsonUrl = fileUrl.Replace("Kotova.Test1.ClientSide.exe", "appsettings.json");
+                    jsonClient.DownloadFileAsync(new Uri(jsonUrl), newAppSettingsPath);
                 };
 
-                // Start the download
-                client.DownloadFileAsync(new Uri(fileUrl), newAppPath);
+                // Start downloading the EXE
+                exeClient.DownloadFileAsync(new Uri(fileUrl), newAppPath);
 
-                // Keep the application running until the download completes
+                // Keep the application running until the downloads complete
                 Application.Run(progressForm);
 
                 return newAppPath;
@@ -458,6 +508,7 @@ namespace Kotova.Test1.ClientSide
                 return null;
             }
         }
+
 
 
         public static void RestartApplication(string newVersionFilePath, string currentExePath)
