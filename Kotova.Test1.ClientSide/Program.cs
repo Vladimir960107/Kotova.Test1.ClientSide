@@ -146,6 +146,19 @@ namespace Kotova.Test1.ClientSide
                 throw new Exception("embeddedVersionInfo is null");
             }
 
+            string currentExeDirectory = Path.GetDirectoryName(currentExePath);
+            string serverExeDirectory = Path.GetDirectoryName(embeddedVersionInfo.ServerInternalFilePath);
+
+            // Compare directories in a case-insensitive way.
+            // Also check if appsettings.json is present in the same folder.
+            if (IsSameDirectory(currentExeDirectory, serverExeDirectory) &&
+                File.Exists(Path.Combine(currentExeDirectory, "appsettings.json")))
+            {
+                // We are running from the server share location
+                CopyExeAndJsonToLocalFolderAndRestart();
+                return; // So we don't continue the rest of Main
+            }
+
             string externalJsonPath = embeddedVersionInfo.ServerVersionInternalPath;
 
             VersionAndReleaseDateInfo embeddedVersionInfoFromServer = VersionChecker.GetEmbeddedVersionInfoFromJson(externalJsonPath);
@@ -225,6 +238,66 @@ namespace Kotova.Test1.ClientSide
             Application.Run(loginForm);
 
             GC.KeepAlive(mutex);
+        }
+
+        private static bool IsSameDirectory(string dir1, string dir2)
+        {
+            if (string.IsNullOrEmpty(dir1) || string.IsNullOrEmpty(dir2))
+                return false;
+
+            // Normalize (remove trailing slashes, etc.)
+            dir1 = Path.GetFullPath(dir1).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            dir2 = Path.GetFullPath(dir2).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            return dir1.Equals(dir2, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void CopyExeAndJsonToLocalFolderAndRestart()
+        {
+            try
+            {
+                // 1. Identify the local Lynks folder
+                string targetDirectory = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Lynks"
+                );
+                Directory.CreateDirectory(targetDirectory);
+
+                // 2. Identify the current EXE and its folder
+                string currentExePath = Application.ExecutablePath;
+                string currentExeDirectory = Path.GetDirectoryName(currentExePath);
+                string exeName = Path.GetFileName(currentExePath);
+
+                // 3. Copy the EXE
+                string targetExePath = Path.Combine(targetDirectory, exeName);
+                File.Copy(currentExePath, targetExePath, true);
+
+                // 4. Copy appsettings.json
+                string sourceJsonPath = Path.Combine(currentExeDirectory, "appsettings.json");
+                string targetJsonPath = Path.Combine(targetDirectory, "appsettings.json");
+
+                if (File.Exists(sourceJsonPath))
+                {
+                    File.Copy(sourceJsonPath, targetJsonPath, true);
+                }
+
+                // 5. Start the app from local folder
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = targetExePath,
+                    // If you want to pass any arguments, add them here, e.g.:
+                    // Arguments = "someArg if needed",
+                    UseShellExecute = false
+                });
+
+                // 6. Close the current instance immediately
+                Environment.Exit(0);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error copying files to local folder: {ex.Message}");
+                // Possibly handle error or just run normally
+            }
         }
 
         private static VersionInfo GetEmbeddedVersionInfo()
