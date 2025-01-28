@@ -144,6 +144,8 @@ namespace Kotova.Test1.ClientSide
                         UseShellExecute = false
                     });
 
+                    CreateNewShortcutForAppOnTheDesktop(); //TODO ДОБАВИТЬ ЭТУ ШТУКУ ТУДА КУДА НУЖЖНО И С ПАРАМЕТРОМ. А ИМЕнно где-то здесь и посмотреть что с этим сделать.
+
                     // Exit the current instance
                     Environment.Exit(0);
                 }
@@ -158,9 +160,10 @@ namespace Kotova.Test1.ClientSide
                 Console.WriteLine("Development Console is enabled.");
             }
 
-            
 
             
+
+
 
             string externalJsonPath = embeddedVersionInfo.ServerVersionInternalPath;
 
@@ -704,6 +707,40 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        public static void CreateNewShortcutForAppOnTheDesktop(string exePath)
+        {
+            try
+            {
+                // Ensure the file exists
+                if (!File.Exists(exePath))
+                {
+                    MessageBox.Show($"The file '{exePath}' does not exist.", "Shortcut Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Get application name without extension
+                string appName = Path.GetFileNameWithoutExtension(exePath);
+
+                // Define shortcut file name
+                string shortcutName = appName + ".lnk";
+
+                // Get the desktop path
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+                // Define the shortcut file path
+                string desktopShortcutPath = Path.Combine(desktopPath, shortcutName);
+
+                // Create shortcut on the desktop
+                CreateShortcut(exePath, desktopShortcutPath);
+
+                MessageBox.Show($"Shortcut for '{appName}' created successfully on the Desktop.", "Shortcut Created", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error creating shortcut: {ex.Message}", "Shortcut Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
 
         private static void CreateNewShortCutForApplicationInTheOldPathAndDesktop(string oldExePath)
         {
@@ -724,22 +761,32 @@ namespace Kotova.Test1.ClientSide
                 string desktopShortcut = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), shortcutName);
 
                 // Create the shortcut in the current path directory
-                ShellLink.Shortcut.CreateShortcut(currentExePath)
-                    .WriteToFile(oldPathShortcut);
-                if (oldPathShortcut == desktopShortcut)
+                CreateShortcut(currentExePath, oldPathShortcut);
+
+                // Ensure the desktop shortcut is created only if it's a different location
+                if (!oldPathShortcut.Equals(desktopShortcut, StringComparison.OrdinalIgnoreCase))
                 {
-                    return; //TODO: Проверь работает ли эта штука!
-                            //Пропуск что если файл лежал на рабочем столе, то не нужно создавать на рабочем столе 2 ярлыка (потому что папки совпадают)
+                    CreateShortcut(currentExePath, desktopShortcut);
                 }
-                // Create the shortcut on the desktop
-                ShellLink.Shortcut.CreateShortcut(currentExePath)
-                    .WriteToFile(desktopShortcut);
 
                 //MessageBox.Show("Shortcuts have been created successfully.");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error creating shortcuts: {ex.Message}");
+            }
+        }
+
+        private static void CreateShortcut(string targetPath, string shortcutPath)
+        {
+            try
+            {
+                var shortcut = ShellLink.Shortcut.CreateShortcut(targetPath);
+                shortcut.WriteToFile(shortcutPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to create shortcut at {shortcutPath}: {ex.Message}", "Shortcut Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
