@@ -133,6 +133,7 @@ namespace Kotova.Test1.ClientSide
                     string currentPath = Process.GetCurrentProcess().MainModule.FileName;
                     System.IO.File.Copy(currentPath, targetPath, true);
                     DeleteAllShortcutsInCurrentDirectoryAndDesktop(Path.GetDirectoryName(currentPath));
+                    CreateNewShortcutForAppOnTheDesktop(targetPath); //TODO: MAIN PRIORITY. опнбепхрэ, врн щрю ьрсйю пюанрюер!
 
                     int oldProcessId = Process.GetCurrentProcess().Id;
 
@@ -144,7 +145,7 @@ namespace Kotova.Test1.ClientSide
                         UseShellExecute = false
                     });
 
-                    CreateNewShortcutForAppOnTheDesktop(); //TODO днаюбхрэ щрс ьрсйс рсдю йсдю мсффмн х я оюпюлерпнл. ю хлеММН ЦДЕ-РН ГДЕЯЭ Х ОНЯЛНРПЕРЭ ВРН Я ЩРХЛ ЯДЕКЮРЭ.
+                    
 
                     // Exit the current instance
                     Environment.Exit(0);
