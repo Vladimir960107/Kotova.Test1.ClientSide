@@ -126,8 +126,9 @@
             // 
             AdditionalSettingsForUserContextMenuStrip.Items.AddRange(new ToolStripItem[] { UpdateInstructionsToolStripMenuItem, ChangeCredentialsToolStripMenuItem, signOutToolStripMenuItem, exitApplicationToolStripMenuItem });
             AdditionalSettingsForUserContextMenuStrip.Name = "AdditionalSettingsForUser";
-            AdditionalSettingsForUserContextMenuStrip.Size = new Size(269, 92);
+            AdditionalSettingsForUserContextMenuStrip.Size = new Size(269, 114);
             AdditionalSettingsForUserContextMenuStrip.Text = "Доп. настройки:";
+            AdditionalSettingsForUserContextMenuStrip.Opening += AdditionalSettingsForUserContextMenuStrip_Opening;
             // 
             // UpdateInstructionsToolStripMenuItem
             // 
@@ -160,7 +161,7 @@
             // AdditionalSettingsPicture
             // 
             AdditionalSettingsPicture.Image = Properties.Resources.setting_line_icon;
-            AdditionalSettingsPicture.Location = new Point(22, 22);
+            AdditionalSettingsPicture.Location = new Point(773, 21);
             AdditionalSettingsPicture.Name = "AdditionalSettingsPicture";
             AdditionalSettingsPicture.Size = new Size(34, 36);
             AdditionalSettingsPicture.SizeMode = PictureBoxSizeMode.Zoom;

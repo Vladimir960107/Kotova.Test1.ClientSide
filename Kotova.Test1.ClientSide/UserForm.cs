@@ -846,5 +846,24 @@ namespace Kotova.Test1.ClientSide
             }
             OpenFile(selectedItem.ToString());
         }
+
+        private void AdditionalSettingsForUserContextMenuStrip_Opening(object sender, CancelEventArgs e)
+        {
+            // If you’re relying on the default opening, you don't want to cancel it:
+            e.Cancel = false;
+
+            // Let's get the default position and shift it, for example.
+            // ContextMenuStrip does not directly give us the "default" point 
+            // but we can compute or adjust with SourceControl, etc.
+            // For simplicity, if you only want a small shift from the cursor:
+            Point cursorPos = Cursor.Position;
+            int menuWidth = AdditionalSettingsForUserContextMenuStrip.Size.Width;
+            Point adjustedPos = new Point(cursorPos.X - menuWidth, cursorPos.Y);
+            AdditionalSettingsForUserContextMenuStrip.Show(adjustedPos);
+
+            // You can let the control handle it or show manually:
+            // AdditionalSettingsForUserContextMenuStrip.Show(adjustedPos);
+            // e.Cancel = true;  // <-- would normally be used if you do a manual Show, but then you'd rely solely on Show().
+        }
     }
 }
