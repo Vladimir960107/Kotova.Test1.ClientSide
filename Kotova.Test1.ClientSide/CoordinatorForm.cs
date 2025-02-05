@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Net.Http;
 using System.IO;
 using Microsoft.AspNetCore.SignalR.Client;
+using Newtonsoft.Json.Serialization;
 
 
 namespace Kotova.Test1.ClientSide
@@ -33,6 +34,7 @@ namespace Kotova.Test1.ClientSide
         private static readonly string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
         private static readonly string DownloadNamesForInitialInstrUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-list-of-people-init-instructions";
         private static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        private static readonly string DownloadTelpEmployeesURL = ConfigurationClass.BASE_TELP_URL_DEVELOPMENT + "/get-filtered-employees";
         private Login_Russian? _loginForm;
         private string? _userName;
         public SignUpForm _signUpForm;
@@ -65,9 +67,6 @@ namespace Kotova.Test1.ClientSide
 
             SignUpForm signUpForm = new SignUpForm(loginForm, this);
             _signUpForm = signUpForm;
-
-
-
         }
 
 
@@ -341,9 +340,6 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show($"Error inserting employee: {errorText}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     uploadNewcommer.Enabled = true;
                 }
-
-
-
             }
             catch (Exception ex)
             {
@@ -949,6 +945,74 @@ namespace Kotova.Test1.ClientSide
         private void ExcelExportForCoordinatorButton_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private async void buttonRefreshTelpDatabase_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    HttpResponseMessage response = await client.GetAsync(DownloadTelpEmployeesURL);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonResponse = await response.Content.ReadAsStringAsync();
+                        var employees = JsonConvert.DeserializeObject<List<TelpEmployeeDto>>(jsonResponse);
+
+                        // Clear existing items
+                        TelpEmployeesListView.Items.Clear();
+
+                        // Set the view mode to Details
+                        TelpEmployeesListView.View = View.Details;
+
+                        // Add columns if they don't exist
+                        if (TelpEmployeesListView.Columns.Count == 0)
+                        {
+                            TelpEmployeesListView.Columns.Add("ФИО", 20);
+                            TelpEmployeesListView.Columns.Add("Отдел", 15);
+                            TelpEmployeesListView.Columns.Add("Должность", 15);
+                            TelpEmployeesListView.Columns.Add("Email", 15);
+                            TelpEmployeesListView.Columns.Add("Табельный номер", 10);
+                        }
+
+                        // Add items
+                        foreach (var employee in employees)
+                        {
+                            var item = new ListViewItem(new[]
+                            {
+                                employee.FullName,
+                                employee.DepartmentName,
+                                employee.PositionName,
+                                employee.Email ?? "",
+                                employee.PersonnelNumber
+                            });
+                            TelpEmployeesListView.Items.Add(item);
+                        }
+
+                        MessageBox.Show("База данных TELP успешно обновлена", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        // Read and show the detailed error message from the server
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка при получении данных: {response.StatusCode}. Подробности: {errorContent}",
+                                        "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // This block is now reserved for network-level issues, etc.
+                MessageBox.Show($"Ошибка при выполнении запроса: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw;
+            }
         }
     }
 }

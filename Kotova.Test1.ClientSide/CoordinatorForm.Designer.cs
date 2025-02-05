@@ -46,6 +46,9 @@
             datePickerEnd = new DateTimePicker();
             label6 = new Label();
             CoordinatorTabControl = new TabControl();
+            tabPage2 = new TabPage();
+            TelpEmployeesListView = new ListView();
+            buttonRefreshTelpDatabase = new Button();
             tabPage3 = new TabPage();
             AddInitialInstructionToNewcomer = new CheckBox();
             label25 = new Label();
@@ -90,8 +93,14 @@
             button1 = new Button();
             UserLabel = new Label();
             label11 = new Label();
+            fullname = new ColumnHeader();
+            department = new ColumnHeader();
+            position = new ColumnHeader();
+            email = new ColumnHeader();
+            personnelNumber = new ColumnHeader();
             tabPage1.SuspendLayout();
             CoordinatorTabControl.SuspendLayout();
+            tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             tabPage5.SuspendLayout();
@@ -210,6 +219,7 @@
             // CoordinatorTabControl
             // 
             CoordinatorTabControl.Controls.Add(tabPage1);
+            CoordinatorTabControl.Controls.Add(tabPage2);
             CoordinatorTabControl.Controls.Add(tabPage3);
             CoordinatorTabControl.Controls.Add(tabPage4);
             CoordinatorTabControl.Controls.Add(tabPage5);
@@ -219,6 +229,37 @@
             CoordinatorTabControl.Size = new Size(989, 426);
             CoordinatorTabControl.TabIndex = 22;
             CoordinatorTabControl.SelectedIndexChanged += CoordinatorTabControl_SelectedIndexChanged;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(TelpEmployeesListView);
+            tabPage2.Controls.Add(buttonRefreshTelpDatabase);
+            tabPage2.Location = new Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(981, 398);
+            tabPage2.TabIndex = 6;
+            tabPage2.Text = "Связь баз данных";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // TelpEmployeesListView
+            // 
+            TelpEmployeesListView.Columns.AddRange(new ColumnHeader[] { fullname, department, position, email, personnelNumber });
+            TelpEmployeesListView.Location = new Point(34, 18);
+            TelpEmployeesListView.Name = "TelpEmployeesListView";
+            TelpEmployeesListView.Size = new Size(831, 295);
+            TelpEmployeesListView.TabIndex = 3;
+            TelpEmployeesListView.UseCompatibleStateImageBehavior = false;
+            // 
+            // buttonRefreshTelpDatabase
+            // 
+            buttonRefreshTelpDatabase.Location = new Point(34, 337);
+            buttonRefreshTelpDatabase.Name = "buttonRefreshTelpDatabase";
+            buttonRefreshTelpDatabase.Size = new Size(155, 43);
+            buttonRefreshTelpDatabase.TabIndex = 2;
+            buttonRefreshTelpDatabase.Text = "Обновление базы данных";
+            buttonRefreshTelpDatabase.UseVisualStyleBackColor = true;
+            buttonRefreshTelpDatabase.Click += buttonRefreshTelpDatabase_Click;
             // 
             // tabPage3
             // 
@@ -656,6 +697,26 @@
             label11.TabIndex = 36;
             label11.Text = "Вы вошли как:";
             // 
+            // fullname
+            // 
+            fullname.Text = "ФИО";
+            // 
+            // department
+            // 
+            department.Text = "Отдел";
+            // 
+            // position
+            // 
+            position.Text = "Должность";
+            // 
+            // email
+            // 
+            email.Text = "Email";
+            // 
+            // personnelNumber
+            // 
+            personnelNumber.Text = "Табельный номер";
+            // 
             // CoordinatorForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -671,6 +732,7 @@
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
             CoordinatorTabControl.ResumeLayout(false);
+            tabPage2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             tabPage4.ResumeLayout(false);
@@ -738,5 +800,13 @@
         private Label label10;
         private Label UserLabel;
         private Label label11;
+        private TabPage tabPage2;
+        private Button buttonRefreshTelpDatabase;
+        private ListView TelpEmployeesListView;
+        private ColumnHeader fullname;
+        private ColumnHeader department;
+        private ColumnHeader position;
+        private ColumnHeader email;
+        private ColumnHeader personnelNumber;
     }
 }
