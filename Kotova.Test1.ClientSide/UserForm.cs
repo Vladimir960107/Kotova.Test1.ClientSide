@@ -26,6 +26,7 @@ using System.Runtime.InteropServices;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Windows.Controls;
+using Control = System.Windows.Forms.Control;
 
 
 namespace Kotova.Test1.ClientSide
@@ -40,7 +41,7 @@ namespace Kotova.Test1.ClientSide
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
         public const string dB_pos_users_pathToInstruction = "path_to_instruction";
 
-
+        public Dictionary<Control, Rectangle> controlsOriginalSizes;
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ СЛЕДУЮЩИЕ СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
@@ -99,22 +100,23 @@ namespace Kotova.Test1.ClientSide
 
         public UserForm(Login_Russian loginForm, string userName)
         {
-            StartTimer();
             InitializeComponent();
+
+
+            // The rest of your initialization code...
+            StartTimer();
             exitApplicationToolStripMenuItem.Enabled = false;
             _loginForm = loginForm;
             _userName = userName;
             UserLabel.Text = _userName;
             PassInstruction.Enabled = false;
-
             InitializeSignalRConnection();
 
-            SignUpForm signUpForm = new SignUpForm(loginForm, this);
-            _signUpForm = signUpForm;
-
+            _signUpForm = new SignUpForm(loginForm, this);
             _ = RefreshNewInstructionsInternal();
             _ = RefreshOldInstructionsInternal();
         }
+
 
         public void EnableExitTheProgrammEntirelyButton()
         {
@@ -865,5 +867,222 @@ namespace Kotova.Test1.ClientSide
             // AdditionalSettingsForUserContextMenuStrip.Show(adjustedPos);
             // e.Cancel = true;  // <-- would normally be used if you do a manual Show, but then you'd rely solely on Show().
         }
+
+        // Add these class-level fields to track window state
+        private bool isMaximized = false;
+        private TabPage lastActiveTab = null;
+
+
+        #region Resize of form for User
+        private void UserForm_Resize(object sender, EventArgs e)
+        {
+            if (controlsOriginalSizes == null || PassedOrNotInstrTabControl == null)
+            {
+                return;
+            }
+
+            // Update our tracking of window state
+            isMaximized = (this.WindowState == FormWindowState.Maximized);
+
+            // Store current tab for reference
+            lastActiveTab = PassedOrNotInstrTabControl.SelectedTab;
+
+            // Call our resize handler
+            HandleTabResize(lastActiveTab);
+        }
+
+        // Add this handler for tab changes
+        private void PassedOrNotInstrTabControl_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            TabPage currentTab = PassedOrNotInstrTabControl.SelectedTab;
+
+            // Only resize if we're maximized
+            if (isMaximized)
+            {
+                HandleTabResize(currentTab);
+            }
+            else
+            {
+                // Restore original sizes for the new tab's controls
+                RestoreTabControlsToOriginalSize(currentTab);
+            }
+
+            lastActiveTab = currentTab;
+        }
+
+        private void HandleTabResize(TabPage currentTab)
+        {
+            Control[] currentTabControls = GetControlsForTab(currentTab);
+            if (currentTabControls == null) return;
+
+            Rectangle originalPanelBounds = controlsOriginalSizes[PassedOrNotInstrTabControl];
+
+            if (isMaximized)
+            {
+                float widthRatio = (float)this.ClientSize.Width / originalPanelBounds.Width;
+                float heightRatio = (float)this.ClientSize.Height / originalPanelBounds.Height;
+
+                PassedOrNotInstrTabControl.Width = (int)(originalPanelBounds.Width * widthRatio);
+                PassedOrNotInstrTabControl.Height = (int)(originalPanelBounds.Height * heightRatio);
+
+                int spacing = 40;
+                int controlWidth = (PassedOrNotInstrTabControl.Width - (3 * spacing)) / 2;
+
+                if (currentTab == NotPassedInstrTabPage)
+                {
+                    // First control and its label
+                    var firstControl = currentTabControls[0]; // ListOfInstructionsForUser
+                    if (controlsOriginalSizes.ContainsKey(firstControl))
+                    {
+                        Rectangle originalBounds = controlsOriginalSizes[firstControl];
+                        firstControl.SetBounds(
+                            spacing,
+                            originalBounds.Y + 40,
+                            controlWidth,
+                            PassedOrNotInstrTabControl.Height - (2 * spacing) - 20
+                        );
+
+                        // Position its label
+                        LabelOfNotPassedInstr.SetBounds(
+                            spacing,
+                            originalBounds.Y,
+                            controlWidth,
+                            20
+                        );
+                    }
+
+                    // Second control and its label
+                    var secondControl = currentTabControls[1]; // FilesOfInstructionCheckedListBox
+                    if (controlsOriginalSizes.ContainsKey(secondControl))
+                    {
+                        Rectangle originalBounds = controlsOriginalSizes[secondControl];
+                        secondControl.SetBounds(
+                            firstControl.Right + spacing,
+                            originalBounds.Y + 40,
+                            controlWidth,
+                            PassedOrNotInstrTabControl.Height - (2 * spacing) - 20
+                        );
+                    }
+                }
+                else if (currentTab == PassedInstrTabPage)
+                {
+                    // Grid control
+                    var gridControl = currentTabControls[0]; // dataGridViewPassedInstructions
+                    if (controlsOriginalSizes.ContainsKey(gridControl))
+                    {
+                        Rectangle originalBounds = controlsOriginalSizes[gridControl];
+                        gridControl.SetBounds(
+                            spacing,
+                            originalBounds.Y + 40,
+                            controlWidth,
+                            PassedOrNotInstrTabControl.Height - (2 * spacing) - 80  // Added bottom spacing
+                        );
+                        // Position its label
+                        LabelOfPassedInstr.SetBounds(
+                            spacing,
+                            originalBounds.Y,
+                            controlWidth,
+                            20
+                        );
+                    }
+
+                    // List box control
+                    var listBoxControl = currentTabControls[1]; // listBoxOfPathsOfPassedInstructions
+                    if (controlsOriginalSizes.ContainsKey(listBoxControl))
+                    {
+                        Rectangle originalBounds = controlsOriginalSizes[listBoxControl];
+                        listBoxControl.SetBounds(
+                            gridControl.Right + spacing,
+                            originalBounds.Y + 40,
+                            controlWidth,
+                            PassedOrNotInstrTabControl.Height - (2 * spacing) - 80  // Added bottom spacing
+                        );
+                    }
+                }
+            }
+            else
+            {
+                RestoreTabControlsToOriginalSize(currentTab);
+            }
+        }
+
+        private Control[] GetControlsForTab(TabPage tab)
+        {
+            if (tab == NotPassedInstrTabPage)
+            {
+                return new Control[]
+                {
+            ListOfInstructionsForUser,
+            FilesOfInstructionCheckedListBox,
+            LabelOfNotPassedInstr,    // Adding the label
+                };
+            }
+            else if (tab == PassedInstrTabPage)
+            {
+                return new Control[]
+                {
+            dataGridViewPassedInstructions,
+            listBoxOfPathsOfPassedInstructions,
+            LabelOfPassedInstr,
+                    // Add any labels for the second tab if they exist
+                };
+            }
+            return null;
+        }
+
+        private void RestoreTabControlsToOriginalSize(TabPage tab)
+        {
+            // Get controls for this tab
+            Control[] tabControls = GetControlsForTab(tab);
+            if (tabControls == null) return;
+
+            // Restore the tab control itself
+            Rectangle tabControlBounds = controlsOriginalSizes[PassedOrNotInstrTabControl];
+            PassedOrNotInstrTabControl.SetBounds(
+                tabControlBounds.X,
+                tabControlBounds.Y,
+                tabControlBounds.Width,
+                tabControlBounds.Height
+            );
+
+            // Restore each control to its original size
+            foreach (Control ctrl in tabControls)
+            {
+                if (!controlsOriginalSizes.ContainsKey(ctrl)) continue;
+
+                Rectangle originalBounds = controlsOriginalSizes[ctrl];
+                ctrl.Visible = true;
+                ctrl.SetBounds(
+                    originalBounds.X,
+                    originalBounds.Y,
+                    originalBounds.Width,
+                    originalBounds.Height
+                );
+            }
+        }
+
+        private void UserForm_Load(object sender, EventArgs e)
+        {
+            controlsOriginalSizes = new Dictionary<Control, Rectangle>();
+
+            // Capture the main tab control
+            controlsOriginalSizes[PassedOrNotInstrTabControl] = PassedOrNotInstrTabControl.Bounds;
+
+            // Capture controls for the first tab
+            controlsOriginalSizes[ListOfInstructionsForUser] = ListOfInstructionsForUser.Bounds;
+            controlsOriginalSizes[FilesOfInstructionCheckedListBox] = FilesOfInstructionCheckedListBox.Bounds;
+            controlsOriginalSizes[LabelOfNotPassedInstr] = LabelOfNotPassedInstr.Bounds;
+            controlsOriginalSizes[LabelOfPassedInstr] = LabelOfPassedInstr.Bounds;
+
+            // Capture controls for the second tab
+            controlsOriginalSizes[dataGridViewPassedInstructions] = dataGridViewPassedInstructions.Bounds;
+            controlsOriginalSizes[listBoxOfPathsOfPassedInstructions] = listBoxOfPathsOfPassedInstructions.Bounds;
+
+            // Capture the tab pages themselves
+            controlsOriginalSizes[NotPassedInstrTabPage] = NotPassedInstrTabPage.Bounds;
+            controlsOriginalSizes[PassedInstrTabPage] = PassedInstrTabPage.Bounds;
+        }
+        #endregion
     }
+
 }

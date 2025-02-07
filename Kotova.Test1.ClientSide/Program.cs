@@ -244,6 +244,7 @@ namespace Kotova.Test1.ClientSide
             Login_Russian loginForm = new Login_Russian();
             Application.Run(loginForm);
 
+
             GC.KeepAlive(mutex);
         }
 

@@ -47,6 +47,9 @@
             label4 = new Label();
             label5 = new Label();
             buttonSyncManualyInstrWithDB = new Button();
+            tableLayoutPanel1 = new TableLayoutPanel();
+            button2 = new Button();
+            tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
             // button1
@@ -243,11 +246,38 @@
             buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
             buttonSyncManualyInstrWithDB.Click += buttonSyncManualyInstrWithDB_Click;
             // 
+            // tableLayoutPanel1
+            // 
+            tableLayoutPanel1.ColumnCount = 3;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95F));
+            tableLayoutPanel1.Controls.Add(button2, 0, 0);
+            tableLayoutPanel1.Location = new Point(638, 460);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 3;
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 41F));
+            tableLayoutPanel1.Size = new Size(327, 135);
+            tableLayoutPanel1.TabIndex = 20;
+            // 
+            // button2
+            // 
+            button2.Anchor = AnchorStyles.None;
+            button2.Location = new Point(20, 12);
+            button2.Name = "button2";
+            button2.Size = new Size(75, 23);
+            button2.TabIndex = 0;
+            button2.Text = "button2";
+            button2.UseVisualStyleBackColor = true;
+            // 
             // Form2
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1107, 338);
+            ClientSize = new Size(1708, 894);
+            Controls.Add(tableLayoutPanel1);
             Controls.Add(buttonSyncManualyInstrWithDB);
             Controls.Add(label5);
             Controls.Add(label4);
@@ -270,6 +300,7 @@
             Margin = new Padding(3, 2, 3, 2);
             Name = "Form2";
             Text = "Form2";
+            tableLayoutPanel1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -295,5 +326,7 @@
         private Label label4;
         private Label label5;
         private Button buttonSyncManualyInstrWithDB;
+        private TableLayoutPanel tableLayoutPanel1;
+        private Button button2;
     }
 }

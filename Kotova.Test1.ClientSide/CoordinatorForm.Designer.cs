@@ -48,6 +48,11 @@
             CoordinatorTabControl = new TabControl();
             tabPage2 = new TabPage();
             TelpEmployeesListView = new ListView();
+            fullname = new ColumnHeader();
+            department = new ColumnHeader();
+            position = new ColumnHeader();
+            email = new ColumnHeader();
+            personnelNumber = new ColumnHeader();
             buttonRefreshTelpDatabase = new Button();
             tabPage3 = new TabPage();
             AddInitialInstructionToNewcomer = new CheckBox();
@@ -93,11 +98,6 @@
             button1 = new Button();
             UserLabel = new Label();
             label11 = new Label();
-            fullname = new ColumnHeader();
-            department = new ColumnHeader();
-            position = new ColumnHeader();
-            email = new ColumnHeader();
-            personnelNumber = new ColumnHeader();
             tabPage1.SuspendLayout();
             CoordinatorTabControl.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -245,11 +245,34 @@
             // TelpEmployeesListView
             // 
             TelpEmployeesListView.Columns.AddRange(new ColumnHeader[] { fullname, department, position, email, personnelNumber });
+            TelpEmployeesListView.FullRowSelect = true;
             TelpEmployeesListView.Location = new Point(34, 18);
+            TelpEmployeesListView.MultiSelect = false;
             TelpEmployeesListView.Name = "TelpEmployeesListView";
             TelpEmployeesListView.Size = new Size(831, 295);
             TelpEmployeesListView.TabIndex = 3;
             TelpEmployeesListView.UseCompatibleStateImageBehavior = false;
+            TelpEmployeesListView.DoubleClick += TelpEmployeesListView_DoubleClick;
+            // 
+            // fullname
+            // 
+            fullname.Text = "ФИО";
+            // 
+            // department
+            // 
+            department.Text = "Отдел";
+            // 
+            // position
+            // 
+            position.Text = "Должность";
+            // 
+            // email
+            // 
+            email.Text = "Email";
+            // 
+            // personnelNumber
+            // 
+            personnelNumber.Text = "Табельный номер";
             // 
             // buttonRefreshTelpDatabase
             // 
@@ -696,26 +719,6 @@
             label11.Size = new Size(88, 15);
             label11.TabIndex = 36;
             label11.Text = "Вы вошли как:";
-            // 
-            // fullname
-            // 
-            fullname.Text = "ФИО";
-            // 
-            // department
-            // 
-            department.Text = "Отдел";
-            // 
-            // position
-            // 
-            position.Text = "Должность";
-            // 
-            // email
-            // 
-            email.Text = "Email";
-            // 
-            // personnelNumber
-            // 
-            personnelNumber.Text = "Табельный номер";
             // 
             // CoordinatorForm
             // 

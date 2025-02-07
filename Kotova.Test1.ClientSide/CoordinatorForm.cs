@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.IO;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json.Serialization;
+//using System.Windows.Controls;
 
 
 namespace Kotova.Test1.ClientSide
@@ -1012,6 +1013,18 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 throw;
+            }
+        }
+
+        private void TelpEmployeesListView_DoubleClick(object sender, EventArgs e)
+        {
+            if (TelpEmployeesListView.SelectedItems.Count > 0)
+            {
+                // Get the first selected item (the full row is selected because of FullRowSelect = true)
+                ListViewItem selectedItem = TelpEmployeesListView.SelectedItems[0];
+
+                // Retrieve the text from the first column
+                string? personnelNumberString = !string.IsNullOrEmpty(selectedItem.SubItems[4].Text) ? selectedItem.SubItems[4].Text : null;
             }
         }
     }
