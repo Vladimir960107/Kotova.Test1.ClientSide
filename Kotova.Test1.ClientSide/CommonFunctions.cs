@@ -33,6 +33,25 @@ namespace Kotova.Test1.ClientSide
             base.WndProc(ref m);
         }
     }
+    public static class CommonRoleNamesForCoordinatorForms
+    {
+        public static readonly Dictionary<string, string> RoleDisplayNames = new Dictionary<string, string>
+        {
+            { "user", "Сотрудник" },
+            { "chief of department", "Руководство ОТДЕЛА" },
+            { "coordinator", "Охрана труда" },
+            { "management", "Руководство ФИЛИАЛА" }
+        };
+
+        // And an inverse dictionary if we need to convert back:
+        public static readonly Dictionary<string, string> RoleDBNames = new Dictionary<string, string>
+        {
+            { "Сотрудник", "user" },
+            { "Руководство ОТДЕЛА", "chief of department" },
+            { "Охрана труда", "coordinator" },
+            { "Руководство ФИЛИАЛА", "management" }
+        };
+    }
 
 
 }

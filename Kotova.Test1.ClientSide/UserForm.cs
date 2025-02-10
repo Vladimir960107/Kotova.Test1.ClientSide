@@ -600,7 +600,6 @@ namespace Kotova.Test1.ClientSide
                     OpenFile(selectedPath);
                 }
             });
-
         }
 
         private bool AreAllItemsChecked(CheckedListBox checkedListBox)
@@ -1083,6 +1082,8 @@ namespace Kotova.Test1.ClientSide
             controlsOriginalSizes[PassedInstrTabPage] = PassedInstrTabPage.Bounds;
         }
         #endregion
+
+
     }
 
 }

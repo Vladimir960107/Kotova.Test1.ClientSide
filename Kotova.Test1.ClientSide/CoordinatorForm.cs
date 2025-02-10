@@ -202,6 +202,8 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        
+
         private List<string>? RolesDBToRoleNames(List<string>? list)
         {
             var roles = new List<string>();
@@ -948,7 +950,7 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private async void buttonRefreshTelpDatabase_Click(object sender, EventArgs e)
+        private async Task RefreshTelpDatabaseAsync()
         {
             try
             {
@@ -984,47 +986,62 @@ namespace Kotova.Test1.ClientSide
                         {
                             var item = new ListViewItem(new[]
                             {
-                                employee.FullName,
-                                employee.DepartmentName,
-                                employee.PositionName,
-                                employee.Email ?? "",
-                                employee.PersonnelNumber
-                            });
+                        employee.FullName,
+                        employee.DepartmentName,
+                        employee.PositionName,
+                        employee.Email ?? "",
+                        employee.PersonnelNumber
+                    });
                             TelpEmployeesListView.Items.Add(item);
                         }
 
-                        MessageBox.Show("База данных TELP успешно обновлена", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        System.Windows.Forms.MessageBox.Show("База данных TELP успешно обновлена", "Успех",
+                            System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
                     }
                     else
                     {
-                        // Read and show the detailed error message from the server
                         string errorContent = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Ошибка при получении данных: {response.StatusCode}. Подробности: {errorContent}",
-                                        "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        System.Windows.Forms.MessageBox.Show(
+                            $"Ошибка при получении данных: {response.StatusCode}. Подробности: {errorContent}",
+                            "Ошибка", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                     }
                 }
             }
             catch (HttpRequestException ex)
             {
-                // This block is now reserved for network-level issues, etc.
-                MessageBox.Show($"Ошибка при выполнении запроса: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                System.Windows.Forms.MessageBox.Show($"Ошибка при выполнении запроса: {ex.Message}",
+                    "Ошибка", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                System.Windows.Forms.MessageBox.Show($"Неожиданная ошибка: {ex.Message}",
+                    "Ошибка", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 throw;
             }
+        }
+
+        private async void buttonRefreshTelpDatabase_Click(object sender, EventArgs e)
+        {
+            await RefreshTelpDatabaseAsync();
         }
 
         private void TelpEmployeesListView_DoubleClick(object sender, EventArgs e)
         {
             if (TelpEmployeesListView.SelectedItems.Count > 0)
             {
-                // Get the first selected item (the full row is selected because of FullRowSelect = true)
                 ListViewItem selectedItem = TelpEmployeesListView.SelectedItems[0];
+                var employeeDto = new TelpEmployeeDto
+                {
+                    FullName = selectedItem.SubItems[0].Text,
+                    DepartmentName = selectedItem.SubItems[1].Text,
+                    PositionName = selectedItem.SubItems[2].Text,
+                    Email = selectedItem.SubItems[3].Text,
+                    PersonnelNumber = selectedItem.SubItems[4].Text
+                };
 
-                // Retrieve the text from the first column
-                string? personnelNumberString = !string.IsNullOrEmpty(selectedItem.SubItems[4].Text) ? selectedItem.SubItems[4].Text : null;
+                var dbConnectionForm = new CoordinatorForm_DBConnection(_loginForm, employeeDto);
+                dbConnectionForm.Closed += async (s, args) => await RefreshTelpDatabaseAsync();
+                dbConnectionForm.Show();
             }
         }
     }

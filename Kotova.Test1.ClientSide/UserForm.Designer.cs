@@ -62,6 +62,9 @@
             LabelOfPassedInstr = new Label();
             tableLayoutPanel4 = new TableLayoutPanel();
             tableLayoutPanel3 = new TableLayoutPanel();
+            tableLayoutPanel7 = new TableLayoutPanel();
+            tableLayoutPanel8 = new TableLayoutPanel();
+            tableLayoutPanel9 = new TableLayoutPanel();
             AdditionalSettingsForUserContextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)AdditionalSettingsPicture).BeginInit();
             PassedOrNotInstrTabControl.SuspendLayout();
@@ -72,34 +75,41 @@
             tableLayoutPanel5.SuspendLayout();
             tableLayoutPanel6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPassedInstructions).BeginInit();
+            tableLayoutPanel7.SuspendLayout();
+            tableLayoutPanel8.SuspendLayout();
+            tableLayoutPanel9.SuspendLayout();
             SuspendLayout();
             // 
             // label1
             // 
+            label1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             label1.AutoSize = true;
-            label1.Location = new Point(25, 31);
+            label1.Location = new Point(3, 0);
             label1.Name = "label1";
-            label1.Size = new Size(88, 15);
+            label1.Size = new Size(91, 38);
             label1.TabIndex = 22;
             label1.Text = "Вы вошли как:";
+            label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // UserLabel
             // 
             UserLabel.AutoSize = true;
-            UserLabel.Location = new Point(128, 31);
+            UserLabel.Dock = DockStyle.Fill;
+            UserLabel.Location = new Point(100, 0);
             UserLabel.Name = "UserLabel";
-            UserLabel.Size = new Size(81, 15);
+            UserLabel.Size = new Size(91, 38);
             UserLabel.TabIndex = 23;
             UserLabel.Text = "UnknownUser";
+            UserLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // ListOfInstructionsForUser
             // 
-            ListOfInstructionsForUser.Dock = DockStyle.Fill;
+            ListOfInstructionsForUser.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             ListOfInstructionsForUser.FormattingEnabled = true;
             ListOfInstructionsForUser.ItemHeight = 15;
             ListOfInstructionsForUser.Location = new Point(3, 3);
             ListOfInstructionsForUser.Name = "ListOfInstructionsForUser";
-            ListOfInstructionsForUser.Size = new Size(362, 304);
+            ListOfInstructionsForUser.Size = new Size(353, 334);
             ListOfInstructionsForUser.TabIndex = 24;
             ListOfInstructionsForUser.SelectedValueChanged += ListOfInstructions_SelectedValueChanged;
             // 
@@ -109,7 +119,7 @@
             LabelOfNotPassedInstr.AutoSize = true;
             LabelOfNotPassedInstr.Location = new Point(3, 0);
             LabelOfNotPassedInstr.Name = "LabelOfNotPassedInstr";
-            LabelOfNotPassedInstr.Size = new Size(736, 40);
+            LabelOfNotPassedInstr.Size = new Size(718, 40);
             LabelOfNotPassedInstr.TabIndex = 25;
             LabelOfNotPassedInstr.Text = "Лист непройденных инструктажей:";
             LabelOfNotPassedInstr.TextAlign = ContentAlignment.MiddleLeft;
@@ -117,7 +127,7 @@
             // PassInstruction
             // 
             PassInstruction.Anchor = AnchorStyles.None;
-            PassInstruction.Location = new Point(247, 366);
+            PassInstruction.Location = new Point(238, 403);
             PassInstruction.Name = "PassInstruction";
             PassInstruction.Size = new Size(248, 19);
             PassInstruction.TabIndex = 28;
@@ -127,12 +137,12 @@
             // 
             // FilesOfInstructionCheckedListBox
             // 
-            FilesOfInstructionCheckedListBox.Dock = DockStyle.Fill;
+            FilesOfInstructionCheckedListBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             FilesOfInstructionCheckedListBox.FormattingEnabled = true;
             FilesOfInstructionCheckedListBox.HorizontalScrollbar = true;
-            FilesOfInstructionCheckedListBox.Location = new Point(371, 3);
+            FilesOfInstructionCheckedListBox.Location = new Point(362, 3);
             FilesOfInstructionCheckedListBox.Name = "FilesOfInstructionCheckedListBox";
-            FilesOfInstructionCheckedListBox.Size = new Size(362, 304);
+            FilesOfInstructionCheckedListBox.Size = new Size(353, 328);
             FilesOfInstructionCheckedListBox.TabIndex = 30;
             FilesOfInstructionCheckedListBox.ItemCheck += FilesOfInstructionCheckedListBox_ItemCheck;
             // 
@@ -174,11 +184,11 @@
             // 
             // AdditionalSettingsPicture
             // 
-            AdditionalSettingsPicture.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            AdditionalSettingsPicture.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             AdditionalSettingsPicture.Image = Properties.Resources.setting_line_icon;
-            AdditionalSettingsPicture.Location = new Point(724, 21);
+            AdditionalSettingsPicture.Location = new Point(691, 3);
             AdditionalSettingsPicture.Name = "AdditionalSettingsPicture";
-            AdditionalSettingsPicture.Size = new Size(34, 36);
+            AdditionalSettingsPicture.Size = new Size(44, 38);
             AdditionalSettingsPicture.SizeMode = PictureBoxSizeMode.Zoom;
             AdditionalSettingsPicture.TabIndex = 35;
             AdditionalSettingsPicture.TabStop = false;
@@ -188,10 +198,11 @@
             // 
             PassedOrNotInstrTabControl.Controls.Add(NotPassedInstrTabPage);
             PassedOrNotInstrTabControl.Controls.Add(PassedInstrTabPage);
-            PassedOrNotInstrTabControl.Location = new Point(12, 86);
+            PassedOrNotInstrTabControl.Dock = DockStyle.Fill;
+            PassedOrNotInstrTabControl.Location = new Point(3, 53);
             PassedOrNotInstrTabControl.Name = "PassedOrNotInstrTabControl";
             PassedOrNotInstrTabControl.SelectedIndex = 0;
-            PassedOrNotInstrTabControl.Size = new Size(756, 430);
+            PassedOrNotInstrTabControl.Size = new Size(738, 467);
             PassedOrNotInstrTabControl.TabIndex = 36;
             PassedOrNotInstrTabControl.SelectedIndexChanged += PassedOrNotInstrTabControl_SelectedIndexChanged;
             PassedOrNotInstrTabControl.TabIndexChanged += PassedOrNotInstrTabControl_TabIndexChanged;
@@ -202,7 +213,7 @@
             NotPassedInstrTabPage.Location = new Point(4, 24);
             NotPassedInstrTabPage.Name = "NotPassedInstrTabPage";
             NotPassedInstrTabPage.Padding = new Padding(3);
-            NotPassedInstrTabPage.Size = new Size(748, 402);
+            NotPassedInstrTabPage.Size = new Size(730, 439);
             NotPassedInstrTabPage.TabIndex = 0;
             NotPassedInstrTabPage.Text = "Непройденные инструктажи";
             NotPassedInstrTabPage.UseVisualStyleBackColor = true;
@@ -221,7 +232,7 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
-            tableLayoutPanel1.Size = new Size(742, 396);
+            tableLayoutPanel1.Size = new Size(724, 433);
             tableLayoutPanel1.TabIndex = 31;
             // 
             // tableLayoutPanel2
@@ -237,7 +248,7 @@
             tableLayoutPanel2.RowCount = 1;
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tableLayoutPanel2.Size = new Size(736, 310);
+            tableLayoutPanel2.Size = new Size(718, 347);
             tableLayoutPanel2.TabIndex = 0;
             // 
             // PassedInstrTabPage
@@ -246,7 +257,7 @@
             PassedInstrTabPage.Location = new Point(4, 24);
             PassedInstrTabPage.Name = "PassedInstrTabPage";
             PassedInstrTabPage.Padding = new Padding(3);
-            PassedInstrTabPage.Size = new Size(1521, 581);
+            PassedInstrTabPage.Size = new Size(730, 439);
             PassedInstrTabPage.TabIndex = 1;
             PassedInstrTabPage.Text = "Пройденные инструктажи";
             PassedInstrTabPage.UseVisualStyleBackColor = true;
@@ -263,7 +274,7 @@
             tableLayoutPanel5.RowCount = 2;
             tableLayoutPanel5.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
             tableLayoutPanel5.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanel5.Size = new Size(1515, 575);
+            tableLayoutPanel5.Size = new Size(724, 433);
             tableLayoutPanel5.TabIndex = 37;
             // 
             // tableLayoutPanel6
@@ -279,7 +290,7 @@
             tableLayoutPanel6.RowCount = 1;
             tableLayoutPanel6.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel6.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tableLayoutPanel6.Size = new Size(1509, 529);
+            tableLayoutPanel6.Size = new Size(718, 387);
             tableLayoutPanel6.TabIndex = 0;
             // 
             // listBoxOfPathsOfPassedInstructions
@@ -287,9 +298,9 @@
             listBoxOfPathsOfPassedInstructions.Dock = DockStyle.Fill;
             listBoxOfPathsOfPassedInstructions.FormattingEnabled = true;
             listBoxOfPathsOfPassedInstructions.ItemHeight = 15;
-            listBoxOfPathsOfPassedInstructions.Location = new Point(757, 3);
+            listBoxOfPathsOfPassedInstructions.Location = new Point(362, 3);
             listBoxOfPathsOfPassedInstructions.Name = "listBoxOfPathsOfPassedInstructions";
-            listBoxOfPathsOfPassedInstructions.Size = new Size(749, 523);
+            listBoxOfPathsOfPassedInstructions.Size = new Size(353, 381);
             listBoxOfPathsOfPassedInstructions.TabIndex = 35;
             listBoxOfPathsOfPassedInstructions.DoubleClick += listBoxOfPathsOfPassedInstructions_DoubleClick;
             // 
@@ -302,7 +313,7 @@
             dataGridViewPassedInstructions.MultiSelect = false;
             dataGridViewPassedInstructions.Name = "dataGridViewPassedInstructions";
             dataGridViewPassedInstructions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridViewPassedInstructions.Size = new Size(748, 523);
+            dataGridViewPassedInstructions.Size = new Size(353, 381);
             dataGridViewPassedInstructions.TabIndex = 34;
             dataGridViewPassedInstructions.CellClick += dataGridViewPassedInstructions_CellClick;
             dataGridViewPassedInstructions.SelectionChanged += dataGridViewPassedInstructions_SelectionChanged;
@@ -359,15 +370,58 @@
             tableLayoutPanel3.Size = new Size(200, 100);
             tableLayoutPanel3.TabIndex = 0;
             // 
+            // tableLayoutPanel7
+            // 
+            tableLayoutPanel7.ColumnCount = 1;
+            tableLayoutPanel7.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel7.Controls.Add(tableLayoutPanel8, 0, 0);
+            tableLayoutPanel7.Controls.Add(PassedOrNotInstrTabControl, 0, 1);
+            tableLayoutPanel7.Dock = DockStyle.Fill;
+            tableLayoutPanel7.Location = new Point(0, 0);
+            tableLayoutPanel7.Name = "tableLayoutPanel7";
+            tableLayoutPanel7.RowCount = 2;
+            tableLayoutPanel7.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tableLayoutPanel7.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel7.Size = new Size(744, 523);
+            tableLayoutPanel7.TabIndex = 37;
+            // 
+            // tableLayoutPanel8
+            // 
+            tableLayoutPanel8.ColumnCount = 3;
+            tableLayoutPanel8.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
+            tableLayoutPanel8.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel8.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50F));
+            tableLayoutPanel8.Controls.Add(tableLayoutPanel9, 0, 0);
+            tableLayoutPanel8.Controls.Add(AdditionalSettingsPicture, 2, 0);
+            tableLayoutPanel8.Dock = DockStyle.Fill;
+            tableLayoutPanel8.Location = new Point(3, 3);
+            tableLayoutPanel8.Name = "tableLayoutPanel8";
+            tableLayoutPanel8.RowCount = 1;
+            tableLayoutPanel8.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel8.Size = new Size(738, 44);
+            tableLayoutPanel8.TabIndex = 0;
+            // 
+            // tableLayoutPanel9
+            // 
+            tableLayoutPanel9.ColumnCount = 2;
+            tableLayoutPanel9.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableLayoutPanel9.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tableLayoutPanel9.Controls.Add(label1, 0, 0);
+            tableLayoutPanel9.Controls.Add(UserLabel, 1, 0);
+            tableLayoutPanel9.Dock = DockStyle.Fill;
+            tableLayoutPanel9.Location = new Point(3, 3);
+            tableLayoutPanel9.Name = "tableLayoutPanel9";
+            tableLayoutPanel9.RowCount = 1;
+            tableLayoutPanel9.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel9.Size = new Size(194, 38);
+            tableLayoutPanel9.TabIndex = 38;
+            // 
             // UserForm
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
             AutoScaleMode = AutoScaleMode.Dpi;
-            ClientSize = new Size(780, 532);
-            Controls.Add(PassedOrNotInstrTabControl);
-            Controls.Add(AdditionalSettingsPicture);
-            Controls.Add(UserLabel);
-            Controls.Add(label1);
+            ClientSize = new Size(744, 523);
+            Controls.Add(tableLayoutPanel7);
             Name = "UserForm";
             Text = "User";
             FormClosing += UserForm_FormClosing;
@@ -385,8 +439,11 @@
             tableLayoutPanel5.PerformLayout();
             tableLayoutPanel6.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewPassedInstructions).EndInit();
+            tableLayoutPanel7.ResumeLayout(false);
+            tableLayoutPanel8.ResumeLayout(false);
+            tableLayoutPanel9.ResumeLayout(false);
+            tableLayoutPanel9.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -418,5 +475,8 @@
         private TableLayoutPanel tableLayoutPanel6;
         private TableLayoutPanel tableLayoutPanel4;
         private TableLayoutPanel tableLayoutPanel3;
+        private TableLayoutPanel tableLayoutPanel7;
+        private TableLayoutPanel tableLayoutPanel8;
+        private TableLayoutPanel tableLayoutPanel9;
     }
 }
