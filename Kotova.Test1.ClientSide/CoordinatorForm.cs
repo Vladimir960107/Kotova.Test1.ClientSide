@@ -969,16 +969,19 @@ namespace Kotova.Test1.ClientSide
                         TelpEmployeesListView.Items.Clear();
 
                         // Set the view mode to Details
+                        TelpEmployeesListView.FullRowSelect = true;
                         TelpEmployeesListView.View = View.Details;
+                        TelpEmployeesListView.GridLines = true;
+                        TelpEmployeesListView.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 
                         // Add columns if they don't exist
                         if (TelpEmployeesListView.Columns.Count == 0)
                         {
-                            TelpEmployeesListView.Columns.Add("ФИО", 20);
-                            TelpEmployeesListView.Columns.Add("Отдел", 15);
-                            TelpEmployeesListView.Columns.Add("Должность", 15);
-                            TelpEmployeesListView.Columns.Add("Email", 15);
-                            TelpEmployeesListView.Columns.Add("Табельный номер", 10);
+                            TelpEmployeesListView.Columns.Add("ФИО", -2);
+                            TelpEmployeesListView.Columns.Add("Отдел", -2);
+                            TelpEmployeesListView.Columns.Add("Должность", -2);
+                            TelpEmployeesListView.Columns.Add("Email", -2);
+                            TelpEmployeesListView.Columns.Add("Табельный номер", -2);
                         }
 
                         // Add items
@@ -994,9 +997,9 @@ namespace Kotova.Test1.ClientSide
                     });
                             TelpEmployeesListView.Items.Add(item);
                         }
-
+                        ResizeListViewColumns(TelpEmployeesListView);
                         System.Windows.Forms.MessageBox.Show("База данных TELP успешно обновлена", "Успех",
-                            System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+                        System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
                     }
                     else
                     {
@@ -1017,6 +1020,23 @@ namespace Kotova.Test1.ClientSide
                 System.Windows.Forms.MessageBox.Show($"Неожиданная ошибка: {ex.Message}",
                     "Ошибка", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 throw;
+            }
+        }
+
+        private void ResizeListViewColumns(System.Windows.Forms.ListView listView)
+        {
+            foreach (ColumnHeader column in listView.Columns)
+            {
+                column.Width = -2; // Auto-size column based on content
+            }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (TelpEmployeesListView != null)
+            {
+                ResizeListViewColumns(TelpEmployeesListView);
             }
         }
 

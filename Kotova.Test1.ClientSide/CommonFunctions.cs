@@ -33,7 +33,7 @@ namespace Kotova.Test1.ClientSide
             base.WndProc(ref m);
         }
     }
-    public static class CommonRoleNamesForCoordinatorForms
+    public static class CommonRoleNamesForCoordinatorForms // TODO: СДЛЕАТЬ ЭТО В БАЗЕ ДАННЫХ И В КЛАСС CACHE, И СКАЧИВАТЬ СЮДА В ПРОГРАММУ ИЗ БАЗЫ ДАННЫХ!
     {
         public static readonly Dictionary<string, string> RoleDisplayNames = new Dictionary<string, string>
         {
@@ -51,6 +51,52 @@ namespace Kotova.Test1.ClientSide
             { "Охрана труда", "coordinator" },
             { "Руководство ФИЛИАЛА", "management" }
         };
+    }
+
+    public static class InstructionTypeMappings
+    {
+        // Maps numeric IDs to instruction names
+        public static readonly Dictionary<int, string> IdToName = new Dictionary<int, string>
+        {
+            { 0, "Вводный" },
+            { 1, "Внеплановый" },
+            { 2, "Первичный" },
+            { 3, "Первичный (для водителей)" },
+            { 4, "Целевой" }
+        };
+
+            // Maps instruction names to numeric IDs
+            public static readonly Dictionary<string, int> NameToId = new Dictionary<string, int>
+        {
+            { "Вводный", 0 },
+            { "Внеплановый", 1 },
+            { "Первичный", 2 },
+            { "Первичный (для водителей)", 3 },
+            { "Целевой", 4 }
+        };
+
+        // Helper method to get name from ID
+        public static string GetInstructionName(int id)
+        {
+            return IdToName.TryGetValue(id, out string name) ? name : "Unknown";
+        }
+
+        // Helper method to get ID from name
+        public static int GetInstructionId(string name)
+        {
+            return NameToId.TryGetValue(name, out int id) ? id : -1;
+        }
+    }
+
+    public static class ComboBoxExtensions
+    {
+        public static void PreventMouseWheelScroll(this System.Windows.Controls.ComboBox comboBox)
+        {
+            comboBox.PreviewMouseWheel += (s, e) =>
+            {
+                e.Handled = true;
+            };
+        }
     }
 
 

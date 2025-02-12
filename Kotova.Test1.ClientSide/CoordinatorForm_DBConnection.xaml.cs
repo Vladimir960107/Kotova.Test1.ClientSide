@@ -10,6 +10,8 @@ using System.Windows.Media;
 using Newtonsoft.Json;
 using System.Linq;
 using Kotova.CommonClasses;
+using System.Text;
+using MessageBox = System.Windows.MessageBox;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -17,6 +19,8 @@ namespace Kotova.Test1.ClientSide
     {
         private static readonly string DownloadDepartmentsForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/download-list-of-departments";
         private static readonly string DownloadRolesForUsersUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-roles-for-newcomer";
+        private static readonly string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
+        private static readonly string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-login-and-password-for-newcommer";
 
         // Regular expressions for validation
         private static readonly Regex RussianNameRegex = new Regex(@"^[А-ЯЁа-яё]+([ -][А-ЯЁа-яё]+)*$");
@@ -28,11 +32,15 @@ namespace Kotova.Test1.ClientSide
         public CoordinatorForm_DBConnection(Login_Russian loginForm, TelpEmployeeDto employeeData = null)
         {
             InitializeComponent();
+            DepartmentForNewcomerComboBox.PreventMouseWheelScroll();
+            RoleOfNewcomerComboBox.PreventMouseWheelScroll();
             _loginForm = loginForm;
             _employeeData = employeeData;
 
             // Load initial data asynchronously
             InitializeFormAsync();
+            
+
         }
 
         private async void InitializeFormAsync()
@@ -68,6 +76,9 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        
+
+
         private async Task LoadDepartmentsAsync()
         {
             using (HttpClient client = new HttpClient())
@@ -83,7 +94,7 @@ namespace Kotova.Test1.ClientSide
 
                 foreach (var dept in departments)
                 {
-                    DepartmentForNewcomer.Items.Add(dept);
+                    DepartmentForNewcomerComboBox.Items.Add(dept);
                 }
             }
         }
@@ -105,7 +116,7 @@ namespace Kotova.Test1.ClientSide
                 {
                     if (CommonRoleNamesForCoordinatorForms.RoleDisplayNames.TryGetValue(role, out string displayName))
                     {
-                        RoleOfNewcomerListBox.Items.Add(displayName);
+                        RoleOfNewcomerComboBox.Items.Add(displayName);
                     }
                 }
             }
@@ -122,14 +133,13 @@ namespace Kotova.Test1.ClientSide
 
             personnelNumberTextBox.Text = _employeeData.PersonnelNumber;
             personnelNumberTextBox.IsReadOnly = true;
-
             // Select and disable department if it exists in the list
-            var deptItem = DepartmentForNewcomer.Items.Cast<string>()
-                .FirstOrDefault(d => d == _employeeData.DepartmentName);
+            var deptItem = DepartmentForNewcomerComboBox.Items.Cast<string>()
+                .FirstOrDefault(d => string.Equals(d.Trim(), _employeeData.DepartmentName.Trim(), StringComparison.OrdinalIgnoreCase));
             if (deptItem != null)
             {
-                DepartmentForNewcomer.SelectedItem = deptItem;
-                DepartmentForNewcomer.IsEnabled = false;
+                DepartmentForNewcomerComboBox.SelectedItem = deptItem;
+                DepartmentForNewcomerComboBox.IsEnabled = false;
             }
         }
 
@@ -189,45 +199,146 @@ namespace Kotova.Test1.ClientSide
             textBox.ToolTip = null;
         }
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             uploadNewcommer.IsEnabled = false;
 
-            if (!ValidateAllFields())
+            try
             {
-                System.Windows.MessageBox.Show("Пожалуйста, проверьте правильность заполнения всех полей",
-                              "Ошибка валидации",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Warning);
-                uploadNewcommer.IsEnabled = true;
-                return;
-            }
-
-            if (dateOfBirthDateTimePicker.SelectedDate.HasValue)
-            {
-                var age = DateTime.Today.Year - dateOfBirthDateTimePicker.SelectedDate.Value.Year;
-                if (dateOfBirthDateTimePicker.SelectedDate.Value > DateTime.Today.AddYears(-age)) age--;
-
-                if (age < 18)
+                // Enhanced validation
+                if (!ValidateAllFields())
                 {
-                    System.Windows.MessageBox.Show("Сотрудник должен быть старше 18 лет",
+                    MessageBox.Show("Пожалуйста, проверьте правильность заполнения всех полей",
                                   "Ошибка валидации",
                                   MessageBoxButton.OK,
                                   MessageBoxImage.Warning);
                     uploadNewcommer.IsEnabled = true;
                     return;
                 }
+
+                // Create Employee object (similar to CoordinatorForm)
+                Employee newEmployee = new Employee
+                {
+                    personnel_number = personnelNumberTextBox.Text,
+                    full_name = employeeFullNameTextBox.Text,
+                    job_position = employeesPositionTextBox.Text,
+                    department = DepartmentForNewcomerComboBox.SelectedItem?.ToString(),
+                    group = null,
+                    birth_date = dateOfBirthDateTimePicker.SelectedDate ?? DateTime.Now,
+                    gender = 3, // Default as in CoordinatorForm
+                    is_working_in_department = true
+                };
+
+                // Get role name in DB format
+                string? roleName = RoleNameToRoleDB(RoleOfNewcomerComboBox.SelectedItem?.ToString());
+                if (string.IsNullOrEmpty(roleName))
+                {
+                    MessageBox.Show("Выбрана недопустимая роль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    uploadNewcommer.IsEnabled = true;
+                    return;
+                }
+
+                string isEmployeeRequireInitInstr = AddInitialInstructionToNewcomer.IsChecked?.ToString() ?? "False";
+
+                // Insert employee using the same API endpoint as CoordinatorForm
+                using (HttpClient client = new HttpClient())
+                {
+                    string token = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                    // First API call - Insert Employee
+                    var response = await InsertNewEmployeeAsync(newEmployee, token);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Second API call - Get Login/Password
+                        var loginPasswordResponse = await GetLoginPassword(
+                            new List<string> {
+                        newEmployee.personnel_number,
+                        newEmployee.department,
+                        "1", // Default workplace number since this field was removed from WPF form
+                        roleName,
+                        isEmployeeRequireInitInstr
+                            },
+                            token);
+
+                        if (loginPasswordResponse.IsSuccessStatusCode)
+                        {
+                            var jsonResponse = await loginPasswordResponse.Content.ReadAsStringAsync();
+                            var loginAndPassword = JsonConvert.DeserializeObject<Tuple<string, string>>(jsonResponse);
+
+                            // Update UI with generated credentials
+                            loginTextBox.Text = loginAndPassword.Item1;
+                            PasswordTextBox.Text = loginAndPassword.Item2;
+
+                            MessageBox.Show("Сотрудник успешно добавлен в базу данных",
+                                          "Успех",
+                                          MessageBoxButton.OK,
+                                          MessageBoxImage.Information);
+                        }
+                        else
+                        {
+                            string errorText = await loginPasswordResponse.Content.ReadAsStringAsync();
+                            MessageBox.Show($"Ошибка получения логина/пароля: {errorText}",
+                                          "Ошибка",
+                                          MessageBoxButton.OK,
+                                          MessageBoxImage.Error);
+                            uploadNewcommer.IsEnabled = true;
+                        }
+                    }
+                    else
+                    {
+                        string errorText = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка добавления сотрудника: {errorText}",
+                                      "Ошибка",
+                                      MessageBoxButton.OK,
+                                      MessageBoxImage.Error);
+                        uploadNewcommer.IsEnabled = true;
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}",
+                              "Ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
+                uploadNewcommer.IsEnabled = true;
+            }
+        }
 
-            System.Windows.MessageBox.Show("Данные сотрудника успешно сохранены",
-                          "Успех",
-                          MessageBoxButton.OK,
-                          MessageBoxImage.Information);
+        // Helper method for HTTP request to insert employee (from CoordinatorForm)
+        private async Task<HttpResponseMessage> InsertNewEmployeeAsync(Employee employee, string token)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var json = JsonConvert.SerializeObject(employee);
+                var data = new StringContent(json, Encoding.UTF8, "application/json");
+                return await client.PostAsync(InsertNewEmployeeURL, data);
+            }
+        }
 
-            loginTextBox.Text = $"User{new Random().Next(1000000, 9999999)}";
-            PasswordTextBox.Text = loginTextBox.Text;
+        // Helper method for HTTP request to get login/password (from CoordinatorForm)
+        private async Task<HttpResponseMessage> GetLoginPassword(List<string> dataAboutUser, string token)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var json = JsonConvert.SerializeObject(dataAboutUser);
+                var data = new StringContent(json, Encoding.UTF8, "application/json");
+                return await client.PostAsync(GetLoginPasswordUrl, data);
+            }
+        }
 
-            uploadNewcommer.IsEnabled = true;
+        private string? RoleNameToRoleDB(string? displayName)
+        {
+            if (string.IsNullOrEmpty(displayName))
+                return null;
+
+            return CommonRoleNamesForCoordinatorForms.RoleDBNames.TryGetValue(displayName, out string dbName)
+                ? dbName
+                : null;
         }
 
         private bool ValidateAllFields()
@@ -254,8 +365,8 @@ namespace Kotova.Test1.ClientSide
 
             // Always validate these fields
             if (string.IsNullOrWhiteSpace(employeesPositionTextBox.Text) ||
-                DepartmentForNewcomer.SelectedItem == null ||
-                RoleOfNewcomerListBox.SelectedItem == null ||
+                DepartmentForNewcomerComboBox.SelectedItem == null ||
+                RoleOfNewcomerComboBox.SelectedItem == null ||
                 !dateOfBirthDateTimePicker.SelectedDate.HasValue)
             {
                 isValid = false;
@@ -276,14 +387,14 @@ namespace Kotova.Test1.ClientSide
             {
                 employeeFullNameTextBox.Clear();
                 personnelNumberTextBox.Clear();
-                DepartmentForNewcomer.SelectedIndex = -1;
-                DepartmentForNewcomer.IsEnabled = true;
+                DepartmentForNewcomerComboBox.SelectedIndex = -1;
+                DepartmentForNewcomerComboBox.IsEnabled = true;
             }
 
             employeesPositionTextBox.Clear();
-            WorkplaceNumberTextBox.Clear();
+            //WorkplaceNumberTextBox.Clear(); КНОПКА БЫЛА УБРАНА, ПОКА ЧТО.
             dateOfBirthDateTimePicker.SelectedDate = DateTime.Today;
-            RoleOfNewcomerListBox.SelectedIndex = -1;
+            RoleOfNewcomerComboBox.SelectedIndex = -1;
             AddInitialInstructionToNewcomer.IsChecked = false;
             loginTextBox.Clear();
             PasswordTextBox.Clear();

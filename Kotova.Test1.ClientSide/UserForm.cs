@@ -323,7 +323,7 @@ namespace Kotova.Test1.ClientSide
                         {
                             dataGridViewPassedInstructions.Rows.Add(
                                 formattedDate,
-                                temp[db_typeOfInstruction],
+                                InstructionTypeMappings.GetInstructionName(((JsonElement)temp[db_typeOfInstruction]).GetInt32()),
                                 temp[dB_pos_users_causeOfInstruction]
                             );
                         }));
