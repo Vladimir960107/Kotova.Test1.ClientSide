@@ -107,13 +107,17 @@ namespace Kotova.Test1.ClientSide
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-
-                    // Parse the JSON response to extract the $values array
                     var jsonDocument = JsonDocument.Parse(jsonResponse);
                     var valuesElement = jsonDocument.RootElement.GetProperty("$values");
-                    List<string>? rolesOfUsers = RolesDBToRoleNames(System.Text.Json.JsonSerializer.Deserialize<List<string>>(valuesElement.GetRawText()));
 
-                    if (rolesOfUsers == null || rolesOfUsers.Count == 0)
+                    // This line changes to use the new RoleMappings class
+                    List<string>? rolesOfUsers = System.Text.Json.JsonSerializer
+                        .Deserialize<List<string>>(valuesElement.GetRawText())?
+                        .Select(dbRole => RoleMappings.GetRoleDisplayName(dbRole))
+                        .Where(displayName => displayName != null)
+                        .ToList();
+
+                    if (rolesOfUsers == null || !rolesOfUsers.Any())
                     {
                         return false;
                     }
@@ -128,35 +132,6 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Error: {ex.Message}");
                 return false;
             }
-        }
-
-        private List<string>? RolesDBToRoleNames(List<string>? list)
-        {
-            var roles = new List<string>();
-            if (list == null || !list.Any()) { return list; }
-            {
-                foreach (var role in list)
-                {
-                    switch (role)
-                    {
-                        case "user":
-                            roles.Add("Сотрудник");
-                            break;
-                        case "chief of department":
-                            roles.Add("Руководство ОТДЕЛА");
-                            break;
-                        case "coordinator":
-                            roles.Add("Охрана труда");
-                            break;
-                        case "management":
-                            roles.Add("Руководство ФИЛИАЛА");
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-            return roles;
         }
 
         private async void InitializeSignalRConnection()
@@ -218,7 +193,7 @@ namespace Kotova.Test1.ClientSide
 
         }
 
-        private async void PostCustomTaskButton_Click(object sender, EventArgs e)
+        /*private async void PostCustomTaskButton_Click(object sender, EventArgs e)
         {
             int? userRole = RoleNameToRoleDB(RoleOfNewcomerListBox.SelectedItem.ToString());
             int? departmentId = DepartmentNameToDepartmentIdDB(DepartmentForNewcomer.SelectedItem.ToString());
@@ -234,39 +209,7 @@ namespace Kotova.Test1.ClientSide
             {
                 MessageBox.Show("Что-то пошло не так при отправке кастомного задания" ,"Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-        }
-
-        private int? DepartmentNameToDepartmentIdDB(string? v)
-        {
-            switch (v)
-            {
-                case "Общестроительный отдел":
-                    return 1;
-                case "Технический отдел":
-                    return 2;
-                case "Руководство":
-                    return 5;
-                default:
-                    return null;
-            }
-        }
-
-        private int? RoleNameToRoleDB(string? v)
-        {
-            switch (v)
-            {
-                case "Сотрудник":
-                    return 1;
-                case "Руководство ОТДЕЛА":
-                    return 2;
-                case "Охрана труда":
-                    return 3;
-                case "Руководство ФИЛИАЛА":
-                    return 4;
-                default:
-                    return null;
-            }
-        }
+        }*/
 
         private async Task<HttpResponseMessage> PostCustomTask(CustomTask customTask, string token)
         {

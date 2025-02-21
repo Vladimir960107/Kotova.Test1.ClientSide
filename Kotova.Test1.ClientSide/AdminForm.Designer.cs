@@ -35,16 +35,8 @@
             label2 = new Label();
             button9 = new Button();
             button10 = new Button();
-            DepartmentsComboBox1 = new ComboBox();
+            DepartmentsForUsersComboBox = new ComboBox();
             label1 = new Label();
-            ListOfInstructions = new ListBox();
-            buttonSyncManualyInstrWithDB = new Button();
-            label5 = new Label();
-            label3 = new Label();
-            ListBoxNamesOfPeople = new ListBox();
-            SyncNamesWithDB = new Button();
-            label4 = new Label();
-            checkBoxIsForDrivers = new CheckBox();
             button1 = new Button();
             tabControl1 = new TabControl();
             tabPage1 = new TabPage();
@@ -138,13 +130,13 @@
             button10.Text = "Загрузка excel на сервер";
             button10.UseVisualStyleBackColor = true;
             // 
-            // DepartmentsComboBox1
+            // DepartmentsForUsersComboBox
             // 
-            DepartmentsComboBox1.FormattingEnabled = true;
-            DepartmentsComboBox1.Location = new Point(40, 61);
-            DepartmentsComboBox1.Name = "DepartmentsComboBox1";
-            DepartmentsComboBox1.Size = new Size(219, 23);
-            DepartmentsComboBox1.TabIndex = 26;
+            DepartmentsForUsersComboBox.FormattingEnabled = true;
+            DepartmentsForUsersComboBox.Location = new Point(41, 61);
+            DepartmentsForUsersComboBox.Name = "DepartmentsForUsersComboBox";
+            DepartmentsForUsersComboBox.Size = new Size(219, 23);
+            DepartmentsForUsersComboBox.TabIndex = 26;
             // 
             // label1
             // 
@@ -154,85 +146,6 @@
             label1.Size = new Size(100, 15);
             label1.TabIndex = 27;
             label1.Text = "Выберите Отдел:";
-            // 
-            // ListOfInstructions
-            // 
-            ListOfInstructions.FormattingEnabled = true;
-            ListOfInstructions.ItemHeight = 15;
-            ListOfInstructions.Location = new Point(41, 149);
-            ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(232, 79);
-            ListOfInstructions.TabIndex = 42;
-            // 
-            // buttonSyncManualyInstrWithDB
-            // 
-            buttonSyncManualyInstrWithDB.Location = new Point(41, 113);
-            buttonSyncManualyInstrWithDB.Margin = new Padding(3, 2, 3, 2);
-            buttonSyncManualyInstrWithDB.Name = "buttonSyncManualyInstrWithDB";
-            buttonSyncManualyInstrWithDB.Size = new Size(216, 22);
-            buttonSyncManualyInstrWithDB.TabIndex = 41;
-            buttonSyncManualyInstrWithDB.Text = "Синхр. инструктажи с Базой Данных";
-            buttonSyncManualyInstrWithDB.UseVisualStyleBackColor = true;
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Location = new Point(171, 234);
-            label5.Name = "label5";
-            label5.Size = new Size(74, 15);
-            label5.TabIndex = 40;
-            label5.Text = "Не выбрано";
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(312, 234);
-            label3.Name = "label3";
-            label3.Size = new Size(310, 15);
-            label3.TabIndex = 38;
-            label3.Text = "Чтобы отменить выбор - ctrl+ЛКМ(левый клик мыши)";
-            // 
-            // ListBoxNamesOfPeople
-            // 
-            ListBoxNamesOfPeople.FormattingEnabled = true;
-            ListBoxNamesOfPeople.ItemHeight = 15;
-            ListBoxNamesOfPeople.Items.AddRange(new object[] { "Список ФИО" });
-            ListBoxNamesOfPeople.Location = new Point(312, 149);
-            ListBoxNamesOfPeople.Margin = new Padding(3, 2, 3, 2);
-            ListBoxNamesOfPeople.Name = "ListBoxNamesOfPeople";
-            ListBoxNamesOfPeople.SelectionMode = SelectionMode.MultiExtended;
-            ListBoxNamesOfPeople.Size = new Size(346, 79);
-            ListBoxNamesOfPeople.TabIndex = 35;
-            // 
-            // SyncNamesWithDB
-            // 
-            SyncNamesWithDB.Location = new Point(371, 123);
-            SyncNamesWithDB.Margin = new Padding(3, 2, 3, 2);
-            SyncNamesWithDB.Name = "SyncNamesWithDB";
-            SyncNamesWithDB.Size = new Size(216, 22);
-            SyncNamesWithDB.TabIndex = 37;
-            SyncNamesWithDB.Text = "Синхр. ФИО с Базой Данных";
-            SyncNamesWithDB.UseVisualStyleBackColor = true;
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(41, 234);
-            label4.Name = "label4";
-            label4.Size = new Size(124, 15);
-            label4.TabIndex = 39;
-            label4.Text = "Дата инструктажа до:";
-            // 
-            // checkBoxIsForDrivers
-            // 
-            checkBoxIsForDrivers.AutoSize = true;
-            checkBoxIsForDrivers.Location = new Point(396, 97);
-            checkBoxIsForDrivers.Margin = new Padding(3, 2, 3, 2);
-            checkBoxIsForDrivers.Name = "checkBoxIsForDrivers";
-            checkBoxIsForDrivers.Size = new Size(152, 19);
-            checkBoxIsForDrivers.TabIndex = 34;
-            checkBoxIsForDrivers.Text = "Только для водителей?";
-            checkBoxIsForDrivers.UseVisualStyleBackColor = true;
             // 
             // button1
             // 
@@ -259,16 +172,8 @@
             // 
             tabPage1.Controls.Add(button1);
             tabPage1.Controls.Add(panel2);
-            tabPage1.Controls.Add(ListOfInstructions);
-            tabPage1.Controls.Add(DepartmentsComboBox1);
-            tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
+            tabPage1.Controls.Add(DepartmentsForUsersComboBox);
             tabPage1.Controls.Add(label1);
-            tabPage1.Controls.Add(label5);
-            tabPage1.Controls.Add(checkBoxIsForDrivers);
-            tabPage1.Controls.Add(label3);
-            tabPage1.Controls.Add(label4);
-            tabPage1.Controls.Add(ListBoxNamesOfPeople);
-            tabPage1.Controls.Add(SyncNamesWithDB);
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
@@ -421,7 +326,6 @@
             PostCustomTaskButton.TabIndex = 0;
             PostCustomTaskButton.Text = "Опубликовать кастомное задание";
             PostCustomTaskButton.UseVisualStyleBackColor = true;
-            PostCustomTaskButton.Click += PostCustomTaskButton_Click;
             // 
             // AdminForm
             // 
@@ -447,16 +351,8 @@
         private Panel panel2;
         private Button button9;
         private Button button10;
-        private ComboBox DepartmentsComboBox1;
+        private ComboBox DepartmentsForUsersComboBox;
         private Label label1;
-        private ListBox ListOfInstructions;
-        private Button buttonSyncManualyInstrWithDB;
-        private Label label5;
-        private Label label3;
-        private ListBox ListBoxNamesOfPeople;
-        private Button SyncNamesWithDB;
-        private Label label4;
-        private CheckBox checkBoxIsForDrivers;
         private Button button1;
         private Label label2;
         private Button Download_file_excel;

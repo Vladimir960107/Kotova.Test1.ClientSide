@@ -114,8 +114,8 @@ namespace Kotova.Test1.ClientSide
 
                 foreach (var role in roles)
                 {
-                    if (CommonRoleNamesForCoordinatorForms.RoleDisplayNames.TryGetValue(role, out string displayName))
-                    {
+                    if (RoleMappings.RoleDbToDisplay.TryGetValue(role, out string displayName))
+                        {
                         RoleOfNewcomerComboBox.Items.Add(displayName);
                     }
                 }
@@ -230,7 +230,7 @@ namespace Kotova.Test1.ClientSide
                 };
 
                 // Get role name in DB format
-                string? roleName = RoleNameToRoleDB(RoleOfNewcomerComboBox.SelectedItem?.ToString());
+                string? roleName = RoleMappings.GetRoleDisplayName(RoleOfNewcomerComboBox.SelectedItem?.ToString());
                 if (string.IsNullOrEmpty(roleName))
                 {
                     MessageBox.Show("Выбрана недопустимая роль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -329,16 +329,6 @@ namespace Kotova.Test1.ClientSide
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
                 return await client.PostAsync(GetLoginPasswordUrl, data);
             }
-        }
-
-        private string? RoleNameToRoleDB(string? displayName)
-        {
-            if (string.IsNullOrEmpty(displayName))
-                return null;
-
-            return CommonRoleNamesForCoordinatorForms.RoleDBNames.TryGetValue(displayName, out string dbName)
-                ? dbName
-                : null;
         }
 
         private bool ValidateAllFields()
