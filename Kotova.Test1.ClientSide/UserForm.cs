@@ -98,7 +98,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        public UserForm(Login_Russian loginForm, string userName)
+        public UserForm(Login_Russian loginForm, string userName, string fullName, string departmentName)
         {
             InitializeComponent();
 

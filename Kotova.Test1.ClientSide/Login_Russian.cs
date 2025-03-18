@@ -33,6 +33,8 @@ namespace Kotova.Test1.ClientSide
         private TaskCompletionSource<bool> _initTaskCompletionSource;
         private int timeForBeingAuthenticated = 600;
 
+        private DepartmentCache _departmentCache;
+
         public static Login_Russian Instance { get; private set; }
 
         public Form activeForm;
@@ -44,6 +46,10 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
             InitializeSettingsMenu();
             InitializeNotifyIcon();
+
+
+            _ = InitializeDepartmentCache();
+
             try
             {
                 versionLabel.Text = ConfigurationClass.BASE_VERSION;
@@ -109,7 +115,7 @@ namespace Kotova.Test1.ClientSide
                 // Initialization succeeded
                 //MessageBox.Show("Initialization succeeded");
                 string token = Decryption_stuff.DecryptedJWTToken();
-                HandleUserBasedOnRole(token);
+                ProcessSuccessfulAuthentication(token);
             }
             else
             {
@@ -224,6 +230,181 @@ namespace Kotova.Test1.ClientSide
 
 
 
+        private void OpenFormBasedOnRole(string role, string username, string fullName, string departmentName)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action(() => OpenFormBasedOnRole(role, username, fullName, departmentName)));
+                return;
+            }
+
+            Form formToOpen = null;
+
+            switch (role)
+            {
+                case "User":
+                    formToOpen = new UserForm(this, username, fullName, departmentName);
+                    break;
+                case "ChiefOfDepartment":
+                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
+                    break;
+                case "Coordinator":
+                    formToOpen = new CoordinatorForm(this, username, fullName, departmentName);
+                    break;
+                case "Management":
+                    formToOpen = new ManagementForm(this, username, fullName, departmentName);
+                    break;
+                case "Admin":
+                    formToOpen = new AdminForm(this, username, fullName);
+                    break;
+                default:
+                    MessageBox.Show($"Упс, роль '{role}' не валидна. Попросите кого-то из тех. поддержки разрешить ситуацию :I");
+                    return;
+            }
+
+            if (formToOpen != null)
+            {
+                activeForm = formToOpen;
+                formToOpen.Location = this.Location;
+                this.Hide();
+                formToOpen.Show();
+
+                // Check if this is a default username after a delay
+                if (isDefaultUsername(username))
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+
+                        this.Invoke(new Action(() =>
+                        {
+                            if (formToOpen is UserForm userForm && userForm._signUpForm != null)
+                                userForm._signUpForm.Show();
+                            else if (formToOpen is ChiefForm chiefForm && chiefForm._signUpForm != null)
+                                chiefForm._signUpForm.Show();
+                            else if (formToOpen is CoordinatorForm coordForm && coordForm._signUpForm != null)
+                                coordForm._signUpForm.Show();
+                            else if (formToOpen is ManagementForm mgmtForm && mgmtForm._signUpForm != null)
+                                mgmtForm._signUpForm.Show();
+                        }));
+                    });
+                }
+            }
+        }
+
+        private async void LogInButton_Click(object sender, EventArgs e)
+        {
+            LogInButton.Enabled = false;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(LoginTextBox.Text) || string.IsNullOrWhiteSpace(PasswordTextBox.Text))
+                {
+                    MessageBox.Show("Пожалуйста, заполните Логин и Пароль", "Не указан Логин и/или Пароль", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                var username = LoginTextBox.Text;
+                var password = PasswordTextBox.Text;
+                var loginModel = new
+                {
+                    username = username,
+                    password = password,
+                    time_for_being_authenticated = timeForBeingAuthenticated,
+                };
+
+                var response = await _httpClient.PostAsJsonAsync(_loginUrl, loginModel);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var result = JsonSerializer.Deserialize<LoginResponse>(jsonResponse);
+
+                    if (result is null || string.IsNullOrWhiteSpace(result.token))
+                    {
+                        MessageBox.Show("Вход не удался. Результат или токен не валиден(нуль)");
+                    }
+                    else
+                    {
+                        _jwtToken = result.token;
+                        if (EncodeJWTTokenSuccessfully(_jwtToken))
+                        {
+                            PasswordTextBox.Text = "";
+                            Console.WriteLine($"JWTToken: {_jwtToken}");
+                            ProcessSuccessfulAuthentication(_jwtToken);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Что-то пошло не так. Обратитесь в поддержку.");
+                        }
+                    }
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(jsonResponse);
+                    MessageBox.Show($"Вход не успешен, так как начальник для данного отдела уже авторизован. Попросите его закрыть приложение и после этого - спустя минуту авторизуйтесь заново.", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    var message = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"{message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+                MessageBox.Show(ex.ToString());
+            }
+            finally
+            {
+                LogInButton.Enabled = true;
+            }
+        }
+
+        private void ProcessSuccessfulAuthentication(string token)
+        {
+            string role = GetRoleFromToken(token);
+            string userName = GetUserNameFromToken(token);
+            string fullName = GetFullNameFromToken(token);
+
+            int departmentId = GetDepartmentIdFromToken(token);
+
+            // Get department name from cache
+            string departmentName = "Unknown Department";
+            if (departmentId > 0)
+            {
+                departmentName = _departmentCache.GetDepartmentName(departmentId);
+            }
+
+            OpenFormBasedOnRole(role, userName, fullName, departmentName);
+        }
+
+        public string GetFullNameFromToken(string jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+                return string.Empty;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return string.Empty;
+
+                var fullNameClaim = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "FullName");
+                return fullNameClaim?.Value ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+
+
+
 
         public class TokenRequest
         {
@@ -270,94 +451,6 @@ namespace Kotova.Test1.ClientSide
             return false;
         }
 
-        private void HandleUserBasedOnRole(string token)
-        {
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action(() => HandleUserBasedOnRole(token)));
-            }
-            else
-            {
-                string role = GetRoleFromToken(token);
-                string username = GetUserNameFromToken(token);
-                switch (role)
-                {
-                    case "User":
-                        OpenUserForm(username);
-                        break;
-                    case "ChiefOfDepartment":
-                        OpenChiefForm(username);
-                        break;
-                    case "Coordinator":
-                        OpenCoordinatorForm(username);
-                        break;
-                    case "Management":
-                        OpenManagementForm(username);
-                        break;
-                    case "Administrator":
-                        OpenAdminForm(username);
-                        break;
-                    default:
-                        MessageBox.Show("Упс, роль не валидна. Попросите кого-то из тех. поддержки разрешить ситуацию :I");
-                        break;
-                }
-            }
-        }
-
-        private void OpenUserForm(string username)
-        {
-            UserForm userForm = new UserForm(this, username);
-            activeForm = userForm;
-            userForm.Location = this.Location;
-            this.Hide();
-            userForm.Show();
-            CheckDefaultUsername(userForm, username);
-        }
-
-        private void OpenChiefForm(string username)
-        {
-            ChiefForm chiefOfDepartmentForm = new ChiefForm(this, username);
-            activeForm = chiefOfDepartmentForm;
-            chiefOfDepartmentForm.Location = this.Location;
-            chiefOfDepartmentForm.Show();
-            this.Hide();
-        }
-
-        private void OpenCoordinatorForm(string username)
-        {
-            CoordinatorForm coordinatorForm = new CoordinatorForm(this, username);
-            activeForm = coordinatorForm;
-            coordinatorForm.Location = this.Location;
-            coordinatorForm.Show();
-            this.Hide();
-        }
-
-        private void OpenManagementForm(string username)
-        {
-            ManagementForm managementForm = new ManagementForm(this, username);
-            activeForm = managementForm;
-            managementForm.Location = this.Location;
-            managementForm.Show();
-            this.Hide();
-        }
-
-        private async void CheckDefaultUsername(UserForm userForm, string username)
-        {
-            await Task.Delay(1000);
-            if (isDefaultUsername(username))
-            {
-                userForm._signUpForm?.Show();
-            }
-        }
-        private void OpenAdminForm(string username)
-        {
-            AdminForm adminForm = new AdminForm(this, username);
-            activeForm = adminForm;
-            adminForm.Location = this.Location;
-            adminForm.Show();
-            this.Hide();
-        }
-
 
         private void textBox1_Click(object sender, EventArgs e)
         {
@@ -387,163 +480,6 @@ namespace Kotova.Test1.ClientSide
             PasswordTextBox.UseSystemPasswordChar = true;
         }
 
-        private async void LogInButton_Click(object sender, EventArgs e) // TODO: Переписать эту функцию как выше описано, потому что повторяется!
-        {
-            LogInButton.Enabled = false;
-
-
-
-            if (string.IsNullOrWhiteSpace(LoginTextBox.Text) || string.IsNullOrWhiteSpace(PasswordTextBox.Text))
-            {
-                MessageBox.Show("Пожалуйста, заполните Логин и Пароль", "Не указан Логин и/или Пароль", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                LogInButton.Enabled = true;
-                return;
-            }
-
-            var username = LoginTextBox.Text;
-            var password = PasswordTextBox.Text;
-            var loginModel = new
-            {
-                username = username,
-                password = password,
-                time_for_being_authenticated = timeForBeingAuthenticated,
-            };
-
-
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync(_loginUrl, loginModel);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<LoginResponse>(jsonResponse);
-                    if (result is null || string.IsNullOrWhiteSpace(result.token))
-                    {
-                        MessageBox.Show("Вход не удался. Результат или токен не валиден(нуль)");
-                    }
-                    else
-                    {
-                        _jwtToken = result.token;
-                        if (EncodeJWTTokenSuccessfully(_jwtToken))
-                        {
-                            PasswordTextBox.Text = "";
-                            switch (GetRoleFromToken(_jwtToken))
-                            {
-                                case "User":
-                                    UserForm userForm = new UserForm(this, GetUserNameFromToken(_jwtToken)); // put here like UserForm(this)
-                                    activeForm = userForm;
-                                    userForm.Location = this.Location;
-                                    this.Hide();
-                                    userForm.Show();
-
-                                    await DelayforRegistrationForm();
-                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
-                                    {
-                                        if (userForm._signUpForm is not null)
-                                        {
-                                            userForm._signUpForm.Show();
-                                        }
-                                    }
-
-                                    break;
-                                case "ChiefOfDepartment":
-                                    ChiefForm chiefOfDepartmentForm = new ChiefForm(this, GetUserNameFromToken(_jwtToken));// put here like UserForm(this)
-                                    activeForm = chiefOfDepartmentForm;
-                                    chiefOfDepartmentForm.Location = this.Location;
-                                    chiefOfDepartmentForm.Show();
-                                    this.Hide();
-
-                                    await DelayforRegistrationForm();
-                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
-                                    {
-                                        if (chiefOfDepartmentForm._signUpForm is not null)
-                                        {
-                                            chiefOfDepartmentForm._signUpForm.Show();
-                                        }
-                                    }
-
-                                    break;
-                                case "Coordinator":
-                                    CoordinatorForm coordinatorForm = new CoordinatorForm(this, GetUserNameFromToken(_jwtToken));// put here like UserForm(this)
-                                    activeForm = coordinatorForm;
-                                    coordinatorForm.Location = this.Location;
-                                    coordinatorForm.Show();
-                                    this.Hide();
-
-                                    await DelayforRegistrationForm();
-                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
-                                    {
-                                        if (coordinatorForm._signUpForm is not null)
-                                        {
-                                            coordinatorForm._signUpForm.Show();
-                                        }
-                                    }
-
-                                    break;
-                                case "Management":
-                                    ManagementForm managementForm = new ManagementForm(this, GetUserNameFromToken(_jwtToken));
-                                    activeForm = managementForm;
-                                    managementForm.Location = this.Location;
-                                    managementForm.Show();
-                                    this.Hide();
-
-                                    await DelayforRegistrationForm();
-                                    if (isDefaultUsername(GetUserNameFromToken(_jwtToken)))
-                                    {
-                                        if (managementForm._signUpForm is not null)
-                                        {
-                                            managementForm._signUpForm.Show();
-                                        }
-                                    }
-                                    break;
-                                case "Administrator":
-                                    AdminForm adminForm = new AdminForm(this, GetUserNameFromToken(_jwtToken));
-                                    activeForm = adminForm;
-                                    adminForm.Location = this.Location;
-                                    adminForm.Show();
-                                    this.Hide();
-
-                                    await DelayforRegistrationForm();
-                                    await DelayforRegistrationForm();
-                                    break;
-                                default:
-                                    MessageBox.Show("Ваша роль не подходящая. Обратитесь в поддержку для разрешения этого вопроса :I");
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Что-то пошло не так. Обратитесь в поддержку.");
-
-                        }
-
-                    }
-
-                }
-                else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                {
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(jsonResponse);
-                    MessageBox.Show($"Вход не успешен, так как начальник для данного отдела уже авторизован. Попросите его закрыть приложение и после этого - спустя минуту авторизуйтесь заново.", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                else
-                {
-                    var message = await response.Content.ReadAsStringAsync();
-                    MessageBox.Show($"{message}", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}");
-                MessageBox.Show(ex.ToString());
-            }
-            finally
-            {
-                LogInButton.Enabled = true;
-            }
-
-        }
         private async Task DelayforRegistrationForm()
         {
             await Task.Delay(1000);
@@ -588,21 +524,45 @@ namespace Kotova.Test1.ClientSide
         }
         public string GetRoleFromToken(string jwtToken)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(jwtToken);
-            var tokenS = jsonToken as JwtSecurityToken;
+            if (string.IsNullOrEmpty(jwtToken))
+                return string.Empty;
 
-            var roleClaim = tokenS.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role);
-            return roleClaim?.Value;
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return string.Empty;
+
+                // Try standard role claim first
+                var roleClaim = jsonToken.Claims.FirstOrDefault(claim =>
+                     claim.Type == ClaimTypes.Role ||  // Full URI format
+                     claim.Type == "role" ||           // Short format common in newer JWT implementations
+                     claim.Type == "roles" ||          // Plural version sometimes used
+                     claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"); // Explicit URI
+
+                return roleClaim?.Value ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty; // Return empty string for any parsing errors
+            }
         }
         public string GetUserNameFromToken(string jwtToken)
         {
-            var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(jwtToken);
-            var tokenS = jsonToken as JwtSecurityToken;
+            if (string.IsNullOrEmpty(jwtToken))
+                return string.Empty;
 
-            var roleClaim = tokenS.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Name);
-            return roleClaim?.Value;
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+            if (jsonToken == null)
+                return string.Empty;
+
+            // Look for "unique_name" instead of ClaimTypes.Name
+            var nameClaim = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "unique_name");
+            return nameClaim?.Value ?? string.Empty;
         }
 
         public class LoginResponse
@@ -629,11 +589,62 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        private async Task InitializeDepartmentCache()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{ConfigurationClass.BASE_URL_DEVELOPMENT}/api/departments");
+                if (response.IsSuccessStatusCode)
+                {
+                    var departments = await response.Content.ReadFromJsonAsync<List<DepartmentDto>>();
+                    var deptDict = departments.ToDictionary(d => d.Id, d => d.Name);
+
+                    _departmentCache.UpdateCache(deptDict);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue application startup
+                Console.WriteLine($"Failed to initialize department cache: {ex.Message}");
+            }
+        }
+
         private void Login_Russian_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;  // Prevent the form from closing
             this.Hide();  // Hide the form
             this.ShowInTaskbar = false;  // Hide from the taskbar
+        }
+
+        public int GetDepartmentIdFromToken(string jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+                return -1;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return -1;
+
+                // Look for department ID claim
+                var departmentIdClaim = jsonToken.Claims.FirstOrDefault(claim =>
+                    claim.Type == "DepartmentId" ||
+                    claim.Type == "department_id");
+
+                if (departmentIdClaim != null && int.TryParse(departmentIdClaim.Value, out int departmentId))
+                {
+                    return departmentId;
+                }
+
+                return -1;
+            }
+            catch (Exception)
+            {
+                return -1; // Return -1 for any parsing errors
+            }
         }
 
     }

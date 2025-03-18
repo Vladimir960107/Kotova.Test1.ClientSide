@@ -50,7 +50,7 @@ namespace Kotova.Test1.ClientSide
         public const string db_filePath = "file_path";
         public const string db_typeOfInstruction = "type_of_instruction";
 
-        public ManagementForm(Login_Russian loginForm, string userName)
+        public ManagementForm(Login_Russian loginForm, string userName, string fullName, string departmentName)
         {
             InitializeComponent();
             _loginForm = loginForm;

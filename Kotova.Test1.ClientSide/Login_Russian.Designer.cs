@@ -31,6 +31,7 @@
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Login_Russian));
             panel1 = new Panel();
+            label2 = new Label();
             label1 = new Label();
             pictureBox1 = new PictureBox();
             toolTip1 = new ToolTip(components);
@@ -50,7 +51,6 @@
             panel2 = new Panel();
             versionLabel = new Label();
             pictureBox5 = new PictureBox();
-            label2 = new Label();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox4).BeginInit();
@@ -74,6 +74,19 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(307, 589);
             panel1.TabIndex = 0;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new Font("Palatino Linotype", 9F);
+            label2.ForeColor = Color.White;
+            label2.Location = new Point(95, 507);
+            label2.Name = "label2";
+            label2.Size = new Size(212, 68);
+            label2.TabIndex = 1;
+            label2.Text = "Программа принадлежит проектно-\r\nизыскательскому институту \r\n\"Трансэлектропроект\"\r\n - филиалу АО \"Росжелдорпроект\"";
+            label2.TextAlign = ContentAlignment.BottomRight;
+            label2.UseMnemonic = false;
             // 
             // label1
             // 
@@ -285,19 +298,6 @@
             pictureBox5.TabIndex = 6;
             pictureBox5.TabStop = false;
             pictureBox5.Click += pictureBox5_Click;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Font = new Font("Palatino Linotype", 9F);
-            label2.ForeColor = Color.White;
-            label2.Location = new Point(95, 507);
-            label2.Name = "label2";
-            label2.Size = new Size(212, 68);
-            label2.TabIndex = 1;
-            label2.Text = "Программа принадлежит проектно-\r\nизыскательскому институту \r\n\"Трансэлектропроект\"\r\n - филиалу АО \"Росжелдорпроект\"";
-            label2.TextAlign = ContentAlignment.BottomRight;
-            label2.UseMnemonic = false;
             // 
             // Login_Russian
             // 

@@ -27,7 +27,7 @@ namespace Kotova.Test1.ClientSide
         private Login_Russian? _loginForm;
         string? _userName;
         private HubConnection? _hubConnection = null;
-        public AdminForm(Login_Russian loginForm, string userName)
+        public AdminForm(Login_Russian loginForm, string userName, string fullName)
         {
             _loginForm = loginForm;
             _userName = userName;

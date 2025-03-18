@@ -21,10 +21,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Cache.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -55,7 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Cache.cs" />
     <Content Include="Охрана труда.ico" />
   </ItemGroup>
 

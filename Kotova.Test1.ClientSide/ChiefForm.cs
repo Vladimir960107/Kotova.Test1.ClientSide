@@ -57,7 +57,7 @@ namespace Kotova.Test1.ClientSide
         string? _userName;
         public SignUpForm _signUpForm;
 
-        public ChiefForm(Login_Russian loginForm, string userName)
+        public ChiefForm(Login_Russian loginForm, string userName, string fullName, string departmentName)
         {
             _loginForm = loginForm;
             _userName = userName;

@@ -55,7 +55,7 @@ namespace Kotova.Test1.ClientSide
             InitializeComponent();
         }
 
-        public CoordinatorForm(Login_Russian loginForm, string userName)
+        public CoordinatorForm(Login_Russian loginForm, string userName, string fullName, string departmentName)
         {
             _userName = userName;
             _loginForm = loginForm;
