@@ -67,7 +67,7 @@ namespace Kotova.Test1.ClientSide
                 throw;
             }
 
-            BASE_INSTRUCTIONS_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT + "/Instructions";
+            BASE_INSTRUCTIONS_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT + "/api/Instructions";
             BASE_TASK_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT + "/Tasks";
             BASE_TELP_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT + "/TelpEmployees";
             BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT = BASE_URL_DEVELOPMENT + "/notificationHub";

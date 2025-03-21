@@ -29,6 +29,7 @@ using System.Windows.Controls;
 using Control = System.Windows.Forms.Control;
 
 
+
 namespace Kotova.Test1.ClientSide
 {
     public partial class UserForm : Form
@@ -65,9 +66,10 @@ namespace Kotova.Test1.ClientSide
         public Login_Russian? _loginForm;
         public SignUpForm _signUpForm;
         string? _userName;
-        static readonly string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_not_passed_instructions_for_user";
-        static readonly string DownloadOldInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_passed_instructions_for_user";
-        static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
+        static readonly string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions";
+        static readonly string DownloadOldInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-passed-instructions";
+        static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/mark-instruction-as-passed";
+
 
         private HubConnection? _hubConnection = null;
 
@@ -203,30 +205,58 @@ namespace Kotova.Test1.ClientSide
                 {
                     string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<QueryResult>(jsonResponse);
-                    if (result.Result1.Count == 0)
+                    var passedInstructions = JsonSerializer.Deserialize<List<PassedInstructionDto>>(jsonResponse);
+
+                    if (passedInstructions == null || passedInstructions.Count == 0)
                     {
                         return true;
                     }
 
-                    listOfNewInstructions_global = result.Result1;
-                    listsOfPathsOfNewInstr_global = result.Result2;
-                    foreach (Dictionary<string, object> temp in result.Result1)
+                    // Clear existing rows
+                    this.Invoke(new Action(() =>
                     {
-                        ListOfInstructionsForUser.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
+                        dataGridViewPassedInstructions.Rows.Clear();
+                    }));
 
+                    // Populate the grid with passed instructions
+                    foreach (var instruction in passedInstructions)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            dataGridViewPassedInstructions.Rows.Add(
+                                instruction.WhenPassed?.ToString("yyyy-MM-dd"),
+                                instruction.Type,
+                                instruction.Cause
+                            );
+                        }));
                     }
+
+                    // Store the full instruction data for later use
+                    listOfOldInstructions_global = passedInstructions.Select(i => new Dictionary<string, object>
+            {
+                { dB_instructionId, i.InstructionId },
+                { dB_pos_users_causeOfInstruction, i.Cause },
+                { db_typeOfInstruction, i.Type },
+                { db_dateOfInstructionWasSentToUser, i.WhenPassed }
+            }).ToList();
+
+                    // Store file paths for later use
+                    listsOfPathsOfOldInstr_global = passedInstructions.Select(i => new Dictionary<string, object>
+            {
+                { dB_instructionId, i.InstructionId },
+                { db_filePath, i.FilePaths }
+            }).ToList();
+
                     return false;
                 }
             }
             catch (HttpRequestException ex)
             {
-                // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}");
                 return null;
             }
@@ -277,68 +307,118 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async Task<bool?> DownloadOldInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в ChiefForm.cs в совершенно отдельном файле.
+        private async Task<bool?> DownloadOldInstructionsForUserFromServer(string? userName)
         {
             if (userName is null)
             {
                 throw new ArgumentNullException(nameof(userName));
             }
-            string url = DownloadOldInstructionForUserURL;
+
+            string url = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-passed-instructions";
+
             try
             {
                 using (HttpClient client = new HttpClient())
                 {
                     string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<QueryResult>(jsonResponse);
-                    if (result.Result1.Count == 0)
+
+                    // Debug: Log the raw JSON response
+                    Console.WriteLine($"Raw JSON Response: {jsonResponse}");
+
+                    // Use more flexible JSON options
+                    var jsonSerializerOptions = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        AllowTrailingCommas = true,
+                        ReadCommentHandling = JsonCommentHandling.Skip
+                    };
+
+                    List<PassedInstructionDto> passedInstructions;
+                    try
+                    {
+                        passedInstructions = JsonSerializer.Deserialize<List<PassedInstructionDto>>(jsonResponse, jsonSerializerOptions);
+                    }
+                    catch (JsonException ex)
+                    {
+                        // More detailed error logging
+                        Console.WriteLine($"JSON Deserialization Error: {ex.Message}");
+                        MessageBox.Show($"JSON Parsing Error: {ex.Message}\n\nResponse: {jsonResponse}");
+                        return null;
+                    }
+
+                    if (passedInstructions == null || passedInstructions.Count == 0)
                     {
                         return true;
                     }
 
-                    listOfOldInstructions_global = result.Result1;
-                    listsOfPathsOfOldInstr_global = result.Result2;
-                    foreach (Dictionary<string, object> temp in result.Result1)
+                    // Clear existing rows
+                    this.Invoke(new Action(() =>
                     {
+                        dataGridViewPassedInstructions.Rows.Clear();
+                    }));
 
-                        object dbValue = temp[db_dateOfInstructionWasSentToUser];
-                        string formattedDate;
-                        if (dbValue != null && DateTime.TryParse(dbValue.ToString(), out DateTime dateOfInstruction))
-                        {
-                            // Transforming into "Year-Month-Day" format
-                            formattedDate = dateOfInstruction.ToString("yyyy-MM-dd");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Invalid or null date value of temp[db_dateOfInstructionWasSentToUser] in DownloadOldInstructionsForUserFromServer()");
-                            formattedDate = "Неправильный формат даты";
-                        }
-
+                    // Populate the grid with passed instructions
+                    foreach (var instruction in passedInstructions)
+                    {
                         this.Invoke(new Action(() =>
                         {
                             dataGridViewPassedInstructions.Rows.Add(
-                                formattedDate,
-                                InstructionTypeMappings.GetInstructionName(((JsonElement)temp[db_typeOfInstruction]).GetInt32()),
-                                temp[dB_pos_users_causeOfInstruction]
+                                instruction.WhenPassed?.ToString("yyyy-MM-dd"),
+                                instruction.Type ?? "Unknown Type",
+                                instruction.Cause ?? "Unknown Cause"
                             );
                         }));
-
                     }
+
+                    // Store the full instruction data for later use
+                    listOfOldInstructions_global = passedInstructions.Select(i => new Dictionary<string, object>
+            {
+                { dB_instructionId, i.InstructionId },
+                { dB_pos_users_causeOfInstruction, i.Cause ?? "" },
+                { db_typeOfInstruction, i.Type ?? "" },
+                { db_dateOfInstructionWasSentToUser, i.WhenPassed }
+            }).ToList();
+
+                    // Store file paths for later use
+                    listsOfPathsOfOldInstr_global = passedInstructions.Select(i => new Dictionary<string, object>
+            {
+                { dB_instructionId, i.InstructionId },
+                { db_filePath, i.FilePaths ?? new List<string>() }
+            }).ToList();
+
                     return false;
                 }
             }
             catch (HttpRequestException ex)
             {
-                // Handle any exceptions here
-                MessageBox.Show($"Error: {ex.Message}");
+                MessageBox.Show($"HTTP Request Error: {ex.Message}");
+                Console.WriteLine($"HTTP Request Error: {ex}");
                 return null;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unexpected Error: {ex.Message}");
+                Console.WriteLine($"Unexpected Error: {ex}");
+                return null;
+            }
+        }
 
+        // Modify the DTO to match potential variations in the JSON
+        private class PassedInstructionDto
+        {
+            public int InstructionId { get; set; }
+            public string Cause { get; set; }
+            public DateTime? BeginDate { get; set; }
+            public DateTime? EndDate { get; set; }
+            public string Type { get; set; }
+            public DateTime? WhenPassed { get; set; }
+            public List<string> FilePaths { get; set; } = new List<string>();
         }
         #endregion
 
@@ -525,7 +605,29 @@ namespace Kotova.Test1.ClientSide
 
         private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
         {
-            string url = SendInstructionIsPassedURL;
+            // Extract the instruction ID from the selected dictionary
+            int instructionId;
+            try
+            {
+                // Safely extract instruction ID, handling potential JsonElement
+                object idValue = selectedDict[dB_instructionId];
+
+                if (idValue is JsonElement jsonElement)
+                {
+                    instructionId = jsonElement.GetInt32();
+                }
+                else
+                {
+                    instructionId = Convert.ToInt32(idValue);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error extracting instruction ID: {ex.Message}");
+                return;
+            }
+            string url = SendInstructionIsPassedURL + $"/{instructionId}";
+
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -533,26 +635,27 @@ namespace Kotova.Test1.ClientSide
                     string jwtToken = _loginForm._jwtToken;
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                    string jsonData = JsonSerializer.Serialize(selectedDict);
-
-                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-                    HttpResponseMessage response = await client.PostAsync(url, content);
+                    // Use POST method with no body since the ID is in the URL
+                    HttpResponseMessage response = await client.PostAsync(url, null);
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
+
                     if (response.IsSuccessStatusCode)
                     {
+                        // Clear and refresh the instructions list
                         ListOfInstructionsForUser.Items.Clear();
                         await DownloadInstructionsForUserFromServer(_userName);
+
+                        // Optional: Show success message
+                        MessageBox.Show("Instruction successfully marked as passed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
             catch (HttpRequestException ex)
             {
-
                 // Handle any exceptions here
-                MessageBox.Show($"Error: {ex.Message}");
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

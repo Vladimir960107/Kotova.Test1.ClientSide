@@ -48,7 +48,8 @@ namespace Kotova.Test1.ClientSide
             InitializeNotifyIcon();
 
 
-            _ = InitializeDepartmentCache();
+            _departmentCache = new DepartmentCache();
+            _ = InitializeDepartmentCache();  
 
             try
             {
@@ -593,6 +594,12 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
+                // Make sure _departmentCache is initialized
+                if (_departmentCache == null)
+                {
+                    _departmentCache = new DepartmentCache();
+                }
+
                 var response = await _httpClient.GetAsync($"{ConfigurationClass.BASE_URL_DEVELOPMENT}/api/departments");
                 if (response.IsSuccessStatusCode)
                 {
