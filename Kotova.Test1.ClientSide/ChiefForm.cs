@@ -344,12 +344,12 @@ namespace Kotova.Test1.ClientSide
                     {
 
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        List<Tuple<string, string>>? result = JsonConvert.DeserializeObject<List<Tuple<string, string>>>(responseBody);
+                        List<EmployeeData> result = JsonConvert.DeserializeObject<List<EmployeeData>>(responseBody);
                         if (result is null)
                         {
                             throw new Exception("тело ответа пусто");
                         }
-                        string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
+                        string[] resultArray = result.Select(e => $"{e.FullName} ({e.BirthDate})").ToArray();
 
                         //ListBoxNamesOfPeople.Items.AddRange(resultArray);
                         checkedListBoxNamesOfPeople.Items.AddRange(resultArray);
@@ -540,12 +540,12 @@ namespace Kotova.Test1.ClientSide
                         {
 
                             string responseBody = await response.Content.ReadAsStringAsync();
-                            List<Tuple<string, string>>? result = JsonConvert.DeserializeObject<List<Tuple<string, string>>>(responseBody);
+                            List<EmployeeData> result = JsonConvert.DeserializeObject<List<EmployeeData>>(responseBody);
                             if (result is null)
                             {
                                 throw new Exception("тело ответа пусто");
                             }
-                            string[] resultArray = result.Select(t => $"{t.Item1} ({t.Item2})").ToArray<string>();
+                            string[] resultArray = result.Select(e => $"{e.FullName} ({e.BirthDate})").ToArray();
 
                             //ListBoxNamesOfPeople.Items.AddRange(resultArray);
                             checkedListBoxNamesOfPeopleCreatingInstr.Items.AddRange(resultArray);
@@ -571,6 +571,12 @@ namespace Kotova.Test1.ClientSide
                     SyncNamesWithDB.Enabled = true; // Re-enable the button after the operation completes
                 }
             }
+        }
+
+        public class EmployeeData
+        {
+            public string FullName { get; set; }
+            public string BirthDate { get; set; }
         }
 
 
