@@ -62,6 +62,8 @@ namespace Kotova.Test1.ClientSide
 
         private static bool canYouCloseTheApplication = false;
 
+        private InstructionService _instructionService;
+
 
         public Login_Russian? _loginForm;
         public SignUpForm _signUpForm;
@@ -104,8 +106,10 @@ namespace Kotova.Test1.ClientSide
         {
             InitializeComponent();
 
+            // Initialize the service with the JWT token from the login form
+            _instructionService = new InstructionService(loginForm._jwtToken, new FormLogger(this));
 
-            // The rest of your initialization code...
+            // The rest of your constructor code...
             StartTimer();
             exitApplicationToolStripMenuItem.Enabled = false;
             _loginForm = loginForm;
@@ -118,6 +122,32 @@ namespace Kotova.Test1.ClientSide
             _ = RefreshNewInstructionsInternal();
             _ = RefreshOldInstructionsInternal();
         }
+
+        // Logger implementation for the form
+        private class FormLogger : InstructionService.ILogger
+        {
+            private readonly UserForm _form;
+
+            public FormLogger(UserForm form)
+            {
+                _form = form;
+            }
+
+            public void LogInfo(string message)
+            {
+                Console.WriteLine($"INFO: {message}");
+            }
+
+            public void LogError(string message, Exception ex = null)
+            {
+                string errorMessage = ex != null ? $"{message}: {ex.Message}" : message;
+                Console.WriteLine($"ERROR: {errorMessage}");
+
+                // Optionally show a message box for critical errors
+                // _form.Invoke(new Action(() => MessageBox.Show(errorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)));
+            }
+        }
+
 
 
         public void EnableExitTheProgrammEntirelyButton()
@@ -177,28 +207,53 @@ namespace Kotova.Test1.ClientSide
             await RefreshNewInstructionsInternal();
             await RefreshOldInstructionsInternal();
         }
+        // Updated refresh methods using the service
         private async Task<bool> RefreshNewInstructionsInternal()
         {
-            ListOfInstructionsForUser.Items.Clear();
-            bool? IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
-            if (IsEmpty == true)
+            try
             {
-                MessageBox.Show("Все инструктажи пройдены!");
+                ListOfInstructionsForUser.Items.Clear();
+
+                var result = await _instructionService.GetNotPassedInstructionsAsync();
+
+                if (result == null)
+                {
+                    MessageBox.Show("Все инструктажи пройдены!");
+                    return true;
+                }
+
+                // Update the global lists
+                listOfNewInstructions_global = result.Value.Instructions;
+                listsOfPathsOfNewInstr_global = result.Value.Paths;
+
+                // Update the UI
+                foreach (var instruction in listOfNewInstructions_global)
+                {
+                    if (instruction.ContainsKey("cause_of_instruction") && instruction["cause_of_instruction"] != null)
+                    {
+                        ListOfInstructionsForUser.Items.Add(instruction["cause_of_instruction"].ToString());
+                    }
+                }
+
+                return true;
             }
-            if (IsEmpty is null)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Exception in RefreshNewInstructionsInternal: {ex}");
+                MessageBox.Show($"Error refreshing instructions: {ex.Message}");
                 return false;
             }
-            return true;
         }
 
-        private async Task<bool?> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в ChiefForm.cs в совершенно отдельном файле.
+        private async Task<bool> DownloadInstructionsForUserFromServer(string? userName)
         {
             if (userName is null)
             {
                 throw new ArgumentNullException(nameof(userName));
             }
+
             string url = DownloadInstructionForUserURL;
+
             try
             {
                 using (HttpClient client = new HttpClient())
@@ -210,103 +265,144 @@ namespace Kotova.Test1.ClientSide
                     response.EnsureSuccessStatusCode();
 
                     var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var passedInstructions = JsonSerializer.Deserialize<List<PassedInstructionDto>>(jsonResponse);
 
-                    if (passedInstructions == null || passedInstructions.Count == 0)
+                    // Debug: Log the raw response to see what we're actually getting
+                    Console.WriteLine($"Server response: {jsonResponse}");
+
+                    // Try parsing the response as a list of instruction objects
+                    var instructions = JsonSerializer.Deserialize<List<InstructionDto>>(jsonResponse,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (instructions == null || instructions.Count == 0)
                     {
-                        return true;
+                        Console.WriteLine("No not-passed instructions found.");
+                        return true; // All instructions are passed
                     }
 
-                    // Clear existing rows
-                    this.Invoke(new Action(() =>
-                    {
-                        dataGridViewPassedInstructions.Rows.Clear();
-                    }));
+                    // Process the instructions
+                    ListOfInstructionsForUser.Items.Clear();
 
-                    // Populate the grid with passed instructions
-                    foreach (var instruction in passedInstructions)
+                    // Create our Result1 format that the rest of the code expects
+                    listOfNewInstructions_global = instructions.Select(instr => new Dictionary<string, object>
+            {
+                { dB_instructionId, instr.InstructionId },
+                { dB_pos_users_causeOfInstruction, instr.Cause },
+                { db_typeOfInstruction, instr.Type ?? "Unknown" },
+                { db_dateOfInstructionWasSentToUser, instr.WhenAssigned }
+            }).ToList();
+
+                    // Create our Result2 format that the rest of the code expects
+                    // Create our Result2 format that the rest of the code expects
+                    listsOfPathsOfNewInstr_global = new List<Dictionary<string, object>>();
+
+                    // For each instruction, create a separate dictionary entry for each file path
+                    foreach (var instruction in instructions)
                     {
-                        this.Invoke(new Action(() =>
+                        if (instruction.FilePaths != null && instruction.FilePaths.Any())
                         {
-                            dataGridViewPassedInstructions.Rows.Add(
-                                instruction.WhenPassed?.ToString("yyyy-MM-dd"),
-                                instruction.Type,
-                                instruction.Cause
-                            );
-                        }));
+                            foreach (var filePath in instruction.FilePaths)
+                            {
+                                listsOfPathsOfNewInstr_global.Add(new Dictionary<string, object>
+                        {
+                            { dB_instructionId, instruction.InstructionId },
+                            { db_filePath, filePath }
+                        });
+                            }
+                        }
+                        else
+                        {
+                            // Add a single entry with null path if there are no paths
+                            listsOfPathsOfNewInstr_global.Add(new Dictionary<string, object>
+                    {
+                        { dB_instructionId, instruction.InstructionId },
+                        { db_filePath, null }
+                    });
+                        }
                     }
 
-                    // Store the full instruction data for later use
-                    listOfOldInstructions_global = passedInstructions.Select(i => new Dictionary<string, object>
-            {
-                { dB_instructionId, i.InstructionId },
-                { dB_pos_users_causeOfInstruction, i.Cause },
-                { db_typeOfInstruction, i.Type },
-                { db_dateOfInstructionWasSentToUser, i.WhenPassed }
-            }).ToList();
+                    // Populate the UI with instruction causes
+                    foreach (var instruction in instructions)
+                    {
+                        ListOfInstructionsForUser.Items.Add(instruction.Cause);
+                    }
 
-                    // Store file paths for later use
-                    listsOfPathsOfOldInstr_global = passedInstructions.Select(i => new Dictionary<string, object>
-            {
-                { dB_instructionId, i.InstructionId },
-                { db_filePath, i.FilePaths }
-            }).ToList();
-
-                    return false;
+                    return false; // Not all instructions are passed
                 }
             }
             catch (HttpRequestException ex)
             {
                 MessageBox.Show($"Error: {ex.Message}");
-                return null;
+                Console.WriteLine($"Exception in DownloadInstructionsForUserFromServer: {ex}");
+                return false; // Avoid indicating all instructions are passed when an error occurs
             }
+        }
 
+        // Add a new DTO class to match the server response format
+        public class InstructionDto
+        {
+            public int InstructionId { get; set; }
+            public string Cause { get; set; }
+            public DateTime BeginDate { get; set; }
+            public DateTime EndDate { get; set; }
+            public string Type { get; set; }
+            public DateTime? WhenAssigned { get; set; }
+            public List<string> FilePaths { get; set; }
         }
 
         private async Task<bool> RefreshOldInstructionsInternal()
         {
             try
             {
-                // Log start of method
-                Console.WriteLine("Starting RefreshOldInstructionsInternal...");
-
-                // Clear the list to ensure a fresh state
                 dataGridViewPassedInstructions.Rows.Clear();
-                Console.WriteLine("Cleared ListOfInstructionsForUser.");
 
-                // Log user name
-                Console.WriteLine($"_userName: {_userName}");
+                var result = await _instructionService.GetPassedInstructionsAsync();
 
-                // Call the method to download old instructions
-                bool? IsEmpty = await DownloadOldInstructionsForUserFromServer(_userName);
-
-                // Log result of the download
-                Console.WriteLine($"DownloadOldInstructionsForUserFromServerIsEmpty returned: {IsEmpty}");
-
-                if (IsEmpty == true)
+                if (result == null)
                 {
-                    MessageBox.Show("Все инструктажи пройдены!");
+                    MessageBox.Show("Нет пройденных инструктажей.");
+                    return true;
                 }
 
-                if (IsEmpty is null)
-                {
-                    Console.WriteLine("IsEmpty is null. Exiting RefreshOldInstructionsInternal early.");
-                    return false;
-                }
+                // Update the global lists
+                listOfOldInstructions_global = result.Value.Instructions;
+                listsOfPathsOfOldInstr_global = result.Value.Paths;
 
-                // Log end of method
-                Console.WriteLine("RefreshOldInstructionsInternal completed successfully.");
+                // Update the UI
+                this.Invoke(new Action(() =>
+                {
+                    foreach (var instruction in listOfOldInstructions_global)
+                    {
+                        DateTime? whenPassed = null;
+                        if (instruction.ContainsKey("date_when_passed") && instruction["date_when_passed"] != null)
+                        {
+                            whenPassed = Convert.ToDateTime(instruction["date_when_passed"]);
+                        }
+
+                        string type = instruction.ContainsKey("type_of_instruction") ?
+                            instruction["type_of_instruction"]?.ToString() ?? "Unknown" : "Unknown";
+
+                        string cause = instruction.ContainsKey("cause_of_instruction") ?
+                            instruction["cause_of_instruction"]?.ToString() ?? "" : "";
+
+                        dataGridViewPassedInstructions.Rows.Add(
+                            whenPassed?.ToString("yyyy-MM-dd"),
+                            type,
+                            cause
+                        );
+                    }
+                }));
+
                 return true;
             }
             catch (Exception ex)
             {
-                // Log any exceptions
-                Console.WriteLine($"Exception in RefreshOldInstructionsInternal: {ex.Message}");
-                MessageBox.Show($"Error during refresh: {ex.Message}");
+                Console.WriteLine($"Exception in RefreshOldInstructionsInternal: {ex}");
+                MessageBox.Show($"Error refreshing passed instructions: {ex.Message}");
                 return false;
             }
         }
 
+        // Also fix the method to download old instructions
         private async Task<bool?> DownloadOldInstructionsForUserFromServer(string? userName)
         {
             if (userName is null)
@@ -314,7 +410,7 @@ namespace Kotova.Test1.ClientSide
                 throw new ArgumentNullException(nameof(userName));
             }
 
-            string url = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-passed-instructions";
+            string url = DownloadOldInstructionForUserURL;
 
             try
             {
@@ -329,7 +425,7 @@ namespace Kotova.Test1.ClientSide
                     var jsonResponse = await response.Content.ReadAsStringAsync();
 
                     // Debug: Log the raw JSON response
-                    Console.WriteLine($"Raw JSON Response: {jsonResponse}");
+                    Console.WriteLine($"Raw JSON Response for passed instructions: {jsonResponse}");
 
                     // Use more flexible JSON options
                     var jsonSerializerOptions = new JsonSerializerOptions
@@ -356,6 +452,10 @@ namespace Kotova.Test1.ClientSide
                     {
                         return true;
                     }
+
+                    // Initialize the global lists before populating them
+                    listOfOldInstructions_global = new List<Dictionary<string, object>>();
+                    listsOfPathsOfOldInstr_global = new List<Dictionary<string, object>>();
 
                     // Clear existing rows
                     this.Invoke(new Action(() =>
@@ -385,12 +485,29 @@ namespace Kotova.Test1.ClientSide
                 { db_dateOfInstructionWasSentToUser, i.WhenPassed }
             }).ToList();
 
-                    // Store file paths for later use
-                    listsOfPathsOfOldInstr_global = passedInstructions.Select(i => new Dictionary<string, object>
-            {
-                { dB_instructionId, i.InstructionId },
-                { db_filePath, i.FilePaths ?? new List<string>() }
-            }).ToList();
+                    // Store file paths for later use - handle multiple file paths per instruction
+                    foreach (var instruction in passedInstructions)
+                    {
+                        if (instruction.FilePaths != null && instruction.FilePaths.Any())
+                        {
+                            foreach (var filePath in instruction.FilePaths)
+                            {
+                                listsOfPathsOfOldInstr_global.Add(new Dictionary<string, object>
+                        {
+                            { dB_instructionId, instruction.InstructionId },
+                            { db_filePath, filePath }
+                        });
+                            }
+                        }
+                        else
+                        {
+                            listsOfPathsOfOldInstr_global.Add(new Dictionary<string, object>
+                    {
+                        { dB_instructionId, instruction.InstructionId },
+                        { db_filePath, null }
+                    });
+                        }
+                    }
 
                     return false;
                 }
@@ -605,13 +722,13 @@ namespace Kotova.Test1.ClientSide
 
         private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
         {
-            // Extract the instruction ID from the selected dictionary
-            int instructionId;
             try
             {
-                // Safely extract instruction ID, handling potential JsonElement
-                object idValue = selectedDict[dB_instructionId];
+                // Extract the instruction ID from the selected dictionary
+                int instructionId;
 
+                // Safely extract instruction ID
+                object idValue = selectedDict["instruction_id"];
                 if (idValue is JsonElement jsonElement)
                 {
                     instructionId = jsonElement.GetInt32();
@@ -620,41 +737,27 @@ namespace Kotova.Test1.ClientSide
                 {
                     instructionId = Convert.ToInt32(idValue);
                 }
+
+                // Use the service to mark the instruction as passed
+                bool success = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
+
+                if (success)
+                {
+                    // Clear and refresh the instructions list
+                    ListOfInstructionsForUser.Items.Clear();
+                    await RefreshNewInstructionsInternal();
+                    await RefreshOldInstructionsInternal();
+
+                    // Optional: Show success message
+                    MessageBox.Show("Instruction successfully marked as passed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Failed to mark instruction as passed.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error extracting instruction ID: {ex.Message}");
-                return;
-            }
-            string url = SendInstructionIsPassedURL + $"/{instructionId}";
-
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    string jwtToken = _loginForm._jwtToken;
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                    // Use POST method with no body since the ID is in the URL
-                    HttpResponseMessage response = await client.PostAsync(url, null);
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        // Clear and refresh the instructions list
-                        ListOfInstructionsForUser.Items.Clear();
-                        await DownloadInstructionsForUserFromServer(_userName);
-
-                        // Optional: Show success message
-                        MessageBox.Show("Instruction successfully marked as passed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                // Handle any exceptions here
                 MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
@@ -789,33 +892,47 @@ namespace Kotova.Test1.ClientSide
 
         private void dataGridViewPassedInstructions_SelectionChanged(object sender, EventArgs e)
         {
-            listBoxOfPathsOfPassedInstructions.Items.Clear();
-            if (dataGridViewPassedInstructions.SelectedRows.Count > 0)
+            try
             {
-                DataGridViewRow selectedRow = dataGridViewPassedInstructions.SelectedRows[0];
-                string? cause;
-                try
-                {
-                    object cellValue = selectedRow.Cells["CauseOfPassedInstr"]?.Value; //ЗДЕСЬ 2, ПОТОМУ ЧТО CauseOFPassedInstr НЕ РАБОТАЕТ ПОЧЕМУ-ТО
-                    if (cellValue == null)
-                    {
-                        return;
-                    }
-                    cause = cellValue.ToString();
-                }
-                catch
+                listBoxOfPathsOfPassedInstructions.Items.Clear();
+
+                if (dataGridViewPassedInstructions.SelectedRows.Count <= 0)
                 {
                     return;
                 }
-                // If we successfully retrieved a non-null cause, call your method
+
+                DataGridViewRow selectedRow = dataGridViewPassedInstructions.SelectedRows[0];
+
+                // Make sure we have the right column index
+                int causeColumnIndex = dataGridViewPassedInstructions.Columns["CauseOfPassedInstr"]?.Index ?? 2;
+                if (causeColumnIndex < 0 || causeColumnIndex >= selectedRow.Cells.Count)
+                {
+                    Console.WriteLine($"Invalid column index: {causeColumnIndex}, Cell count: {selectedRow.Cells.Count}");
+                    return;
+                }
+
+                object cellValue = selectedRow.Cells[causeColumnIndex]?.Value;
+                if (cellValue == null)
+                {
+                    return;
+                }
+
+                string cause = cellValue.ToString();
+
+                // Ensure old instructions are loaded before trying to fetch paths
+                if (listOfOldInstructions_global == null || listsOfPathsOfOldInstr_global == null)
+                {
+                    MessageBox.Show("Пожалуйста, дождитесь загрузки инструктажей.");
+                    return;
+                }
+
                 List<string?>? listOfPaths = FetchOldInstructionsFilesByCause(cause);
-                if (listOfPaths is null || listOfPaths.Count == 0) return;
+                if (listOfPaths == null || listOfPaths.Count == 0) return;
 
                 string[] pathArray = listOfPaths
-                    .Where(item => item is not null) // Remove nulls
-                    .Select(item => item!.ToString()!) // Convert to string safely
+                    .Where(item => item is not null)
+                    .Select(item => item!.ToString()!)
                     .ToArray();
-
 
                 if (pathArray is null || pathArray.Length == 0)
                 {
@@ -824,7 +941,11 @@ namespace Kotova.Test1.ClientSide
                 }
 
                 listBoxOfPathsOfPassedInstructions.Items.AddRange(pathArray);
-
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in dataGridViewPassedInstructions_SelectionChanged: {ex}");
+                MessageBox.Show($"Произошла ошибка при загрузке файлов: {ex.Message}");
             }
         }
 
@@ -883,14 +1004,29 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show("Причина выбранного инструктажа null. Как ты вообще сюда попал, User? :/");
                 return null;
             }
+
+            // Add null check for listOfOldInstructions_global
+            if (listOfOldInstructions_global == null)
+            {
+                Console.WriteLine("Warning: listOfOldInstructions_global is null");
+                MessageBox.Show("Ошибка: Список инструктажей не загружен.");
+                return null;
+            }
+
             List<object?> listOfIds = GetInstructionIdsOfGivenCause(listOfOldInstructions_global, cause);
-            if (listOfIds.Count != 1)
+
+            if (listOfIds == null || listOfIds.Count != 1)
             {
                 MessageBox.Show("Для данного инструктажа не найдены ID или найдены больше чем 1, что-то пошло не так :/");
                 return null;
             }
 
             object? firstId = listOfIds[0];
+            if (firstId == null)
+            {
+                MessageBox.Show("ID инструктажа равен null");
+                return null;
+            }
 
             int id;
             if (firstId is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Number)
@@ -902,11 +1038,16 @@ namespace Kotova.Test1.ClientSide
                 id = Convert.ToInt32(firstId); // Standard conversion if not JsonElement
             }
 
+            // Add null check for listsOfPathsOfOldInstr_global
+            if (listsOfPathsOfOldInstr_global == null)
+            {
+                Console.WriteLine("Warning: listsOfPathsOfOldInstr_global is null");
+                MessageBox.Show("Ошибка: Список путей файлов не загружен.");
+                return null;
+            }
 
             List<string?> listOfPaths = GetPathsOfGivenId(listsOfPathsOfOldInstr_global, id);
             return listOfPaths;
-            //PrintListOfDictionary(listsOfPathsOfOldInstr_global);
-            //PrintListOfDictionary(listOfOldInstructions_global);
         }
 
         private List<string?> GetPathsOfGivenId(List<Dictionary<string, object>> list, int id)
@@ -928,10 +1069,18 @@ namespace Kotova.Test1.ClientSide
         }
         private List<object?> GetInstructionIdsOfGivenCause(List<Dictionary<string, object>> list, string cause)
         {
+            // Add null check for the list
+            if (list == null)
+            {
+                Console.WriteLine("Warning: list is null in GetInstructionIdsOfGivenCause");
+                return new List<object?>(); // Return empty list instead of throwing exception
+            }
+
             return list
-            .Where(dict => dict.ContainsKey(dB_pos_users_causeOfInstruction) && dict[dB_pos_users_causeOfInstruction]?.ToString() == cause)
-            .Select(dict => dict.ContainsKey(dB_instructionId) ? dict[dB_instructionId] : null)
-            .ToList();
+                .Where(dict => dict != null && dict.ContainsKey(dB_pos_users_causeOfInstruction) &&
+                       dict[dB_pos_users_causeOfInstruction]?.ToString() == cause)
+                .Select(dict => dict.ContainsKey(dB_instructionId) ? dict[dB_instructionId] : null)
+                .ToList();
         }
         private void PrintListOfDictionary(List<Dictionary<string, object>> list)
         {

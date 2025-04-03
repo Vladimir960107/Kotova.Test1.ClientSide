@@ -23,11 +23,11 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class ChiefForm : Form
     {
-        public static readonly string urlCreateInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-new-instruction-into-db";
+        public static readonly string urlCreateInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-new-instruction-into-db"; //Исправлено
         public static readonly string urlTest = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/greeting";
         public static readonly string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
         public static readonly string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
-        public static readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
+        public static readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names"; //Исправлено
         public static readonly string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_not_passed_instructions_for_user";
         public static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
         public static readonly string GetDepartmentIdByUserName = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-department-id-by";
@@ -138,7 +138,7 @@ namespace Kotova.Test1.ClientSide
                 return;
             }
 
-            string? causeOfCreatedInstruction = fullCustomInstruction._instruction.cause_of_instruction;
+            string? causeOfCreatedInstruction = fullCustomInstruction.Instruction.cause_of_instruction;
             // Дальше по сути идёт функция назначения выбранному инструктажу людей. 
             buttonCreateInstruction.Enabled = false;
 
@@ -250,7 +250,21 @@ namespace Kotova.Test1.ClientSide
                 Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox! 0 - вводный, 1 - внеплановый
                 Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
                 FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
-                string json = JsonConvert.SerializeObject(fullCustomInstr);
+                
+                var requestObject = new
+                {
+                    Instruction = new
+                    {
+                        CauseOfInstruction = instruction.cause_of_instruction,
+                        EndDate = instruction.end_date,
+                        PathToInstruction = instruction.path_to_instruction,
+                        TypeOfInstruction = instruction.type_of_instruction
+                    },
+                    Paths = paths
+                };
+                string json = JsonConvert.SerializeObject(requestObject);
+                Console.WriteLine("Serialized JSON: " + json);
+
                 HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
                 await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
                 buttonCreateInstruction.Enabled = true;

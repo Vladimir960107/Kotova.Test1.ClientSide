@@ -60,7 +60,7 @@ namespace Kotova.Test1.ClientSide
                     catch (HttpRequestException)
                     {
                         var errorResponse = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Error: {response.StatusCode}, Server returned a failure response: {errorResponse}");
+                        MessageBox.Show($"Error in connectionToUrlPost internal: {response.StatusCode}, Server returned a failure response: {errorResponse}");
 
                         return response.StatusCode;
                     }
@@ -68,7 +68,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (HttpRequestException ex)
             {
-                MessageBox.Show($"Error: {ex.Message}");
+                MessageBox.Show($"Error in connectionToUrlPost main: {ex.Message}");
                 return HttpStatusCode.BadRequest;
             }
         }
