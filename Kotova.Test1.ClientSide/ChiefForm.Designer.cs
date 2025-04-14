@@ -87,6 +87,7 @@
             usernameLabel = new Label();
             label10 = new Label();
             button1 = new Button();
+            ListOfNormativeInstrNames = new CheckedListBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -120,6 +121,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(ListOfNormativeInstrNames);
             tabPage2.Controls.Add(checkedListBoxNamesOfPeopleCreatingInstr);
             tabPage2.Controls.Add(treeView1);
             tabPage2.Controls.Add(PathToFolderOfInstruction);
@@ -147,7 +149,7 @@
             checkedListBoxNamesOfPeopleCreatingInstr.HorizontalScrollbar = true;
             checkedListBoxNamesOfPeopleCreatingInstr.Location = new Point(47, 306);
             checkedListBoxNamesOfPeopleCreatingInstr.Name = "checkedListBoxNamesOfPeopleCreatingInstr";
-            checkedListBoxNamesOfPeopleCreatingInstr.Size = new Size(289, 94);
+            checkedListBoxNamesOfPeopleCreatingInstr.Size = new Size(289, 148);
             checkedListBoxNamesOfPeopleCreatingInstr.TabIndex = 35;
             // 
             // treeView1
@@ -624,6 +626,14 @@
             button1.Text = "Задание выполнено";
             button1.UseVisualStyleBackColor = true;
             // 
+            // ListOfNormativeInstrNames
+            // 
+            ListOfNormativeInstrNames.FormattingEnabled = true;
+            ListOfNormativeInstrNames.Location = new Point(387, 306);
+            ListOfNormativeInstrNames.Name = "ListOfNormativeInstrNames";
+            ListOfNormativeInstrNames.Size = new Size(224, 148);
+            ListOfNormativeInstrNames.TabIndex = 36;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -712,5 +722,6 @@
         private Button SelectAllThePeopleInListBoxButton;
         private Button DownloadAllEmployeesInTheDepartment;
         private CheckBox MissTheAssignmentOfInstrCheckedBox;
+        private CheckedListBox ListOfNormativeInstrNames;
     }
 }

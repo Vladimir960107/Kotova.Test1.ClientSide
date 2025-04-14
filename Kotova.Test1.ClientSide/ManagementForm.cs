@@ -1089,4 +1089,11 @@ namespace Kotova.Test1.ClientSide
         }
     }
 
+    public class InstructionDto
+    {
+        public int InstructionId { get; set; }
+        public string TenDigitNumber { get; set; }
+        public string Name { get; set; }
+        public DateTime BirthDate { get; set; }
+    }
 }

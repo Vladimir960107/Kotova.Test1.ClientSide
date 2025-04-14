@@ -21,6 +21,7 @@ using System.Net.Http;
 using System.IO;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json.Serialization;
+using static Kotova.Test1.ClientSide.CoordinatorForm;
 //using System.Windows.Controls;
 
 
@@ -202,7 +203,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        
+
 
         private List<string>? RolesDBToRoleNames(List<string>? list)
         {
@@ -572,6 +573,10 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show("Не обновились данные (скорее всего отсутствует соединение с сервером)");
                 }
 
+            }
+            if (CoordinatorTabControl.SelectedTab == NormativeInstructionsTab)
+            {
+                await LoadNormativeInstructions();
             }
         }
 
@@ -1064,5 +1069,373 @@ namespace Kotova.Test1.ClientSide
                 dbConnectionForm.Show();
             }
         }
+
+        #region Normative Instructions CRUD
+
+        // Add these constants at the beginning of the CoordinatorForm class
+        private static readonly string GetNormativeInstructionsUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions";
+        private static readonly string CreateNormativeInstructionUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions";
+        private static readonly string UpdateNormativeInstructionUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions/{0}"; // Will be formatted with ID
+        private static readonly string DeleteNormativeInstructionUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions/{0}"; // Will be formatted with ID
+
+        // Add these variables to store current edit state
+        private bool isEditMode = false;
+        private List<NormativeInstructionDto> normativeInstructions;
+
+        // Add this class to hold the data
+        public class NormativeInstructionDto
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string Url { get; set; }
+            public DateTime CreatedAt { get; set; }
+        }
+
+
+        // Method to load normative instructions from the server
+        private async Task LoadNormativeInstructions()
+        {
+            try
+            {
+                dgvNormativeInstructions.DataSource = null;
+
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    HttpResponseMessage response = await client.GetAsync(GetNormativeInstructionsUrl);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                    // Use JsonSerializerSettings to ensure proper Unicode handling
+                    var settings = new JsonSerializerSettings
+                    {
+                        Formatting = Formatting.Indented,
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+
+                    normativeInstructions = JsonConvert.DeserializeObject<List<NormativeInstructionDto>>(jsonResponse, settings);
+
+                    // Set up the data grid
+                    dgvNormativeInstructions.DataSource = normativeInstructions;
+
+                    // Configure columns
+                    ConfigureNormativeInstructionsGrid();
+
+                    // Clear input fields and disable buttons
+                    ClearNormativeInstructionInputs();
+                    SetNormativeInstructionEditMode(false);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unexpected error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Configure the data grid columns
+        private void ConfigureNormativeInstructionsGrid()
+        {
+            dgvNormativeInstructions.AutoGenerateColumns = false;
+
+            // Clear existing columns
+            dgvNormativeInstructions.Columns.Clear();
+
+            // Add columns
+            dgvNormativeInstructions.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Id",
+                HeaderText = "ID",
+                Width = 50,
+                ReadOnly = true
+            });
+
+            dgvNormativeInstructions.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Name",
+                HeaderText = "Наименование",
+                Width = 250,
+                ReadOnly = true
+            });
+
+            dgvNormativeInstructions.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Url",
+                HeaderText = "URL",
+                Width = 150,
+                ReadOnly = true
+            });
+
+            dgvNormativeInstructions.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "CreatedAt",
+                HeaderText = "Дата создания",
+                Width = 120,
+                ReadOnly = true,
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Format = "dd.MM.yyyy HH:mm",
+                    Alignment = DataGridViewContentAlignment.MiddleCenter
+                }
+            });
+        }
+
+        // Handle cell click in the data grid
+        private void dgvNormativeInstructions_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.RowIndex < normativeInstructions.Count)
+            {
+                var selectedInstruction = normativeInstructions[e.RowIndex];
+
+                // Fill the form fields
+                txtNormativeInstructionId.Text = selectedInstruction.Id.ToString();
+                txtNormativeInstructionName.Text = selectedInstruction.Name;
+                txtNormativeInstructionUrl.Text = selectedInstruction.Url;
+
+                // Enable edit mode
+                SetNormativeInstructionEditMode(true);
+            }
+        }
+
+        // Clear input fields
+        private void ClearNormativeInstructionInputs()
+        {
+            txtNormativeInstructionId.Text = string.Empty;
+            txtNormativeInstructionName.Text = string.Empty;
+            txtNormativeInstructionUrl.Text = string.Empty;
+        }
+
+        // Set edit mode
+        private void SetNormativeInstructionEditMode(bool isEdit)
+        {
+            isEditMode = isEdit;
+            btnSaveNormativeInstruction.Text = isEdit ? "Обновить" : "Добавить";
+            btnDeleteNormativeInstruction.Enabled = isEdit;
+        }
+
+        // Handle "New" button click
+        private void btnNewNormativeInstruction_Click(object sender, EventArgs e)
+        {
+            ClearNormativeInstructionInputs();
+            SetNormativeInstructionEditMode(false);
+            txtNormativeInstructionName.Focus();
+        }
+
+        // Handle "Save" button click
+        private async void btnSaveNormativeInstruction_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtNormativeInstructionName.Text))
+            {
+                MessageBox.Show("Введите наименование инструкции", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                string jwtToken = _loginForm._jwtToken;
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    HttpResponseMessage response;
+
+                    // Create the model object
+                    var model = new
+                    {
+                        Name = txtNormativeInstructionName.Text,
+                        Url = txtNormativeInstructionUrl.Text
+                    };
+
+                    // Convert to JSON
+                    var content = new StringContent(
+                        JsonConvert.SerializeObject(model),
+                        Encoding.UTF8,
+                        "application/json");
+
+                    if (isEditMode)
+                    {
+                        // Update existing instruction
+                        int id = int.Parse(txtNormativeInstructionId.Text);
+                        string url = string.Format(UpdateNormativeInstructionUrl, id);
+
+                        response = await client.PutAsync(url, content);
+                    }
+                    else
+                    {
+                        // Create new instruction
+                        response = await client.PostAsync(CreateNormativeInstructionUrl, content);
+                    }
+
+                    response.EnsureSuccessStatusCode();
+
+                    // Show success message
+                    MessageBox.Show(
+                        isEditMode ? "Инструкция успешно обновлена" : "Инструкция успешно создана",
+                        "Операция выполнена",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+
+                    // Reload the list
+                    await LoadNormativeInstructions();
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Handle "Cancel" button click
+        private void btnCancelNormativeInstruction_Click(object sender, EventArgs e)
+        {
+            ClearNormativeInstructionInputs();
+            SetNormativeInstructionEditMode(false);
+        }
+
+        // Handle "Delete" button click
+        private async void btnDeleteNormativeInstruction_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtNormativeInstructionId.Text))
+            {
+                MessageBox.Show("Выберите инструкцию для удаления", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Confirm deletion
+            var result = MessageBox.Show(
+                "Вы уверены, что хотите удалить эту инструкцию?",
+                "Подтверждение удаления",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                int id = int.Parse(txtNormativeInstructionId.Text);
+                string url = string.Format(DeleteNormativeInstructionUrl, id);
+
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    HttpResponseMessage response = await client.DeleteAsync(url);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show(
+                            "Инструкция успешно удалена",
+                            "Операция выполнена",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+
+                        // Reload the list
+                        await LoadNormativeInstructions();
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        MessageBox.Show(
+                            "Инструкция не найдена. Возможно, она была удалена другим пользователем.",
+                            "Ошибка",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+
+                        // Reload the list
+                        await LoadNormativeInstructions();
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            $"Ошибка при удалении инструкции: {response.StatusCode}",
+                            "Ошибка",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Handle "Refresh" button click
+        private async void btnRefreshNormativeInstructions_Click(object sender, EventArgs e)
+        {
+            await LoadNormativeInstructions();
+        }
+
+        // Helper method to map the NormativeInstructionName model from the server to our DTO
+        private NormativeInstructionDto MapToDto(dynamic normativeInstruction)
+        {
+            return new NormativeInstructionDto
+            {
+                Id = normativeInstruction.id,
+                Name = normativeInstruction.normative_instruction_name,
+                Url = normativeInstruction.url,
+                CreatedAt = normativeInstruction.created_at
+            };
+        }
+
+        // Add this method to handle right-click on the DataGridView to open the URL in browser
+        private void dgvNormativeInstructions_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                // Get the row that was clicked
+                var hitTestInfo = dgvNormativeInstructions.HitTest(e.X, e.Y);
+                if (hitTestInfo.RowIndex >= 0 && hitTestInfo.RowIndex < normativeInstructions.Count)
+                {
+                    var selectedInstruction = normativeInstructions[hitTestInfo.RowIndex];
+
+                    // Only proceed if there's a URL to open
+                    if (!string.IsNullOrWhiteSpace(selectedInstruction.Url))
+                    {
+                        // Create context menu
+                        ContextMenuStrip menu = new ContextMenuStrip();
+                        ToolStripMenuItem openUrlItem = new ToolStripMenuItem("Открыть URL в браузере");
+
+                        openUrlItem.Click += (s, args) =>
+                        {
+                            try
+                            {
+                                Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = selectedInstruction.Url,
+                                    UseShellExecute = true
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Не удалось открыть URL: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        };
+
+                        menu.Items.Add(openUrlItem);
+                        menu.Show(dgvNormativeInstructions, e.Location);
+                    }
+                }
+            }
+        }
+
+        #endregion
     }
 }

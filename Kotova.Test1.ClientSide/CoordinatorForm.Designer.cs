@@ -95,6 +95,20 @@
             label12 = new Label();
             EndDateOfPassedInstructions = new DateTimePicker();
             BeginingDateOfPassedInstructions = new DateTimePicker();
+            NormativeInstructionsTab = new TabPage();
+            btnRefreshNormativeInstructions = new Button();
+            btnDeleteNormativeInstruction = new Button();
+            btnNewNormativeInstruction = new Button();
+            gbNormativeInstructionDetails = new GroupBox();
+            labelInstructionID = new Label();
+            txtNormativeInstructionId = new TextBox();
+            btnCancelNormativeInstruction = new Button();
+            btnSaveNormativeInstruction = new Button();
+            txtNormativeInstructionUrl = new TextBox();
+            lblNormativeInstructionUrl = new Label();
+            txtNormativeInstructionName = new TextBox();
+            lblNormativeInstructionName = new Label();
+            dgvNormativeInstructions = new DataGridView();
             button1 = new Button();
             UserLabel = new Label();
             label11 = new Label();
@@ -104,6 +118,9 @@
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             tabPage5.SuspendLayout();
+            NormativeInstructionsTab.SuspendLayout();
+            gbNormativeInstructionDetails.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvNormativeInstructions).BeginInit();
             SuspendLayout();
             // 
             // tabPage1
@@ -121,7 +138,7 @@
             tabPage1.Location = new Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new Size(981, 398);
+            tabPage1.Size = new Size(1124, 398);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Вводные инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
@@ -223,10 +240,11 @@
             CoordinatorTabControl.Controls.Add(tabPage3);
             CoordinatorTabControl.Controls.Add(tabPage4);
             CoordinatorTabControl.Controls.Add(tabPage5);
+            CoordinatorTabControl.Controls.Add(NormativeInstructionsTab);
             CoordinatorTabControl.Location = new Point(46, 62);
             CoordinatorTabControl.Name = "CoordinatorTabControl";
             CoordinatorTabControl.SelectedIndex = 0;
-            CoordinatorTabControl.Size = new Size(989, 426);
+            CoordinatorTabControl.Size = new Size(1132, 426);
             CoordinatorTabControl.TabIndex = 22;
             CoordinatorTabControl.SelectedIndexChanged += CoordinatorTabControl_SelectedIndexChanged;
             // 
@@ -237,7 +255,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(981, 398);
+            tabPage2.Size = new Size(1124, 398);
             tabPage2.TabIndex = 6;
             tabPage2.Text = "Связь баз данных";
             tabPage2.UseVisualStyleBackColor = true;
@@ -311,7 +329,7 @@
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(981, 398);
+            tabPage3.Size = new Size(1124, 398);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Данные сотрудника";
             tabPage3.UseVisualStyleBackColor = true;
@@ -514,7 +532,7 @@
             tabPage4.Location = new Point(4, 24);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(981, 398);
+            tabPage4.Size = new Size(1124, 398);
             tabPage4.TabIndex = 5;
             tabPage4.Text = "Прохождение инструктажей";
             tabPage4.UseVisualStyleBackColor = true;
@@ -588,7 +606,7 @@
             tabPage5.Location = new Point(4, 24);
             tabPage5.Name = "tabPage5";
             tabPage5.Padding = new Padding(3);
-            tabPage5.Size = new Size(981, 398);
+            tabPage5.Size = new Size(1124, 398);
             tabPage5.TabIndex = 4;
             tabPage5.Text = "Контроль";
             tabPage5.UseVisualStyleBackColor = true;
@@ -692,9 +710,155 @@
             BeginingDateOfPassedInstructions.Size = new Size(245, 23);
             BeginingDateOfPassedInstructions.TabIndex = 0;
             // 
+            // NormativeInstructionsTab
+            // 
+            NormativeInstructionsTab.Controls.Add(btnRefreshNormativeInstructions);
+            NormativeInstructionsTab.Controls.Add(btnDeleteNormativeInstruction);
+            NormativeInstructionsTab.Controls.Add(btnNewNormativeInstruction);
+            NormativeInstructionsTab.Controls.Add(gbNormativeInstructionDetails);
+            NormativeInstructionsTab.Controls.Add(dgvNormativeInstructions);
+            NormativeInstructionsTab.Location = new Point(4, 24);
+            NormativeInstructionsTab.Name = "NormativeInstructionsTab";
+            NormativeInstructionsTab.Size = new Size(1124, 398);
+            NormativeInstructionsTab.TabIndex = 7;
+            NormativeInstructionsTab.Text = "Нормативная база";
+            NormativeInstructionsTab.UseVisualStyleBackColor = true;
+            // 
+            // btnRefreshNormativeInstructions
+            // 
+            btnRefreshNormativeInstructions.Location = new Point(739, 176);
+            btnRefreshNormativeInstructions.Name = "btnRefreshNormativeInstructions";
+            btnRefreshNormativeInstructions.Size = new Size(78, 40);
+            btnRefreshNormativeInstructions.TabIndex = 4;
+            btnRefreshNormativeInstructions.Text = "Обновить";
+            btnRefreshNormativeInstructions.UseVisualStyleBackColor = true;
+            // 
+            // btnDeleteNormativeInstruction
+            // 
+            btnDeleteNormativeInstruction.Location = new Point(640, 176);
+            btnDeleteNormativeInstruction.Name = "btnDeleteNormativeInstruction";
+            btnDeleteNormativeInstruction.Size = new Size(79, 40);
+            btnDeleteNormativeInstruction.TabIndex = 3;
+            btnDeleteNormativeInstruction.Text = "Удалить";
+            btnDeleteNormativeInstruction.UseVisualStyleBackColor = true;
+            btnDeleteNormativeInstruction.Click += btnDeleteNormativeInstruction_Click;
+            // 
+            // btnNewNormativeInstruction
+            // 
+            btnNewNormativeInstruction.Location = new Point(522, 176);
+            btnNewNormativeInstruction.Name = "btnNewNormativeInstruction";
+            btnNewNormativeInstruction.Size = new Size(90, 40);
+            btnNewNormativeInstruction.TabIndex = 2;
+            btnNewNormativeInstruction.Text = "Новая инструкция";
+            btnNewNormativeInstruction.UseVisualStyleBackColor = true;
+            btnNewNormativeInstruction.Click += btnNewNormativeInstruction_Click;
+            // 
+            // gbNormativeInstructionDetails
+            // 
+            gbNormativeInstructionDetails.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            gbNormativeInstructionDetails.Controls.Add(labelInstructionID);
+            gbNormativeInstructionDetails.Controls.Add(txtNormativeInstructionId);
+            gbNormativeInstructionDetails.Controls.Add(btnCancelNormativeInstruction);
+            gbNormativeInstructionDetails.Controls.Add(btnSaveNormativeInstruction);
+            gbNormativeInstructionDetails.Controls.Add(txtNormativeInstructionUrl);
+            gbNormativeInstructionDetails.Controls.Add(lblNormativeInstructionUrl);
+            gbNormativeInstructionDetails.Controls.Add(txtNormativeInstructionName);
+            gbNormativeInstructionDetails.Controls.Add(lblNormativeInstructionName);
+            gbNormativeInstructionDetails.Location = new Point(522, 15);
+            gbNormativeInstructionDetails.Name = "gbNormativeInstructionDetails";
+            gbNormativeInstructionDetails.Size = new Size(500, 150);
+            gbNormativeInstructionDetails.TabIndex = 1;
+            gbNormativeInstructionDetails.TabStop = false;
+            gbNormativeInstructionDetails.Text = "Детали нормативной инструкции";
+            // 
+            // labelInstructionID
+            // 
+            labelInstructionID.AutoSize = true;
+            labelInstructionID.Location = new Point(291, 118);
+            labelInstructionID.Name = "labelInstructionID";
+            labelInstructionID.Size = new Size(107, 15);
+            labelInstructionID.TabIndex = 7;
+            labelInstructionID.Text = "ID (неизменяемо):";
+            // 
+            // txtNormativeInstructionId
+            // 
+            txtNormativeInstructionId.Enabled = false;
+            txtNormativeInstructionId.Location = new Point(418, 114);
+            txtNormativeInstructionId.Name = "txtNormativeInstructionId";
+            txtNormativeInstructionId.Size = new Size(65, 23);
+            txtNormativeInstructionId.TabIndex = 6;
+            // 
+            // btnCancelNormativeInstruction
+            // 
+            btnCancelNormativeInstruction.Location = new Point(122, 114);
+            btnCancelNormativeInstruction.Name = "btnCancelNormativeInstruction";
+            btnCancelNormativeInstruction.Size = new Size(75, 23);
+            btnCancelNormativeInstruction.TabIndex = 5;
+            btnCancelNormativeInstruction.Text = "Отмена";
+            btnCancelNormativeInstruction.UseVisualStyleBackColor = true;
+            btnCancelNormativeInstruction.Click += btnCancelNormativeInstruction_Click;
+            // 
+            // btnSaveNormativeInstruction
+            // 
+            btnSaveNormativeInstruction.Location = new Point(6, 114);
+            btnSaveNormativeInstruction.Name = "btnSaveNormativeInstruction";
+            btnSaveNormativeInstruction.Size = new Size(75, 23);
+            btnSaveNormativeInstruction.TabIndex = 4;
+            btnSaveNormativeInstruction.Text = "Сохранить";
+            btnSaveNormativeInstruction.UseVisualStyleBackColor = true;
+            btnSaveNormativeInstruction.Click += btnSaveNormativeInstruction_Click;
+            // 
+            // txtNormativeInstructionUrl
+            // 
+            txtNormativeInstructionUrl.Location = new Point(6, 81);
+            txtNormativeInstructionUrl.Name = "txtNormativeInstructionUrl";
+            txtNormativeInstructionUrl.Size = new Size(477, 23);
+            txtNormativeInstructionUrl.TabIndex = 3;
+            // 
+            // lblNormativeInstructionUrl
+            // 
+            lblNormativeInstructionUrl.AutoSize = true;
+            lblNormativeInstructionUrl.Location = new Point(6, 63);
+            lblNormativeInstructionUrl.Name = "lblNormativeInstructionUrl";
+            lblNormativeInstructionUrl.Size = new Size(31, 15);
+            lblNormativeInstructionUrl.TabIndex = 2;
+            lblNormativeInstructionUrl.Text = "URL:";
+            // 
+            // txtNormativeInstructionName
+            // 
+            txtNormativeInstructionName.Location = new Point(6, 37);
+            txtNormativeInstructionName.Name = "txtNormativeInstructionName";
+            txtNormativeInstructionName.Size = new Size(477, 23);
+            txtNormativeInstructionName.TabIndex = 1;
+            // 
+            // lblNormativeInstructionName
+            // 
+            lblNormativeInstructionName.AutoSize = true;
+            lblNormativeInstructionName.Location = new Point(6, 19);
+            lblNormativeInstructionName.Name = "lblNormativeInstructionName";
+            lblNormativeInstructionName.Size = new Size(90, 15);
+            lblNormativeInstructionName.TabIndex = 0;
+            lblNormativeInstructionName.Text = "Наименование";
+            // 
+            // dgvNormativeInstructions
+            // 
+            dgvNormativeInstructions.AllowUserToAddRows = false;
+            dgvNormativeInstructions.AllowUserToDeleteRows = false;
+            dgvNormativeInstructions.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            dgvNormativeInstructions.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvNormativeInstructions.Location = new Point(16, 15);
+            dgvNormativeInstructions.MultiSelect = false;
+            dgvNormativeInstructions.Name = "dgvNormativeInstructions";
+            dgvNormativeInstructions.ReadOnly = true;
+            dgvNormativeInstructions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvNormativeInstructions.Size = new Size(500, 300);
+            dgvNormativeInstructions.TabIndex = 0;
+            dgvNormativeInstructions.CellClick += dgvNormativeInstructions_CellClick;
+            dgvNormativeInstructions.MouseClick += dgvNormativeInstructions_MouseClick;
+            // 
             // button1
             // 
-            button1.Location = new Point(1058, 62);
+            button1.Location = new Point(1058, 29);
             button1.Name = "button1";
             button1.Size = new Size(120, 43);
             button1.TabIndex = 35;
@@ -742,6 +906,10 @@
             tabPage4.PerformLayout();
             tabPage5.ResumeLayout(false);
             tabPage5.PerformLayout();
+            NormativeInstructionsTab.ResumeLayout(false);
+            gbNormativeInstructionDetails.ResumeLayout(false);
+            gbNormativeInstructionDetails.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvNormativeInstructions).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -811,5 +979,19 @@
         private ColumnHeader position;
         private ColumnHeader email;
         private ColumnHeader personnelNumber;
+        private TabPage NormativeInstructionsTab;
+        private DataGridView dgvNormativeInstructions;
+        private GroupBox gbNormativeInstructionDetails;
+        private Label lblNormativeInstructionUrl;
+        private TextBox txtNormativeInstructionName;
+        private Label lblNormativeInstructionName;
+        private Button btnSaveNormativeInstruction;
+        private TextBox txtNormativeInstructionUrl;
+        private Label labelInstructionID;
+        private TextBox txtNormativeInstructionId;
+        private Button btnCancelNormativeInstruction;
+        private Button btnRefreshNormativeInstructions;
+        private Button btnDeleteNormativeInstruction;
+        private Button btnNewNormativeInstruction;
     }
 }

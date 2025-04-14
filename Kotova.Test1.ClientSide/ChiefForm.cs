@@ -26,7 +26,7 @@ namespace Kotova.Test1.ClientSide
         public static readonly string urlCreateInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-new-instruction-into-db"; //Исправлено
         public static readonly string urlTest = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/greeting";
         public static readonly string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
-        public static readonly string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
+        public static readonly string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db"; //Исправлено
         public static readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names"; //Исправлено
         public static readonly string DownloadInstructionForUserURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get_not_passed_instructions_for_user";
         public static readonly string SendInstructionIsPassedURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/instruction_is_passed_by_user";
@@ -119,90 +119,120 @@ namespace Kotova.Test1.ClientSide
         private async void buttonCreateInstruction_Click(object sender, EventArgs e)
         {
             buttonCreateInstruction.Enabled = false;
-            var listOfNames = checkedListBoxNamesOfPeopleCreatingInstr.CheckedItems;
-
-            List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
-            if (listOfNames.Count == 0)
-            {
-                MessageBox.Show("Люди не выбраны!");
-                buttonCreateInstruction.Enabled = true;
-                return;
-            }
-
-            FullCustomInstruction? fullCustomInstruction = await CreateInstructionInternal();
-
-
-
-            if (fullCustomInstruction is null)
-            {
-                return;
-            }
-
-            string? causeOfCreatedInstruction = fullCustomInstruction.Instruction.cause_of_instruction;
-            // Дальше по сути идёт функция назначения выбранному инструктажу людей. 
-            buttonCreateInstruction.Enabled = false;
-
-            if (causeOfCreatedInstruction is null)
-            {
-                MessageBox.Show("Причина инструктажа - null, инструктаж не назначен людям");
-                return;
-            }
-
             try
             {
-                foreach (var item in listOfNames)
+                var listOfNames = checkedListBoxNamesOfPeopleCreatingInstr.CheckedItems;
+
+                List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
+                if (listOfNames.Count == 0)
                 {
-                    listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                    MessageBox.Show("Люди не выбраны!");
+                    buttonCreateInstruction.Enabled = true;
+                    return;
                 }
 
-                string instructionNameString = causeOfCreatedInstruction.ToString();
-                InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
-                string jsonData = JsonConvert.SerializeObject(package);
-                string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+                // Check if at least one normative instruction is selected
+                var selectedNormativeInstructions = new List<int>();
+                foreach (ListBoxItem item in ListOfNormativeInstrNames.CheckedItems)
+                {
+                    selectedNormativeInstructions.Add(item.Value);
+                }
+
+                if (selectedNormativeInstructions.Count == 0)
+                {
+                    MessageBox.Show("Выберите хотя бы одну нормативную инструкцию!");
+                    buttonCreateInstruction.Enabled = true;
+                    return;
+                }
+
+                FullCustomInstruction? fullCustomInstruction = await CreateInstructionInternal();
+
+                if (fullCustomInstruction is null)
+                {
+                    return;
+                }
+
+                string? causeOfCreatedInstruction = fullCustomInstruction.Instruction.cause_of_instruction;
+                // Дальше по сути идёт функция назначения выбранному инструктажу людей. 
+                buttonCreateInstruction.Enabled = false;
+
+                if (causeOfCreatedInstruction is null)
+                {
+                    MessageBox.Show("Причина инструктажа - null, инструктаж не назначен людям");
+                    return;
+                }
 
                 try
                 {
-                    using (var httpClient = new HttpClient())
+                    foreach (var item in listOfNames)
                     {
-                        string jwtToken = _loginForm._jwtToken;
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                        // Set the URI of your server endpoint
-                        var uri = new Uri(urlSubmitInstructionToPeople);
+                        listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                    }
 
-                        // Prepare the content to send
-                        var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
-                        // Send a POST request with the serialized JSON content
-                        var response = await httpClient.PostAsync(uri, content);
+                    string instructionNameString = causeOfCreatedInstruction.ToString();
 
+                    // Include the selected normative instruction IDs in the package
+                    InstructionPackage package = new InstructionPackage(
+                        listOfNamesAndBirthDateString,
+                        instructionNameString,
+                        selectedNormativeInstructions
+                    );
 
-                        if (response.IsSuccessStatusCode)
+                    string jsonData = JsonConvert.SerializeObject(package);
+                    string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                    try
+                    {
+                        using (var httpClient = new HttpClient())
                         {
-                            MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен пользователям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            string jwtToken = _loginForm._jwtToken;
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                            // Set the URI of your server endpoint
+                            var uri = new Uri(urlSubmitInstructionToPeople);
+
+                            // Prepare the content to send
+                            var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+                            // Send a POST request with the serialized JSON content
+                            var response = await httpClient.PostAsync(uri, content);
+
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен пользователям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                var errorMessage = await response.Content.ReadAsStringAsync();
+                                MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
                         }
-                        else
-                        {
-                            var errorMessage = await response.Content.ReadAsStringAsync();
-                            MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    finally
+                    {
+                        submitInstructionToPeople.Enabled = true;
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Произошли ошибка, проверь эту строчку:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {
                     submitInstructionToPeople.Enabled = true;
+                    treeView1.Nodes.Clear();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Произошли ошибка, проверь эту строчку:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Ошибка при создании инструктажа: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
-                submitInstructionToPeople.Enabled = true;
-                treeView1.Nodes.Clear();
+                buttonCreateInstruction.Enabled = true;
             }
         }
         private async Task<FullCustomInstruction?> CreateInstructionInternal()
@@ -393,77 +423,107 @@ namespace Kotova.Test1.ClientSide
         private async void submitInstructionToPeople_Click(object sender, EventArgs e)
         {
             submitInstructionToPeople.Enabled = false;
-            var listOfNames = checkedListBoxNamesOfPeople.CheckedItems;
-            //var listOfNames = ListBoxNamesOfPeople.SelectedItems;
-
-            List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
-            if (listOfNames.Count == 0)
-            {
-                MessageBox.Show("Люди не выбраны!");
-                submitInstructionToPeople.Enabled = true;
-                return;
-            }
-            var selectedInstruction = ListOfInstructions.SelectedItem;
-            if (selectedInstruction is null)
-            {
-                MessageBox.Show("Инструкция не выбрана!");
-                submitInstructionToPeople.Enabled = true;
-                return;
-            }
             try
             {
-                foreach (var item in listOfNames)
+                var listOfNames = checkedListBoxNamesOfPeople.CheckedItems;
+
+                List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
+                if (listOfNames.Count == 0)
                 {
-                    listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                    MessageBox.Show("Люди не выбраны!");
+                    submitInstructionToPeople.Enabled = true;
+                    return;
                 }
-                string instructionNameString = selectedInstruction.ToString();
-                InstructionPackage package = new InstructionPackage(listOfNamesAndBirthDateString, instructionNameString);
-                string jsonData = JsonConvert.SerializeObject(package);
-                string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                var selectedInstruction = ListOfInstructions.SelectedItem;
+                if (selectedInstruction is null)
+                {
+                    MessageBox.Show("Инструкция не выбрана!");
+                    submitInstructionToPeople.Enabled = true;
+                    return;
+                }
+
+                // Check if at least one normative instruction is selected
+                var selectedNormativeInstructions = new List<int>();
+                foreach (ListBoxItem item in ListOfNormativeInstrNames.SelectedItems)
+                {
+                    selectedNormativeInstructions.Add(item.Value);
+                }
+
+                if (selectedNormativeInstructions.Count == 0)
+                {
+                    MessageBox.Show("Выберите хотя бы одну нормативную инструкцию!");
+                    submitInstructionToPeople.Enabled = true;
+                    return;
+                }
 
                 try
                 {
-                    using (var httpClient = new HttpClient())
+                    foreach (var item in listOfNames)
                     {
-                        string jwtToken = _loginForm._jwtToken;
-                        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                        // Set the URI of your server endpoint
-                        var uri = new Uri(urlSubmitInstructionToPeople);
+                        listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                    }
 
-                        // Prepare the content to send
-                        var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+                    string instructionNameString = selectedInstruction.ToString();
 
-                        // Send a POST request with the serialized JSON content
-                        var response = await httpClient.PostAsync(uri, content);
+                    // Include the selected normative instruction IDs in the package
+                    InstructionPackage package = new InstructionPackage(
+                        listOfNamesAndBirthDateString,
+                        instructionNameString,
+                        selectedNormativeInstructions
+                    );
 
-                        if (response.IsSuccessStatusCode)
+                    string jsonData = JsonConvert.SerializeObject(package);
+                    string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                    try
+                    {
+                        using (var httpClient = new HttpClient())
                         {
-                            MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен людям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            string jwtToken = _loginForm._jwtToken;
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                            // Set the URI of your server endpoint
+                            var uri = new Uri(urlSubmitInstructionToPeople);
+
+                            // Prepare the content to send
+                            var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+
+                            // Send a POST request with the serialized JSON content
+                            var response = await httpClient.PostAsync(uri, content);
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен людям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                var errorMessage = await response.Content.ReadAsStringAsync();
+                                MessageBox.Show($"Не получилось отправить данные не сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
                         }
-                        else
-                        {
-                            var errorMessage = await response.Content.ReadAsStringAsync();
-                            MessageBox.Show($"Не получилось отправить данные не сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    finally
+                    {
+                        submitInstructionToPeople.Enabled = true;
+                        await SyncManuallyInstrWithDBInternal();
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Какая-то ошибка произошла при назначении инструктажа:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {
                     submitInstructionToPeople.Enabled = true;
-                    await SyncManuallyInstrWithDBInternal();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Какая-то ошибка произошла при назначении инструктажа:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                submitInstructionToPeople.Enabled = true;
+                MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -543,6 +603,9 @@ namespace Kotova.Test1.ClientSide
                     SyncNamesWithDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
                     checkedListBoxNamesOfPeopleCreatingInstr.Items.Clear();
 
+                    // Also sync normative instruction names
+                    await SyncNormativeInstructionNamesWithDBInternal();
+
                     using (var httpClient = new HttpClient())
                     {
                         string jwtToken = _loginForm._jwtToken;
@@ -552,7 +615,6 @@ namespace Kotova.Test1.ClientSide
 
                         if (response.IsSuccessStatusCode)
                         {
-
                             string responseBody = await response.Content.ReadAsStringAsync();
                             List<EmployeeData> result = JsonConvert.DeserializeObject<List<EmployeeData>>(responseBody);
                             if (result is null)
@@ -561,23 +623,18 @@ namespace Kotova.Test1.ClientSide
                             }
                             string[] resultArray = result.Select(e => $"{e.FullName} ({e.BirthDate})").ToArray();
 
-                            //ListBoxNamesOfPeople.Items.AddRange(resultArray);
                             checkedListBoxNamesOfPeopleCreatingInstr.Items.AddRange(resultArray);
-                            // Successfully called the ImportIntoDB endpoint, handle accordingly
-                            //MessageBox.Show("Names successfully synced with database.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
                             string errorMessage = await response.Content.ReadAsStringAsync();
-                            //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             MessageBox.Show($"Не получилось синхронизировать имена с базой данных. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Exception handling for networking errors, etc.
                     MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
@@ -1585,6 +1642,83 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"Произошла ошибка: {ex.Message}");
+            }
+        }
+        private async Task<bool> SyncNormativeInstructionNamesWithDBInternal()
+        {
+            try
+            {
+                ListOfNormativeInstrNames.Items.Clear();
+
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    // Use the existing endpoint
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        if (string.IsNullOrWhiteSpace(responseBody))
+                        {
+                            throw new Exception("responseBody пуст");
+                        }
+
+                        // Deserialize the response - note the property names match what your endpoint returns
+                        var result = JsonConvert.DeserializeObject<List<NormativeInstructionDto>>(responseBody);
+
+                        if (result == null)
+                        {
+                            throw new Exception("Не удалось десериализовать ответ");
+                        }
+
+                        // Add items to the listbox
+                        foreach (var instruction in result)
+                        {
+                            ListOfNormativeInstrNames.Items.Add(new ListBoxItem
+                            {
+                                Text = instruction.Name,
+                                Value = instruction.Id
+                            });
+                        }
+
+                        return true;
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Не удалось синхронизировать нормативные инструкции. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        // DTO to match the endpoint response
+        public class NormativeInstructionDto
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string Url { get; set; }
+            public DateTime CreatedAt { get; set; }
+        }
+
+        // Helper class to store both text and value in ListBox items
+        public class ListBoxItem
+        {
+            public string Text { get; set; }
+            public int Value { get; set; }
+
+            public override string ToString()
+            {
+                return Text;
             }
         }
     }
