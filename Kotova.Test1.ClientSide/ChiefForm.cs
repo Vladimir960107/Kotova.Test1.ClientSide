@@ -121,166 +121,49 @@ namespace Kotova.Test1.ClientSide
             buttonCreateInstruction.Enabled = false;
             try
             {
-                var listOfNames = checkedListBoxNamesOfPeopleCreatingInstr.CheckedItems;
-
-                List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
-                if (listOfNames.Count == 0)
+                // Basic validation
+                if (string.IsNullOrWhiteSpace(InstructionTextBox.Text))
                 {
-                    MessageBox.Show("Люди не выбраны!");
+                    MessageBox.Show("Причина инструктажа пуста. Исправьте это пожалуйста.");
                     buttonCreateInstruction.Enabled = true;
                     return;
                 }
 
-                // Check if at least one normative instruction is selected
-                var selectedNormativeInstructions = new List<int>();
-                foreach (ListBoxItem item in ListOfNormativeInstrNames.CheckedItems)
-                {
-                    selectedNormativeInstructions.Add(item.Value);
-                }
-
-                if (selectedNormativeInstructions.Count == 0)
-                {
-                    MessageBox.Show("Выберите хотя бы одну нормативную инструкцию!");
-                    buttonCreateInstruction.Enabled = true;
-                    return;
-                }
-
-                FullCustomInstruction? fullCustomInstruction = await CreateInstructionInternal();
-
-                if (fullCustomInstruction is null)
-                {
-                    return;
-                }
-
-                string? causeOfCreatedInstruction = fullCustomInstruction.Instruction.cause_of_instruction;
-                // Дальше по сути идёт функция назначения выбранному инструктажу людей. 
-                buttonCreateInstruction.Enabled = false;
-
-                if (causeOfCreatedInstruction is null)
-                {
-                    MessageBox.Show("Причина инструктажа - null, инструктаж не назначен людям");
-                    return;
-                }
-
-                try
-                {
-                    foreach (var item in listOfNames)
-                    {
-                        listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
-                    }
-
-                    string instructionNameString = causeOfCreatedInstruction.ToString();
-
-                    // Include the selected normative instruction IDs in the package
-                    InstructionPackage package = new InstructionPackage(
-                        listOfNamesAndBirthDateString,
-                        instructionNameString,
-                        selectedNormativeInstructions
-                    );
-
-                    string jsonData = JsonConvert.SerializeObject(package);
-                    string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
-
-                    try
-                    {
-                        using (var httpClient = new HttpClient())
-                        {
-                            string jwtToken = _loginForm._jwtToken;
-                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                            // Set the URI of your server endpoint
-                            var uri = new Uri(urlSubmitInstructionToPeople);
-
-                            // Prepare the content to send
-                            var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
-                            // Send a POST request with the serialized JSON content
-                            var response = await httpClient.PostAsync(uri, content);
-
-
-                            if (response.IsSuccessStatusCode)
-                            {
-                                MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен пользователям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            }
-                            else
-                            {
-                                var errorMessage = await response.Content.ReadAsStringAsync();
-                                MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Ошибка произошла при отправке данных: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    finally
-                    {
-                        submitInstructionToPeople.Enabled = true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Произошли ошибка, проверь эту строчку:{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    submitInstructionToPeople.Enabled = true;
-                    treeView1.Nodes.Clear();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при создании инструктажа: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                buttonCreateInstruction.Enabled = true;
-            }
-        }
-        private async Task<FullCustomInstruction?> CreateInstructionInternal()
-        {
-            try
-            {
-                buttonCreateInstruction.Enabled = false;
-                if (selectedFolderPath is null)
-                {
-                    MessageBox.Show("Путь до инструктажа не выбран!");
-                    buttonCreateInstruction.Enabled = true;
-                    return null;
-                }
                 DateTime startTime = DateTime.Now;
                 DateTime endDate = datePickerEnd.Value.Date;
                 if (endDate <= startTime)
                 {
                     MessageBox.Show("До какой даты должно быть больше текущего времени!");
                     buttonCreateInstruction.Enabled = true;
-                    return null;
-                }
-                if (typeOfInstructionListBox.SelectedIndex == -1)
-                {
-                    buttonCreateInstruction.Enabled = true;
-                    MessageBox.Show("Не выбран тип инструктажа!");
-                    return null;
-                }
-                List<string> paths = GetSelectedFilePaths(treeView1);
-                if (paths.Count == 0)
-                {
-                    MessageBox.Show("Не выбраны файлы для инструктажа");
-                    buttonCreateInstruction.Enabled = true;
-                    return null;
+                    return;
                 }
 
-                bool isForDrivers = false;
-                int bitValueIsForDrivers = isForDrivers ? 1 : 0;
-                string causeOfInstruction = InstructionTextBox.Text;
-                if (string.IsNullOrWhiteSpace(causeOfInstruction))
+                if (typeOfInstructionListBox.SelectedIndex == -1)
                 {
-                    MessageBox.Show("Причина инструктажа пуста. Исправьте это пожалуйста.");
+                    MessageBox.Show("Не выбран тип инструктажа!");
                     buttonCreateInstruction.Enabled = true;
-                    return null;
+                    return;
                 }
-                Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2); //ЗДЕСЬ ПОДРАЗУМЕВАЕТСЯ, ЧТО ТИПОВ ИНСТРУКТАЖЕЙ НЕ БОЛЬШЕ 6 в listBox! 0 - вводный, 1 - внеплановый
-                Instruction instruction = new Instruction(causeOfInstruction, startTime, endDate, selectedFolderPath, typeOfInstruction);
+
+                // Create the instruction without folder path
+                string causeOfInstruction = InstructionTextBox.Text;
+                Byte typeOfInstruction = (Byte)(typeOfInstructionListBox.SelectedIndex + 2);
+
+                // Create the instruction object without path
+                Instruction instruction = new Instruction(
+                    causeOfInstruction,
+                    startTime,
+                    endDate,
+                    null, // No path to instruction
+                    typeOfInstruction
+                );
+
+                // Create empty path list since we no longer need file paths
+                List<string> paths = new List<string>();
+
                 FullCustomInstruction fullCustomInstr = new FullCustomInstruction(instruction, paths);
-                
+
+                // Create request object
                 var requestObject = new
                 {
                     Instruction = new
@@ -292,24 +175,31 @@ namespace Kotova.Test1.ClientSide
                     },
                     Paths = paths
                 };
+
                 string json = JsonConvert.SerializeObject(requestObject);
                 Console.WriteLine("Serialized JSON: " + json);
 
                 HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
                 await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
-                buttonCreateInstruction.Enabled = true;
+
+                // Reset form
                 InstructionTextBox.Text = "";
                 typeOfInstructionListBox.SelectedIndex = -1;
-                selectedFolderPath = null;
-                PathToFolderOfInstruction.Text = "Путь не выбран";
-                return fullCustomInstr;
+
+                // Now show the WPF window for assigning normative instructions to people
+                // We'll implement this in step 2
+
+                // For now, show a message to inform the user
+                MessageBox.Show("Инструктаж создан. Теперь вы можете назначить его сотрудникам и выбрать нормативные инструкции.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
-                return null;
+                MessageBox.Show($"Ошибка при создании инструктажа: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
+            finally
+            {
+                buttonCreateInstruction.Enabled = true;
+            }
         }
 
         private async void buttonSyncManualyInstrWithDB_Click(object sender, EventArgs e)
