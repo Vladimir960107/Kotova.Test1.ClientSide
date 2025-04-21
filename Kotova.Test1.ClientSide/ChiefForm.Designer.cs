@@ -38,11 +38,9 @@
             submitInstructionToPeople = new Button();
             SyncNamesWithDB = new Button();
             tabPage2 = new TabPage();
+            ListOfNormativeInstrNames = new CheckedListBox();
             checkedListBoxNamesOfPeopleCreatingInstr = new CheckedListBox();
-            treeView1 = new TreeViewWithoutDoubleClick();
-            PathToFolderOfInstruction = new Label();
             label7 = new Label();
-            buttonChoosePathToInstruction = new Button();
             label2 = new Label();
             InstructionTextBox = new TextBox();
             label6 = new Label();
@@ -52,13 +50,36 @@
             typeOfInstructionListBox = new ListBox();
             testButton = new Button();
             tabPage1 = new TabPage();
+            assignInstructionToGroupsButton = new Button();
             MissTheAssignmentOfInstrCheckedBox = new CheckBox();
             SelectAllThePeopleInListBoxButton = new Button();
             checkedListBoxNamesOfPeople = new CheckedListBox();
-            ListOfInstructions = new ListBox();
+            ListOfUnplannedInstructions = new ListBox();
             buttonSyncManualyInstrWithDB = new Button();
             ListOfInstructionsForUser = new ListBox();
             ChiefTabControl = new TabControl();
+            instructionManagementTabPage = new TabPage();
+            instructionDetailsGroupBox = new Button();
+            assignInstructionButton = new Button();
+            deleteInstructionButton = new Button();
+            editInstructionButton = new Button();
+            refreshInstructionsButton = new Button();
+            groupBox1 = new GroupBox();
+            completedStatusLabel = new Label();
+            assignedStatusLabel = new Label();
+            endDateLabel = new Label();
+            startDateLabel = new Label();
+            instructionTypeLabel = new Label();
+            instructionCauseLabel = new Label();
+            instructionIdLabel = new Label();
+            instructionsListView = new ListView();
+            InstructionIdInstructionId = new ColumnHeader();
+            columnHeader1 = new ColumnHeader();
+            columnHeader2 = new ColumnHeader();
+            columnHeader3 = new ColumnHeader();
+            columnHeader4 = new ColumnHeader();
+            columnHeader5 = new ColumnHeader();
+            columnHeader6 = new ColumnHeader();
             tabPage3 = new TabPage();
             FilesOfInstructionCheckedListBox = new CheckedListBox();
             PassInstruction = new CheckBox();
@@ -87,10 +108,11 @@
             usernameLabel = new Label();
             label10 = new Label();
             button1 = new Button();
-            ListOfNormativeInstrNames = new CheckedListBox();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
+            instructionManagementTabPage.SuspendLayout();
+            groupBox1.SuspendLayout();
             tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).BeginInit();
@@ -123,10 +145,7 @@
             // 
             tabPage2.Controls.Add(ListOfNormativeInstrNames);
             tabPage2.Controls.Add(checkedListBoxNamesOfPeopleCreatingInstr);
-            tabPage2.Controls.Add(treeView1);
-            tabPage2.Controls.Add(PathToFolderOfInstruction);
             tabPage2.Controls.Add(label7);
-            tabPage2.Controls.Add(buttonChoosePathToInstruction);
             tabPage2.Controls.Add(label2);
             tabPage2.Controls.Add(InstructionTextBox);
             tabPage2.Controls.Add(label6);
@@ -142,6 +161,14 @@
             tabPage2.Text = "Создание инструктажа";
             tabPage2.UseVisualStyleBackColor = true;
             // 
+            // ListOfNormativeInstrNames
+            // 
+            ListOfNormativeInstrNames.FormattingEnabled = true;
+            ListOfNormativeInstrNames.Location = new Point(387, 306);
+            ListOfNormativeInstrNames.Name = "ListOfNormativeInstrNames";
+            ListOfNormativeInstrNames.Size = new Size(224, 148);
+            ListOfNormativeInstrNames.TabIndex = 36;
+            // 
             // checkedListBoxNamesOfPeopleCreatingInstr
             // 
             checkedListBoxNamesOfPeopleCreatingInstr.CheckOnClick = true;
@@ -152,25 +179,6 @@
             checkedListBoxNamesOfPeopleCreatingInstr.Size = new Size(289, 148);
             checkedListBoxNamesOfPeopleCreatingInstr.TabIndex = 35;
             // 
-            // treeView1
-            // 
-            treeView1.CheckBoxes = true;
-            treeView1.Location = new Point(364, 101);
-            treeView1.Name = "treeView1";
-            treeView1.Size = new Size(247, 178);
-            treeView1.TabIndex = 15;
-            treeView1.AfterCheck += treeView1_AfterCheck;
-            // 
-            // PathToFolderOfInstruction
-            // 
-            PathToFolderOfInstruction.AutoSize = true;
-            PathToFolderOfInstruction.Location = new Point(364, 83);
-            PathToFolderOfInstruction.Name = "PathToFolderOfInstruction";
-            PathToFolderOfInstruction.Size = new Size(94, 15);
-            PathToFolderOfInstruction.TabIndex = 14;
-            PathToFolderOfInstruction.Text = "Путь не выбран";
-            toolTip1.SetToolTip(PathToFolderOfInstruction, "Путь не выбран");
-            // 
             // label7
             // 
             label7.AutoSize = true;
@@ -178,17 +186,6 @@
             label7.Name = "label7";
             label7.Size = new Size(0, 15);
             label7.TabIndex = 13;
-            // 
-            // buttonChoosePathToInstruction
-            // 
-            buttonChoosePathToInstruction.Location = new Point(364, 22);
-            buttonChoosePathToInstruction.Margin = new Padding(3, 2, 3, 2);
-            buttonChoosePathToInstruction.Name = "buttonChoosePathToInstruction";
-            buttonChoosePathToInstruction.Size = new Size(172, 56);
-            buttonChoosePathToInstruction.TabIndex = 12;
-            buttonChoosePathToInstruction.Text = "Указать папку для инструктажа";
-            buttonChoosePathToInstruction.UseVisualStyleBackColor = true;
-            buttonChoosePathToInstruction.Click += buttonChooseHyperLinkToInstruction_Click;
             // 
             // label2
             // 
@@ -228,8 +225,7 @@
             // 
             // buttonCreateInstruction
             // 
-            buttonCreateInstruction.Enabled = false;
-            buttonCreateInstruction.Location = new Point(239, 474);
+            buttonCreateInstruction.Location = new Point(65, 474);
             buttonCreateInstruction.Margin = new Padding(3, 2, 3, 2);
             buttonCreateInstruction.Name = "buttonCreateInstruction";
             buttonCreateInstruction.Size = new Size(219, 40);
@@ -269,10 +265,11 @@
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(assignInstructionToGroupsButton);
             tabPage1.Controls.Add(MissTheAssignmentOfInstrCheckedBox);
             tabPage1.Controls.Add(SelectAllThePeopleInListBoxButton);
             tabPage1.Controls.Add(checkedListBoxNamesOfPeople);
-            tabPage1.Controls.Add(ListOfInstructions);
+            tabPage1.Controls.Add(ListOfUnplannedInstructions);
             tabPage1.Controls.Add(buttonSyncManualyInstrWithDB);
             tabPage1.Controls.Add(submitInstructionToPeople);
             tabPage1.Controls.Add(SyncNamesWithDB);
@@ -283,6 +280,15 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Внеплановые инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // assignInstructionToGroupsButton
+            // 
+            assignInstructionToGroupsButton.Location = new Point(445, 503);
+            assignInstructionToGroupsButton.Name = "assignInstructionToGroupsButton";
+            assignInstructionToGroupsButton.Size = new Size(165, 40);
+            assignInstructionToGroupsButton.TabIndex = 38;
+            assignInstructionToGroupsButton.Text = "Назначить инструктаж людям";
+            assignInstructionToGroupsButton.UseVisualStyleBackColor = true;
             // 
             // MissTheAssignmentOfInstrCheckedBox
             // 
@@ -315,14 +321,14 @@
             checkedListBoxNamesOfPeople.Size = new Size(265, 310);
             checkedListBoxNamesOfPeople.TabIndex = 34;
             // 
-            // ListOfInstructions
+            // ListOfUnplannedInstructions
             // 
-            ListOfInstructions.FormattingEnabled = true;
-            ListOfInstructions.ItemHeight = 15;
-            ListOfInstructions.Location = new Point(20, 86);
-            ListOfInstructions.Name = "ListOfInstructions";
-            ListOfInstructions.Size = new Size(275, 304);
-            ListOfInstructions.TabIndex = 33;
+            ListOfUnplannedInstructions.FormattingEnabled = true;
+            ListOfUnplannedInstructions.ItemHeight = 15;
+            ListOfUnplannedInstructions.Location = new Point(20, 86);
+            ListOfUnplannedInstructions.Name = "ListOfUnplannedInstructions";
+            ListOfUnplannedInstructions.Size = new Size(275, 304);
+            ListOfUnplannedInstructions.TabIndex = 33;
             // 
             // buttonSyncManualyInstrWithDB
             // 
@@ -350,6 +356,7 @@
             // 
             ChiefTabControl.Controls.Add(tabPage1);
             ChiefTabControl.Controls.Add(tabPage2);
+            ChiefTabControl.Controls.Add(instructionManagementTabPage);
             ChiefTabControl.Controls.Add(tabPage3);
             ChiefTabControl.Controls.Add(tabPage4);
             ChiefTabControl.Controls.Add(tabPage5);
@@ -359,6 +366,195 @@
             ChiefTabControl.Size = new Size(675, 616);
             ChiefTabControl.TabIndex = 33;
             ChiefTabControl.SelectedIndexChanged += ChiefTabControl_SelectedIndexChanged;
+            // 
+            // instructionManagementTabPage
+            // 
+            instructionManagementTabPage.Controls.Add(instructionDetailsGroupBox);
+            instructionManagementTabPage.Controls.Add(assignInstructionButton);
+            instructionManagementTabPage.Controls.Add(deleteInstructionButton);
+            instructionManagementTabPage.Controls.Add(editInstructionButton);
+            instructionManagementTabPage.Controls.Add(refreshInstructionsButton);
+            instructionManagementTabPage.Controls.Add(groupBox1);
+            instructionManagementTabPage.Controls.Add(instructionsListView);
+            instructionManagementTabPage.Location = new Point(4, 24);
+            instructionManagementTabPage.Name = "instructionManagementTabPage";
+            instructionManagementTabPage.Padding = new Padding(3);
+            instructionManagementTabPage.Size = new Size(667, 588);
+            instructionManagementTabPage.TabIndex = 5;
+            instructionManagementTabPage.Text = "Управление инструктажами";
+            instructionManagementTabPage.UseVisualStyleBackColor = true;
+            // 
+            // instructionDetailsGroupBox
+            // 
+            instructionDetailsGroupBox.Location = new Point(350, 476);
+            instructionDetailsGroupBox.Name = "instructionDetailsGroupBox";
+            instructionDetailsGroupBox.Size = new Size(168, 23);
+            instructionDetailsGroupBox.TabIndex = 6;
+            instructionDetailsGroupBox.Text = "Детали инструктажа";
+            instructionDetailsGroupBox.UseVisualStyleBackColor = true;
+            // 
+            // assignInstructionButton
+            // 
+            assignInstructionButton.Location = new Point(240, 476);
+            assignInstructionButton.Name = "assignInstructionButton";
+            assignInstructionButton.Size = new Size(75, 23);
+            assignInstructionButton.TabIndex = 5;
+            assignInstructionButton.Text = "Назначить";
+            assignInstructionButton.UseVisualStyleBackColor = true;
+            // 
+            // deleteInstructionButton
+            // 
+            deleteInstructionButton.Location = new Point(119, 476);
+            deleteInstructionButton.Name = "deleteInstructionButton";
+            deleteInstructionButton.Size = new Size(75, 23);
+            deleteInstructionButton.TabIndex = 4;
+            deleteInstructionButton.Text = "Удалить";
+            deleteInstructionButton.UseVisualStyleBackColor = true;
+            // 
+            // editInstructionButton
+            // 
+            editInstructionButton.Location = new Point(6, 476);
+            editInstructionButton.Name = "editInstructionButton";
+            editInstructionButton.Size = new Size(75, 23);
+            editInstructionButton.TabIndex = 3;
+            editInstructionButton.Text = "Изменить";
+            editInstructionButton.UseVisualStyleBackColor = true;
+            // 
+            // refreshInstructionsButton
+            // 
+            refreshInstructionsButton.Location = new Point(266, 270);
+            refreshInstructionsButton.Name = "refreshInstructionsButton";
+            refreshInstructionsButton.Size = new Size(123, 23);
+            refreshInstructionsButton.TabIndex = 2;
+            refreshInstructionsButton.Text = "Обновить список";
+            refreshInstructionsButton.UseVisualStyleBackColor = true;
+            // 
+            // groupBox1
+            // 
+            groupBox1.Controls.Add(completedStatusLabel);
+            groupBox1.Controls.Add(assignedStatusLabel);
+            groupBox1.Controls.Add(endDateLabel);
+            groupBox1.Controls.Add(startDateLabel);
+            groupBox1.Controls.Add(instructionTypeLabel);
+            groupBox1.Controls.Add(instructionCauseLabel);
+            groupBox1.Controls.Add(instructionIdLabel);
+            groupBox1.Location = new Point(3, 299);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Size = new Size(655, 160);
+            groupBox1.TabIndex = 1;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Детали инструктажа";
+            // 
+            // completedStatusLabel
+            // 
+            completedStatusLabel.AutoSize = true;
+            completedStatusLabel.Location = new Point(6, 122);
+            completedStatusLabel.Name = "completedStatusLabel";
+            completedStatusLabel.Size = new Size(118, 15);
+            completedStatusLabel.TabIndex = 6;
+            completedStatusLabel.Text = "Статус выполнения:";
+            // 
+            // assignedStatusLabel
+            // 
+            assignedStatusLabel.AutoSize = true;
+            assignedStatusLabel.Location = new Point(6, 107);
+            assignedStatusLabel.Name = "assignedStatusLabel";
+            assignedStatusLabel.Size = new Size(113, 15);
+            assignedStatusLabel.TabIndex = 5;
+            assignedStatusLabel.Text = "Статус назначения:";
+            // 
+            // endDateLabel
+            // 
+            endDateLabel.AutoSize = true;
+            endDateLabel.Location = new Point(6, 92);
+            endDateLabel.Name = "endDateLabel";
+            endDateLabel.Size = new Size(98, 15);
+            endDateLabel.TabIndex = 4;
+            endDateLabel.Text = "Дата окончания:";
+            // 
+            // startDateLabel
+            // 
+            startDateLabel.AutoSize = true;
+            startDateLabel.Location = new Point(6, 77);
+            startDateLabel.Name = "startDateLabel";
+            startDateLabel.Size = new Size(77, 15);
+            startDateLabel.TabIndex = 3;
+            startDateLabel.Text = "Дата начала:";
+            // 
+            // instructionTypeLabel
+            // 
+            instructionTypeLabel.AutoSize = true;
+            instructionTypeLabel.Location = new Point(6, 62);
+            instructionTypeLabel.Name = "instructionTypeLabel";
+            instructionTypeLabel.Size = new Size(30, 15);
+            instructionTypeLabel.TabIndex = 2;
+            instructionTypeLabel.Text = "Тип:";
+            // 
+            // instructionCauseLabel
+            // 
+            instructionCauseLabel.AutoSize = true;
+            instructionCauseLabel.Location = new Point(6, 47);
+            instructionCauseLabel.Name = "instructionCauseLabel";
+            instructionCauseLabel.Size = new Size(60, 15);
+            instructionCauseLabel.TabIndex = 1;
+            instructionCauseLabel.Text = "Причина:";
+            // 
+            // instructionIdLabel
+            // 
+            instructionIdLabel.AutoSize = true;
+            instructionIdLabel.Location = new Point(6, 32);
+            instructionIdLabel.Name = "instructionIdLabel";
+            instructionIdLabel.RightToLeft = RightToLeft.No;
+            instructionIdLabel.Size = new Size(21, 15);
+            instructionIdLabel.TabIndex = 0;
+            instructionIdLabel.Text = "ID:";
+            // 
+            // instructionsListView
+            // 
+            instructionsListView.Columns.AddRange(new ColumnHeader[] { InstructionIdInstructionId, columnHeader1, columnHeader2, columnHeader3, columnHeader4, columnHeader5, columnHeader6 });
+            instructionsListView.Dock = DockStyle.Top;
+            instructionsListView.FullRowSelect = true;
+            instructionsListView.Location = new Point(3, 3);
+            instructionsListView.Name = "instructionsListView";
+            instructionsListView.Size = new Size(661, 250);
+            instructionsListView.TabIndex = 0;
+            instructionsListView.UseCompatibleStateImageBehavior = false;
+            instructionsListView.View = View.Details;
+            // 
+            // InstructionIdInstructionId
+            // 
+            InstructionIdInstructionId.Text = "ID";
+            InstructionIdInstructionId.Width = 40;
+            // 
+            // columnHeader1
+            // 
+            columnHeader1.Text = "Тип";
+            columnHeader1.Width = 100;
+            // 
+            // columnHeader2
+            // 
+            columnHeader2.Text = "Причина инструктажа";
+            columnHeader2.Width = 300;
+            // 
+            // columnHeader3
+            // 
+            columnHeader3.Text = "Дата начала";
+            columnHeader3.Width = 80;
+            // 
+            // columnHeader4
+            // 
+            columnHeader4.Text = "Дата окончания";
+            columnHeader4.Width = 80;
+            // 
+            // columnHeader5
+            // 
+            columnHeader5.Text = "Назначен";
+            columnHeader5.Width = 70;
+            // 
+            // columnHeader6
+            // 
+            columnHeader6.Text = "Закончен";
+            columnHeader6.Width = 70;
             // 
             // tabPage3
             // 
@@ -626,14 +822,6 @@
             button1.Text = "Задание выполнено";
             button1.UseVisualStyleBackColor = true;
             // 
-            // ListOfNormativeInstrNames
-            // 
-            ListOfNormativeInstrNames.FormattingEnabled = true;
-            ListOfNormativeInstrNames.Location = new Point(387, 306);
-            ListOfNormativeInstrNames.Name = "ListOfNormativeInstrNames";
-            ListOfNormativeInstrNames.Size = new Size(224, 148);
-            ListOfNormativeInstrNames.TabIndex = 36;
-            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -656,6 +844,9 @@
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
             ChiefTabControl.ResumeLayout(false);
+            instructionManagementTabPage.ResumeLayout(false);
+            groupBox1.ResumeLayout(false);
+            groupBox1.PerformLayout();
             tabPage3.ResumeLayout(false);
             tabPage3.PerformLayout();
             tabPage4.ResumeLayout(false);
@@ -679,13 +870,11 @@
         private Button Download_file_excel;
         private Button buttonTest;
         private TabControl ChiefTabControl;
-        private Button buttonChoosePathToInstruction;
         private Label label2;
         private TextBox InstructionTextBox;
         private Label label6;
         private DateTimePicker datePickerEnd;
         private Button buttonCreateInstruction;
-        private Label PathToFolderOfInstruction;
         private Label label7;
         private ToolTip toolTip1;
         private Button testButton;
@@ -694,7 +883,7 @@
         private CheckBox PassInstruction;
         private Button HyperLinkForInstructionsFolder;
         private Label label8;
-        private ListBox ListOfInstructions;
+        private ListBox ListOfUnplannedInstructions;
         private CheckedListBox FilesOfInstructionCheckedListBox;
         private TabPage tabPage4;
         private Button TestButtonForInstructions;
@@ -705,7 +894,6 @@
         private DataGridViewTextBoxColumn Passed;
         private CheckedListBox checkedListBoxNamesOfPeopleCreatingInstr;
         private ListBox listBoxOfPassedInstructions;
-        private TreeViewWithoutDoubleClick treeView1;
         private TabPage tabPage5;
         private Label LabelTray;
         private Button RefreshTasksButton;
@@ -723,5 +911,28 @@
         private Button DownloadAllEmployeesInTheDepartment;
         private CheckBox MissTheAssignmentOfInstrCheckedBox;
         private CheckedListBox ListOfNormativeInstrNames;
+        private Button assignInstructionToGroupsButton;
+        private TabPage instructionManagementTabPage;
+        private ListView instructionsListView;
+        private ColumnHeader InstructionIdInstructionId;
+        private ColumnHeader columnHeader1;
+        private ColumnHeader columnHeader2;
+        private ColumnHeader columnHeader3;
+        private ColumnHeader columnHeader4;
+        private ColumnHeader columnHeader5;
+        private ColumnHeader columnHeader6;
+        private GroupBox groupBox1;
+        private Label instructionTypeLabel;
+        private Label instructionCauseLabel;
+        private Label instructionIdLabel;
+        private Label completedStatusLabel;
+        private Label assignedStatusLabel;
+        private Label endDateLabel;
+        private Label startDateLabel;
+        private Button refreshInstructionsButton;
+        private Button instructionDetailsGroupBox;
+        private Button assignInstructionButton;
+        private Button deleteInstructionButton;
+        private Button editInstructionButton;
     }
 }

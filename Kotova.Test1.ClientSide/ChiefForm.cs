@@ -16,7 +16,7 @@ using ClosedXML.Excel;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using Windows.Web.Http;
-
+using WinForms = System.Windows.Forms;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace Kotova.Test1.ClientSide
@@ -51,6 +51,7 @@ namespace Kotova.Test1.ClientSide
         private List<Dictionary<string, object>> listsOfPaths_global;
         private List<InstructionForChief> instructionForChiefs_global;
         private List<Instruction> unplannedInstructions_global;
+
 
         static string? selectedFolderPath = null;
         private Login_Russian? _loginForm;
@@ -177,8 +178,6 @@ namespace Kotova.Test1.ClientSide
                 };
 
                 string json = JsonConvert.SerializeObject(requestObject);
-                Console.WriteLine("Serialized JSON: " + json);
-
                 HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
                 await Test.connectionToUrlPost(urlCreateInstruction, content, $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
 
@@ -186,11 +185,11 @@ namespace Kotova.Test1.ClientSide
                 InstructionTextBox.Text = "";
                 typeOfInstructionListBox.SelectedIndex = -1;
 
-                // Now show the WPF window for assigning normative instructions to people
-                // We'll implement this in step 2
+                // Instead of immediately assigning, just inform the user to use the assignment button
+                MessageBox.Show("Инструктаж успешно создан. Используйте кнопку 'Назначить инструктаж сотрудникам' для назначения сотрудникам и выбора нормативных инструкций.");
 
-                // For now, show a message to inform the user
-                MessageBox.Show("Инструктаж создан. Теперь вы можете назначить его сотрудникам и выбрать нормативные инструкции.");
+                // Refresh the instructions list
+                await SyncManuallyInstrWithDBInternal();
             }
             catch (Exception ex)
             {
@@ -211,7 +210,7 @@ namespace Kotova.Test1.ClientSide
             try
             {
                 buttonSyncManualyInstrWithDB.Enabled = false;
-                ListOfInstructions.Items.Clear();
+                ListOfUnplannedInstructions.Items.Clear();
 
                 using (var httpClient = new HttpClient())
                 {
@@ -229,7 +228,7 @@ namespace Kotova.Test1.ClientSide
                         List<Instruction> result = JsonConvert.DeserializeObject<List<Instruction>>(responseBody); //checked that is not null before! so warning maybe suppressed
                         unplannedInstructions_global = result;
                         string[] resultArray = result.Select(n => n.cause_of_instruction).ToArray(); //check that they are not null;
-                        ListOfInstructions.Items.AddRange(resultArray);
+                        ListOfUnplannedInstructions.Items.AddRange(resultArray);
                         //MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
@@ -325,7 +324,7 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                var selectedInstruction = ListOfInstructions.SelectedItem;
+                var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
                 if (selectedInstruction is null)
                 {
                     MessageBox.Show("Инструкция не выбрана!");
@@ -472,7 +471,7 @@ namespace Kotova.Test1.ClientSide
         {
             if (ChiefTabControl.SelectedTab.Text == "Прохождение инструктажей")
             {
-                ListOfInstructions.Items.Clear();
+                ListOfUnplannedInstructions.Items.Clear();
                 ListOfInstructionsForUser.Items.Clear();
                 bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
                 if (IsEmpty == true)
@@ -484,6 +483,9 @@ namespace Kotova.Test1.ClientSide
             {
                 await SyncManuallyInstrWithDBInternal();
                 await SyncNamesWithDBInternal();
+            }
+            if (ChiefTabControl.SelectedTab == instructionManagementTabPage)
+            {
             }
 
             if (ChiefTabControl.SelectedTab.Text == "Создание инструктажа")
@@ -772,37 +774,6 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-
-        private void buttonChooseHyperLinkToInstruction_Click(object sender, EventArgs e)
-        {
-            using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
-            {
-                // Optionally set the initial directory
-                // folderBrowserDialog.SelectedPath = @"C:\Initial\Folder\Path";
-
-                DialogResult result = folderBrowserDialog.ShowDialog();
-
-                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
-                {
-                    // Store the selected folder path in a variable
-                    selectedFolderPath = folderBrowserDialog.SelectedPath;
-
-                    PathToFolderOfInstruction.Text = selectedFolderPath;
-
-                    buttonCreateInstruction.Enabled = true;
-
-                    treeView1.Nodes.Clear();  // Clear the existing items in the TreeView
-                    TreeNode rootNode = new TreeNode(selectedFolderPath);
-                    treeView1.Nodes.Add(rootNode);  // Add a root node with the selected folder
-                    PopulateTreeView(selectedFolderPath, rootNode);  // Populate the TreeView
-                    //rootNode.Expand();  // Optionally expand the root node, enable if want to all the rootNode be collapsed (чтобы было видно все вложенные файлы сразу, не нажимая плюсик :))
-
-                    MessageBox.Show($"Selected Folder: {selectedFolderPath}");
-
-
-                }
-            }
-        }
         private void PopulateTreeView(string directoryValue, TreeNode parentNode)
         {
             // Processing directories
@@ -826,25 +797,6 @@ namespace Kotova.Test1.ClientSide
                 string fileName = Path.GetFileName(file);
                 TreeNode fileNode = new TreeNode(fileName);
                 parentNode.Nodes.Add(fileNode);
-            }
-        }
-
-        private void treeView1_AfterCheck(object sender, TreeViewEventArgs e)
-        {
-            if (e.Action != TreeViewAction.Unknown) // Ensure the change was triggered by user interaction
-            {
-                treeView1.Enabled = false;
-
-                try
-                {
-                    // Perform the checking/unchecking synchronously
-                    CheckAllChildNodes(e.Node, e.Node.Checked);
-                    UpdateParentNodes(e.Node, e.Node.Checked);
-                }
-                finally
-                {
-                    treeView1.Enabled = true;
-                }
             }
         }
 
@@ -1338,7 +1290,7 @@ namespace Kotova.Test1.ClientSide
 
                 // Set specific column width for long text headers (if needed)
                 worksheet.Column(1).Width = 10;
-                worksheet.Column(2).Width = 30; 
+                worksheet.Column(2).Width = 30;
                 worksheet.Column(3).Width = 25;
                 worksheet.Column(4).Width = 10;
                 worksheet.Column(5).Width = 15;
@@ -1471,11 +1423,11 @@ namespace Kotova.Test1.ClientSide
         private async void SkipTheAssignmentOfInstrCheckedBox_CheckedChanged(object sender, EventArgs e)
         {
             System.Windows.Forms.CheckBox checkBox = sender as System.Windows.Forms.CheckBox;
-            
+
 
             if (checkBox != null && checkBox.Checked)
             {
-                var selectedInstruction = ListOfInstructions.SelectedItem;
+                var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
                 if (selectedInstruction is null)
                 {
                     MessageBox.Show("Инструкция не выбрана!");
@@ -1507,7 +1459,7 @@ namespace Kotova.Test1.ClientSide
                     string url = SkipTheUnplannedInstructionURL;
                     string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                    var selectedInstruction = ListOfInstructions.SelectedItem;
+                    var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
 
                     Instruction instructionToSkip = unplannedInstructions_global
         .FirstOrDefault(ins => ins.cause_of_instruction == selectedInstruction.ToString());
@@ -1611,5 +1563,84 @@ namespace Kotova.Test1.ClientSide
                 return Text;
             }
         }
+
+        private void ShowInstructionAssignmentManager(string instructionName)
+        {
+            var assignmentManager = new InstructionAssignmentManager(
+                instructionName,
+                ConvertItemsToEmployeeList(checkedListBoxNamesOfPeople.Items),
+                ConvertItemsToNormativeInstructionsList(ListOfNormativeInstrNames.Items),
+                _loginForm._jwtToken,
+                urlSubmitInstructionToPeople
+            );
+
+            assignmentManager.ShowDialog();
+        }
+
+        private List<EmployeeInfo> ConvertItemsToEmployeeList(CheckedListBox.ObjectCollection items)
+        {
+            var result = new List<EmployeeInfo>();
+
+            foreach (var item in items)
+            {
+                var tuple = DeconstructNameAndBirthDate(item.ToString());
+                result.Add(new EmployeeInfo
+                {
+                    FullName = tuple.Item1,
+                    BirthDate = tuple.Item2
+                });
+            }
+
+            return result;
+        }
+
+        private List<NormativeInstructionInfo> ConvertItemsToNormativeInstructionsList(System.Windows.Forms.ListBox.ObjectCollection items)
+        {
+            var result = new List<NormativeInstructionInfo>();
+
+            foreach (ListBoxItem item in items)
+            {
+                result.Add(new NormativeInstructionInfo
+                {
+                    Id = item.Value,
+                    Name = item.Text
+                });
+            }
+
+            return result;
+        }
+
+        #region Вкладка "Управление инструктажами"
+
+        private async void assignInstructionToGroupsButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Check if an instruction is selected
+                if (instructionsListView.SelectedItems.Count == 0)
+                {
+                    WinForms.MessageBox.Show("Пожалуйста, выберите инструктаж для назначения.");
+                    return;
+                }
+
+                var selectedItem = instructionsListView.SelectedItems[0];
+                string selectedInstructionName = selectedItem.SubItems[1].Text; // Cause column
+
+                // Fetch employee data
+                await SyncNamesWithDBInternal();
+
+                // Fetch normative instruction names
+                await SyncNormativeInstructionNamesWithDBInternal();
+
+                // Show the assignment manager
+                ShowInstructionAssignmentManager(selectedInstructionName);
+            }
+            catch (Exception ex)
+            {
+                WinForms.MessageBox.Show($"Ошибка: {ex.Message}", "Error", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+            }
+        }
+        #endregion
+
     }
 }
