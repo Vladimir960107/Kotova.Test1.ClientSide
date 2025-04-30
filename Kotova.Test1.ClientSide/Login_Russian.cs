@@ -612,7 +612,8 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 // Log error but continue application startup
-                Console.WriteLine($"Failed to initialize department cache: {ex.Message}");
+                
+                ($"Failed to initialize department cache: {ex.Message}");
             }
         }
 

@@ -50,7 +50,6 @@
             typeOfInstructionListBox = new ListBox();
             testButton = new Button();
             tabPage1 = new TabPage();
-            assignInstructionToGroupsButton = new Button();
             MissTheAssignmentOfInstrCheckedBox = new CheckBox();
             SelectAllThePeopleInListBoxButton = new Button();
             checkedListBoxNamesOfPeople = new CheckedListBox();
@@ -60,10 +59,10 @@
             ChiefTabControl = new TabControl();
             instructionManagementTabPage = new TabPage();
             instructionDetailsGroupBox = new Button();
-            assignInstructionButton = new Button();
-            deleteInstructionButton = new Button();
-            editInstructionButton = new Button();
-            refreshInstructionsButton = new Button();
+            assignInstructionToGroupsButton = new Button();
+            btnDeleteInstruction = new Button();
+            btnEditInstruction = new Button();
+            btnRefreshInstructions = new Button();
             groupBox1 = new GroupBox();
             completedStatusLabel = new Label();
             assignedStatusLabel = new Label();
@@ -108,6 +107,7 @@
             usernameLabel = new Label();
             label10 = new Label();
             button1 = new Button();
+            btnAddInstruction = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
@@ -265,7 +265,6 @@
             // 
             // tabPage1
             // 
-            tabPage1.Controls.Add(assignInstructionToGroupsButton);
             tabPage1.Controls.Add(MissTheAssignmentOfInstrCheckedBox);
             tabPage1.Controls.Add(SelectAllThePeopleInListBoxButton);
             tabPage1.Controls.Add(checkedListBoxNamesOfPeople);
@@ -280,15 +279,6 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Внеплановые инструктажи";
             tabPage1.UseVisualStyleBackColor = true;
-            // 
-            // assignInstructionToGroupsButton
-            // 
-            assignInstructionToGroupsButton.Location = new Point(445, 503);
-            assignInstructionToGroupsButton.Name = "assignInstructionToGroupsButton";
-            assignInstructionToGroupsButton.Size = new Size(165, 40);
-            assignInstructionToGroupsButton.TabIndex = 38;
-            assignInstructionToGroupsButton.Text = "Назначить инструктаж людям";
-            assignInstructionToGroupsButton.UseVisualStyleBackColor = true;
             // 
             // MissTheAssignmentOfInstrCheckedBox
             // 
@@ -369,11 +359,12 @@
             // 
             // instructionManagementTabPage
             // 
+            instructionManagementTabPage.Controls.Add(btnAddInstruction);
             instructionManagementTabPage.Controls.Add(instructionDetailsGroupBox);
-            instructionManagementTabPage.Controls.Add(assignInstructionButton);
-            instructionManagementTabPage.Controls.Add(deleteInstructionButton);
-            instructionManagementTabPage.Controls.Add(editInstructionButton);
-            instructionManagementTabPage.Controls.Add(refreshInstructionsButton);
+            instructionManagementTabPage.Controls.Add(assignInstructionToGroupsButton);
+            instructionManagementTabPage.Controls.Add(btnDeleteInstruction);
+            instructionManagementTabPage.Controls.Add(btnEditInstruction);
+            instructionManagementTabPage.Controls.Add(btnRefreshInstructions);
             instructionManagementTabPage.Controls.Add(groupBox1);
             instructionManagementTabPage.Controls.Add(instructionsListView);
             instructionManagementTabPage.Location = new Point(4, 24);
@@ -386,48 +377,52 @@
             // 
             // instructionDetailsGroupBox
             // 
-            instructionDetailsGroupBox.Location = new Point(350, 476);
+            instructionDetailsGroupBox.Location = new Point(465, 476);
             instructionDetailsGroupBox.Name = "instructionDetailsGroupBox";
             instructionDetailsGroupBox.Size = new Size(168, 23);
             instructionDetailsGroupBox.TabIndex = 6;
             instructionDetailsGroupBox.Text = "Детали инструктажа";
             instructionDetailsGroupBox.UseVisualStyleBackColor = true;
             // 
-            // assignInstructionButton
+            // assignInstructionToGroupsButton
             // 
-            assignInstructionButton.Location = new Point(240, 476);
-            assignInstructionButton.Name = "assignInstructionButton";
-            assignInstructionButton.Size = new Size(75, 23);
-            assignInstructionButton.TabIndex = 5;
-            assignInstructionButton.Text = "Назначить";
-            assignInstructionButton.UseVisualStyleBackColor = true;
+            assignInstructionToGroupsButton.Location = new Point(364, 476);
+            assignInstructionToGroupsButton.Name = "assignInstructionToGroupsButton";
+            assignInstructionToGroupsButton.Size = new Size(75, 23);
+            assignInstructionToGroupsButton.TabIndex = 5;
+            assignInstructionToGroupsButton.Text = "Назначить";
+            assignInstructionToGroupsButton.UseVisualStyleBackColor = true;
+            assignInstructionToGroupsButton.Click += assignInstructionToGroupsButton_Click;
             // 
-            // deleteInstructionButton
+            // btnDeleteInstruction
             // 
-            deleteInstructionButton.Location = new Point(119, 476);
-            deleteInstructionButton.Name = "deleteInstructionButton";
-            deleteInstructionButton.Size = new Size(75, 23);
-            deleteInstructionButton.TabIndex = 4;
-            deleteInstructionButton.Text = "Удалить";
-            deleteInstructionButton.UseVisualStyleBackColor = true;
+            btnDeleteInstruction.Location = new Point(254, 476);
+            btnDeleteInstruction.Name = "btnDeleteInstruction";
+            btnDeleteInstruction.Size = new Size(75, 23);
+            btnDeleteInstruction.TabIndex = 4;
+            btnDeleteInstruction.Text = "Удалить";
+            btnDeleteInstruction.UseVisualStyleBackColor = true;
+            btnDeleteInstruction.Click += btnDeleteInstruction_Click;
             // 
-            // editInstructionButton
+            // btnEditInstruction
             // 
-            editInstructionButton.Location = new Point(6, 476);
-            editInstructionButton.Name = "editInstructionButton";
-            editInstructionButton.Size = new Size(75, 23);
-            editInstructionButton.TabIndex = 3;
-            editInstructionButton.Text = "Изменить";
-            editInstructionButton.UseVisualStyleBackColor = true;
+            btnEditInstruction.Location = new Point(139, 476);
+            btnEditInstruction.Name = "btnEditInstruction";
+            btnEditInstruction.Size = new Size(75, 23);
+            btnEditInstruction.TabIndex = 3;
+            btnEditInstruction.Text = "Изменить";
+            btnEditInstruction.UseVisualStyleBackColor = true;
+            btnEditInstruction.Click += btnEditInstruction_Click;
             // 
-            // refreshInstructionsButton
+            // btnRefreshInstructions
             // 
-            refreshInstructionsButton.Location = new Point(266, 270);
-            refreshInstructionsButton.Name = "refreshInstructionsButton";
-            refreshInstructionsButton.Size = new Size(123, 23);
-            refreshInstructionsButton.TabIndex = 2;
-            refreshInstructionsButton.Text = "Обновить список";
-            refreshInstructionsButton.UseVisualStyleBackColor = true;
+            btnRefreshInstructions.Location = new Point(266, 270);
+            btnRefreshInstructions.Name = "btnRefreshInstructions";
+            btnRefreshInstructions.Size = new Size(123, 23);
+            btnRefreshInstructions.TabIndex = 2;
+            btnRefreshInstructions.Text = "Обновить список";
+            btnRefreshInstructions.UseVisualStyleBackColor = true;
+            btnRefreshInstructions.Click += btnRefreshInstructions_Click;
             // 
             // groupBox1
             // 
@@ -822,6 +817,16 @@
             button1.Text = "Задание выполнено";
             button1.UseVisualStyleBackColor = true;
             // 
+            // btnAddInstruction
+            // 
+            btnAddInstruction.Location = new Point(21, 476);
+            btnAddInstruction.Name = "btnAddInstruction";
+            btnAddInstruction.Size = new Size(75, 23);
+            btnAddInstruction.TabIndex = 7;
+            btnAddInstruction.Text = "Добавить";
+            btnAddInstruction.UseVisualStyleBackColor = true;
+            btnAddInstruction.Click += btnAddInstruction_Click;
+            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -929,10 +934,10 @@
         private Label assignedStatusLabel;
         private Label endDateLabel;
         private Label startDateLabel;
-        private Button refreshInstructionsButton;
+        private Button btnRefreshInstructions;
         private Button instructionDetailsGroupBox;
-        private Button assignInstructionButton;
-        private Button deleteInstructionButton;
-        private Button editInstructionButton;
+        private Button btnDeleteInstruction;
+        private Button btnEditInstruction;
+        private Button btnAddInstruction;
     }
 }

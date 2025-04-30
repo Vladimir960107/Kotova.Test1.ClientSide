@@ -583,7 +583,8 @@ namespace Kotova.Test1.ClientSide
             {
                 // Handle any exceptions here
                 MessageBox.Show($"Ошибка: {ex.Message}");
-                throw ex;
+                Console.WriteLine($"Couldn't download instructions for user(Chief) from server: {ex.Message}"); //TODO: Нужно чтобы здесь не выбрасывалось резко из приложения, если что. По идее, наверное?
+                return false;
             }
         }
 
@@ -1640,7 +1641,212 @@ namespace Kotova.Test1.ClientSide
                 WinForms.MessageBox.Show($"Ошибка: {ex.Message}", "Error", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
             }
         }
+
+        private async void btnAddInstruction_Click(object sender, EventArgs e)
+        {
+            // Open a form or dialog to collect instruction details
+            var addInstructionForm = new AddInstructionForm();
+            if (addInstructionForm.ShowDialog() == WinForms.DialogResult.OK)
+            {
+                var newInstruction = addInstructionForm.InstructionResult;
+                await CreateInstructionOnServer(newInstruction);
+                await RefreshInstructionsListView();
+            }
+        }
+
+        private async void btnEditInstruction_Click(object sender, EventArgs e)
+        {
+            if (instructionsListView.SelectedItems.Count == 0)
+            {
+                WinForms.MessageBox.Show("Выберите инструктаж для редактирования.");
+                return;
+            }
+
+            var selectedItem = instructionsListView.SelectedItems[0];
+            var instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
+            var instruction = await GetInstructionById(instructionId);
+
+            var editInstructionForm = new EditInstructionForm(instruction);
+            if (editInstructionForm.ShowDialog() == WinForms.DialogResult.OK)
+            {
+                var updatedInstruction = editInstructionForm.InstructionResult;
+                await UpdateInstructionOnServer(updatedInstruction);
+                await RefreshInstructionsListView();
+            }
+        }
+
+        private async void btnDeleteInstruction_Click(object sender, EventArgs e)
+        {
+            if (instructionsListView.SelectedItems.Count == 0)
+            {
+                WinForms.MessageBox.Show("Выберите инструктаж для удаления.");
+                return;
+            }
+
+            var selectedItem = instructionsListView.SelectedItems[0];
+            var instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
+
+            if (WinForms.MessageBox.Show(
+                "Вы уверены, что хотите удалить этот инструктаж?",
+                "Подтверждение удаления",
+                WinForms.MessageBoxButtons.YesNo,
+                WinForms.MessageBoxIcon.Warning) == WinForms.DialogResult.Yes)
+            {
+                await DeleteInstructionOnServer(instructionId);
+                await RefreshInstructionsListView();
+            }
+        }
+
+        private async Task RefreshInstructionsListView()
+        {
+            instructionsListView.Items.Clear();
+
+            // Get all instructions from server (excluding unplanned ones)
+            var instructions = await GetAllInstructionsFromServer();
+
+            foreach (var instruction in instructions)
+            {
+                var item = new WinForms.ListViewItem(instruction.instruction_id.ToString());
+                item.SubItems.Add(instruction.cause_of_instruction);
+                item.SubItems.Add(GetInstructionTypeName(instruction.type_of_instruction));
+                item.SubItems.Add(instruction.begin_date.ToString("dd.MM.yyyy"));
+                item.SubItems.Add(instruction.end_date.ToString("dd.MM.yyyy"));
+                item.SubItems.Add(instruction.is_assigned_to_people ? "Назначен" : "Не назначен");
+
+                instructionsListView.Items.Add(item);
+            }
+        }
+
+        private string GetInstructionTypeName(byte typeCode) //TODO: Убери этот хардкод и скачай с базы данных данные.
+        {
+            return typeCode switch
+            {
+                0 => "Вводный",
+                1 => "Внеплановый",
+                2 => "Первичный",
+                3 => "Повторный",
+                4 => "Повторный (для водителей)",
+                5 => "Целевой",
+                _ => "Неизвестный тип"
+            };
+        }
+
         #endregion
 
+
+
+
+
+        #region API Calls For CRUD Operations for tab "Управление Инструктажами"
+
+        private async Task<List<Instruction>> GetAllInstructionsFromServer()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    // Create a new endpoint for getting all non-unplanned instructions
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-all-instructions");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        var instructions = JsonConvert.DeserializeObject<List<Instruction>>(responseBody);
+
+                        // Filter out unplanned instructions (type 1)
+                        return instructions.Where(i => i.type_of_instruction != 1).ToList();
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        WinForms.MessageBox.Show($"Не удалось получить инструктажи. Status code: {response.StatusCode} {errorMessage}",
+                            "Error", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+                        return new List<Instruction>();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WinForms.MessageBox.Show($"Произошла ошибка: {ex.Message}",
+                    "Error", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+                return new List<Instruction>();
+            }
+        }
+
+        private async Task<Instruction> GetInstructionById(int instructionId)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                string jwtToken = _loginForm._jwtToken;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/get-instruction/{instructionId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<Instruction>(responseBody);
+                }
+
+                throw new Exception($"Failed to get instruction. Status code: {response.StatusCode}");
+            }
+        }
+
+        private async Task CreateInstructionOnServer(Instruction instruction)
+        {
+            // Reuse your existing code for creating instructions
+            // Similar to buttonCreateInstruction_Click but using the instruction parameter
+        }
+
+        private async Task UpdateInstructionOnServer(Instruction instruction)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                string jwtToken = _loginForm._jwtToken;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                string json = JsonConvert.SerializeObject(instruction);
+                HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PutAsync(
+                    ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/update-instruction/{instruction.instruction_id}",
+                    content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Failed to update instruction. Status code: {response.StatusCode}. Error: {errorMessage}");
+                }
+            }
+        }
+
+        private async Task DeleteInstructionOnServer(int instructionId)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                string jwtToken = _loginForm._jwtToken;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await httpClient.DeleteAsync(
+                    ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/delete-instruction/{instructionId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Failed to delete instruction. Status code: {response.StatusCode}. Error: {errorMessage}");
+                }
+            }
+        }
+
+        #endregion
+
+
+        private async void btnRefreshInstructions_Click(object sender, EventArgs e)
+        {
+            await RefreshInstructionsListView();
+        }
     }
 }
