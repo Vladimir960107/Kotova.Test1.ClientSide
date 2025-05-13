@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
@@ -35,7 +35,7 @@ namespace Kotova.Test1.ClientSide
 
             if (IsUpdateInProgress())
             {
-                MessageBox.Show("Обновление программы в процессе. Пожалуйста, дождитесь окончания обновления.");
+                MessageBox.Show("ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ ГЇГ°Г®ГЈГ°Г Г¬Г¬Г» Гў ГЇГ°Г®Г¶ГҐГ±Г±ГҐ. ГЏГ®Г¦Г Г«ГіГ©Г±ГІГ , Г¤Г®Г¦Г¤ГЁГІГҐГ±Гј Г®ГЄГ®Г­Г·Г Г­ГЁГї Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГї.");
                 return;
             }
 
@@ -133,7 +133,7 @@ namespace Kotova.Test1.ClientSide
                     string currentPath = Process.GetCurrentProcess().MainModule.FileName;
                     System.IO.File.Copy(currentPath, targetPath, true);
                     DeleteAllShortcutsInCurrentDirectoryAndDesktop(Path.GetDirectoryName(currentPath));
-                    CreateNewShortcutForAppOnTheDesktop(targetPath); //TODO: MAIN PRIORITY. ПРОВЕРИТЬ, ЧТО ЭТА ШТУКА РАБОТАЕТ!
+                    CreateNewShortcutForAppOnTheDesktop(targetPath); //TODO: MAIN PRIORITY. ГЏГђГЋГ‚Г…ГђГ€Г’Гњ, Г—Г’ГЋ ГќГ’ГЂ ГГ’Г“ГЉГЂ ГђГЂГЃГЋГ’ГЂГ…Г’!
 
                     int oldProcessId = Process.GetCurrentProcess().Id;
 
@@ -191,8 +191,8 @@ namespace Kotova.Test1.ClientSide
                         {
                             // Ask the user if they want to download and install the update
                             MessageBox.Show(
-                                "Доступна новая версия приложения. Скачиваем и обновляем.",
-                                "Обновление"
+                                "Г„Г®Г±ГІГіГЇГ­Г  Г­Г®ГўГ Гї ГўГҐГ°Г±ГЁГї ГЇГ°ГЁГ«Г®Г¦ГҐГ­ГЁГї. Г‘ГЄГ Г·ГЁГўГ ГҐГ¬ ГЁ Г®ГЎГ­Г®ГўГ«ГїГҐГ¬.",
+                                "ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ"
                             );
                                 // The user confirmed to update
                             if (embeddedVersionInfo.ServerVersionInternalPath == null)
@@ -219,7 +219,7 @@ namespace Kotova.Test1.ClientSide
             {
                 if (environment == "Development")
                 {
-                    MessageBox.Show("Не удалось загрузить версию из файла .json с сервера для обновления программы.");
+                    MessageBox.Show("ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г§Г ГЈГ°ГіГ§ГЁГІГј ГўГҐГ°Г±ГЁГѕ ГЁГ§ ГґГ Г©Г«Г  .json Г± Г±ГҐГ°ГўГҐГ°Г  Г¤Г«Гї Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГї ГЇГ°Г®ГЈГ°Г Г¬Г¬Г».");
                 }
             }
 
@@ -477,7 +477,7 @@ namespace Kotova.Test1.ClientSide
         {
             if (remoteVersion == null || remoteVersion.Length == 0)
             {
-                MessageBox.Show("Удалённая версия файла сервера не найдена. (Скорее всего нет подключения к удалённому серверу)");
+                MessageBox.Show("Г“Г¤Г Г«ВёГ­Г­Г Гї ГўГҐГ°Г±ГЁГї ГґГ Г©Г«Г  Г±ГҐГ°ГўГҐГ°Г  Г­ГҐ Г­Г Г©Г¤ГҐГ­Г . (Г‘ГЄГ®Г°ГҐГҐ ГўГ±ГҐГЈГ® Г­ГҐГІ ГЇГ®Г¤ГЄГ«ГѕГ·ГҐГ­ГЁГї ГЄ ГіГ¤Г Г«ВёГ­Г­Г®Г¬Гі Г±ГҐГ°ГўГҐГ°Гі)");
                 return false;
             }
             Version remote = new Version(remoteVersion);
@@ -501,7 +501,7 @@ namespace Kotova.Test1.ClientSide
 
             try
             {
-                progressForm.SetMessage("Скачивается обновление. Пожалуйста, подождите...");
+                progressForm.SetMessage("Г‘ГЄГ Г·ГЁГўГ ГҐГІГ±Гї Г®ГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ. ГЏГ®Г¦Г Г«ГіГ©Г±ГІГ , ГЇГ®Г¤Г®Г¦Г¤ГЁГІГҐ...");
                 progressForm.Show();
 
                 // --- STEP 1: Download the EXE file ---
@@ -517,14 +517,14 @@ namespace Kotova.Test1.ClientSide
                 {
                     if (e.Error != null)
                     {
-                        MessageBox.Show($"Не удалось скачать EXE-файл: {e.Error.Message}");
+                        MessageBox.Show($"ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г±ГЄГ Г·Г ГІГј EXE-ГґГ Г©Г«: {e.Error.Message}");
                         progressForm.Close();
                         RemoveUpdateLock();
                         return;
                     }
 
                     // --- STEP 2: Now download the appsettings.json ---
-                    progressForm.SetMessage("EXE-файл загружен. Скачивается appsettings.json...");
+                    progressForm.SetMessage("EXE-ГґГ Г©Г« Г§Г ГЈГ°ГіГ¦ГҐГ­. Г‘ГЄГ Г·ГЁГўГ ГҐГІГ±Гї appsettings.json...");
                     progressForm.UpdateProgress(0);
 
                     WebClient jsonClient = new WebClient();
@@ -538,14 +538,14 @@ namespace Kotova.Test1.ClientSide
                     {
                         if (evt.Error != null)
                         {
-                            MessageBox.Show($"Не удалось скачать appsettings.json: {evt.Error.Message}");
+                            MessageBox.Show($"ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г±ГЄГ Г·Г ГІГј appsettings.json: {evt.Error.Message}");
                             progressForm.Close();
                             RemoveUpdateLock();
                             return;
                         }
 
                         // --- STEP 3: Both files are now downloaded. Proceed with update steps ---
-                        progressForm.SetMessage("Обновление скачено и установлено. Перезапуск...");
+                        progressForm.SetMessage("ГЋГЎГ­Г®ГўГ«ГҐГ­ГЁГҐ Г±ГЄГ Г·ГҐГ­Г® ГЁ ГіГ±ГІГ Г­Г®ГўГ«ГҐГ­Г®. ГЏГҐГ°ГҐГ§Г ГЇГіГ±ГЄ...");
                         Thread.Sleep(1000); // Show the message briefly
                         progressForm.Close();
 
@@ -583,7 +583,7 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось обновить приложение: {ex.Message}");
+                MessageBox.Show($"ГЌГҐ ГіГ¤Г Г«Г®Г±Гј Г®ГЎГ­Г®ГўГЁГІГј ГЇГ°ГЁГ«Г®Г¦ГҐГ­ГЁГҐ: {ex.Message}");
                 progressForm.Close();
                 RemoveUpdateLock();
                 return null;

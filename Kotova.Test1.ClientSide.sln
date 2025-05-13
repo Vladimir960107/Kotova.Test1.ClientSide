@@ -5,6 +5,8 @@ VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kotova.Test1.ClientSide", "Kotova.Test1.ClientSide\Kotova.Test1.ClientSide.csproj", "{ECECD025-5A05-43AE-974D-688638CBB88F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kotova.CommonClasses", "..\Kotova.CommonClasses\Kotova.CommonClasses\Kotova.CommonClasses.csproj", "{043124AA-6AFB-1780-0CAB-C8A21683A377}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{ECECD025-5A05-43AE-974D-688638CBB88F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ECECD025-5A05-43AE-974D-688638CBB88F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ECECD025-5A05-43AE-974D-688638CBB88F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{043124AA-6AFB-1780-0CAB-C8A21683A377}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{043124AA-6AFB-1780-0CAB-C8A21683A377}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{043124AA-6AFB-1780-0CAB-C8A21683A377}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{043124AA-6AFB-1780-0CAB-C8A21683A377}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
