@@ -613,7 +613,7 @@ namespace Kotova.Test1.ClientSide
             {
                 // Log error but continue application startup
                 
-                ($"Failed to initialize department cache: {ex.Message}");
+                Console.WriteLine($"Failed to initialize department cache: {ex.Message}");
             }
         }
 

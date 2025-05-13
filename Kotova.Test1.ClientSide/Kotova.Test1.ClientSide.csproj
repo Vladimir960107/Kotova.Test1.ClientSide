@@ -21,10 +21,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Cache.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
@@ -37,8 +33,7 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
   </ItemGroup>
-  
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>$(DefineConstants);DEBUG_IP</DefineConstants>
   </PropertyGroup>
@@ -55,7 +50,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Cache.cs" />
     <Content Include="Охрана труда.ico" />
   </ItemGroup>
 
@@ -82,6 +76,10 @@
     <PackageReference Include="System.IO.Packaging" Version="8.0.1" />
   </ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\..\Kotova.CommonClasses\Kotova.CommonClasses\Kotova.CommonClasses.csproj" />
+	</ItemGroup>
+
   <ItemGroup>
     <Reference Include="Kotova.CommonClasses">
       <HintPath>..\..\..\..\source\repos\Kotova.CommonClasses\Kotova.CommonClasses\bin\Debug\net6.0\Kotova.CommonClasses.dll</HintPath>
@@ -101,6 +99,11 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- ✅ This is the important addition -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
   </ItemGroup>
 
 </Project>
