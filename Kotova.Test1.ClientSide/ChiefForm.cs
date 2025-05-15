@@ -1645,7 +1645,7 @@ namespace Kotova.Test1.ClientSide
         private async void btnAddInstruction_Click(object sender, EventArgs e)
         {
             // Open a form or dialog to collect instruction details
-            var addInstructionForm = new AddInstructionForm();
+            var addInstructionForm = new AddInstructionForm(_loginForm._jwtToken);
             if (addInstructionForm.ShowDialog() == WinForms.DialogResult.OK)
             {
                 var newInstruction = addInstructionForm.InstructionResult;
