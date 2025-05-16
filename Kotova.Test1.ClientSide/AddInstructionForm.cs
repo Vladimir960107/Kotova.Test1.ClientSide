@@ -171,12 +171,12 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                // Create the instruction without folder path
+                // Get values from form
                 string causeOfInstruction = txtCause.Text;
                 // Map selected index to type byte (adding 2 because types start at 2 for these)
                 Byte typeOfInstruction = (Byte)(cmbType.SelectedIndex + 2);
 
-                // Create the instruction object
+                // Create the instruction object for local use
                 Instruction instruction = new Instruction(
                     causeOfInstruction,
                     startTime,
@@ -196,7 +196,7 @@ namespace Kotova.Test1.ClientSide
                     }
                 }
 
-                    // Set the result and close the form
+                // Set the result and close the form
                 InstructionResult = instruction;
                 DialogResult = WinForms.DialogResult.OK;
                 Close();
@@ -205,8 +205,7 @@ namespace Kotova.Test1.ClientSide
             {
                 WinForms.MessageBox.Show($"Ошибка при создании инструктажа: {ex.Message}",
                     "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
-                Console.WriteLine($"Ошибка при создании инструктажа: {ex.Message}",
-                    "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+                Console.WriteLine($"Ошибка при создании инструктажа: {ex.Message}");
                 btnSave.Enabled = true;
             }
         }
@@ -215,24 +214,16 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                // Create empty path list since we no longer need file paths
-                List<string> paths = new List<string>();
-
-                // Create request object
-                var requestObject = new
+                // Create a new DTO that matches the server's expected format
+                var instructionDto = new InstructionCreateDto
                 {
-                    Instruction = new
-                    {
-                        CauseOfInstruction = instruction.cause_of_instruction,
-                        BeginDate = instruction.begin_date,
-                        EndDate = instruction.end_date,
-                        PathToInstruction = instruction.path_to_instruction,
-                        TypeOfInstruction = instruction.type_of_instruction
-                    },
-                    Paths = paths
+                    CauseOfInstruction = instruction.cause_of_instruction,
+                    EndDate = instruction.end_date,
+                    TypeOfInstruction = instruction.type_of_instruction
                 };
 
-                string json = JsonConvert.SerializeObject(requestObject);
+                // Serialize the DTO directly - no nested structure anymore
+                string json = JsonConvert.SerializeObject(instructionDto);
 
                 using (var httpClient = new HttpClient())
                 {

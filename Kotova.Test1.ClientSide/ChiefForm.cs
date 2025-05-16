@@ -1666,7 +1666,7 @@ namespace Kotova.Test1.ClientSide
             var instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
             var instruction = await GetInstructionById(instructionId);
 
-            var editInstructionForm = new EditInstructionForm(instruction);
+            var editInstructionForm = new EditInstructionForm(instruction, _loginForm._jwtToken);
             if (editInstructionForm.ShowDialog() == WinForms.DialogResult.OK)
             {
                 var updatedInstruction = editInstructionForm.InstructionResult;
@@ -1808,7 +1808,15 @@ namespace Kotova.Test1.ClientSide
                 string jwtToken = _loginForm._jwtToken;
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                string json = JsonConvert.SerializeObject(instruction);
+                // Create an appropriate format that matches what the server expects
+                var instructionDto = new
+                {
+                    CauseOfInstruction = instruction.cause_of_instruction,
+                    EndDate = instruction.end_date,
+                    TypeOfInstruction = instruction.type_of_instruction
+                };
+
+                string json = JsonConvert.SerializeObject(instructionDto);
                 HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await httpClient.PutAsync(
