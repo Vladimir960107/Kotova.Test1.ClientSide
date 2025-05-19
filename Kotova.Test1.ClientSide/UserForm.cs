@@ -27,6 +27,8 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Windows.Controls;
 using Control = System.Windows.Forms.Control;
+using System.Windows.Forms.Integration;
+using WPF = System.Windows;
 
 
 
@@ -48,6 +50,15 @@ namespace Kotova.Test1.ClientSide
         public const string db_filePath = "file_path";
         public const string db_typeOfInstruction = "type_of_instruction";
         public const string db_dateOfInstructionWasSentToUser = "when_was_send_to_user";
+
+        // Added these new constants
+        public const string db_normativeInstructionId = "id";
+        public const string db_normativeInstructionName = "name";
+        public const string db_normativeInstructionUrl = "url";
+
+        // Changed global variable names
+        private List<Dictionary<string, object>> listsOfNormativeInstructionsOfNewInstr_global; // was listsOfPathsOfNewInstr_global
+        private List<Dictionary<string, object>> listsOfNormativeInstructionsOfOldInstr_global; // was listsOfPathsOfOldInstr_global
 
         private bool _IsInstructionSelected = false;
         private List<Dictionary<string, object>> listsOfPathsOfNewInstr_global;
@@ -148,6 +159,70 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        #region WPF Integration
+
+        // Add these using statements at the top:
+        // using System.Windows.Forms.Integration;
+        // using System.Windows;
+
+        // Method to show the WPF window from Windows Forms
+        private void ShowWpfInstructionViewer()
+        {
+            try
+            {
+                // Create and show the WPF instruction viewer window
+                var wpfWindow = new InstructionViewerWindow(_loginForm._jwtToken, _userName, isChief: false);
+                wpfWindow.Title = $"Просмотр инструктажей - {_userName}";
+
+                // Show the window
+                wpfWindow.Show();
+
+                // Optional: Make it modal if needed
+                // wpfWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии окна просмотра инструктажей: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private void AddWpfViewerButton()
+        {
+            var btnWpfViewer = new WPF.Forms.Button()
+            {
+                Text = "Открыть WPF просмотрщик",
+                Size = new Size(200, 30),
+                Location = new Point(10, 40), // Adjust as needed
+                BackColor = Color.LightGreen
+            };
+            btnWpfViewer.Click += (sender, e) => ShowWpfInstructionViewer();
+
+            // Add to the form (adjust the parent container as needed)
+            this.Controls.Add(btnWpfViewer);
+            btnWpfViewer.BringToFront();
+        }
+
+        private void InitializeWpfFeatures()
+        {
+            // For UserForm
+            InitializeWpfIntegration();
+            AddWpfViewerButton();
+        }
+
+        private void InitializeWpfIntegration()
+        {
+            // Add to existing context menu
+            var wpfViewerItem = new ToolStripMenuItem("Новый просмотрщик инструктажей (WPF)");
+            wpfViewerItem.Click += (sender, e) => ShowWpfInstructionViewer();
+
+            // Add separator and new item
+            AdditionalSettingsForUserContextMenuStrip.Items.Add(new ToolStripSeparator());
+            AdditionalSettingsForUserContextMenuStrip.Items.Add(wpfViewerItem);
+        }
+
+        #endregion
+
+
 
 
         public void EnableExitTheProgrammEntirelyButton()
@@ -224,7 +299,8 @@ namespace Kotova.Test1.ClientSide
 
                 // Update the global lists
                 listOfNewInstructions_global = result.Value.Instructions;
-                listsOfPathsOfNewInstr_global = result.Value.Paths;
+                listsOfNormativeInstructionsOfNewInstr_global = result.Value.NormativeInstructions; // Changed from Paths
+
 
                 // Update the UI
                 foreach (var instruction in listOfNewInstructions_global)
@@ -365,7 +441,7 @@ namespace Kotova.Test1.ClientSide
 
                 // Update the global lists
                 listOfOldInstructions_global = result.Value.Instructions;
-                listsOfPathsOfOldInstr_global = result.Value.Paths;
+                listsOfNormativeInstructionsOfOldInstr_global = result.Value.NormativeInstructions; // Changed from Paths
 
                 // Update the UI
                 this.Invoke(new Action(() =>
@@ -378,8 +454,8 @@ namespace Kotova.Test1.ClientSide
                             whenPassed = Convert.ToDateTime(instruction["date_when_passed"]);
                         }
 
-                        string type = instruction.ContainsKey("type_of_instruction") ?
-                            instruction["type_of_instruction"]?.ToString() ?? "Unknown" : "Unknown";
+                        string type = instruction.ContainsKey("type") ?
+                             instruction["type"]?.ToString() ?? "Unknown" : "Unknown";
 
                         string cause = instruction.ContainsKey("cause_of_instruction") ?
                             instruction["cause_of_instruction"]?.ToString() ?? "" : "";
@@ -543,39 +619,53 @@ namespace Kotova.Test1.ClientSide
         private void ListOfInstructions_SelectedValueChanged(object sender, EventArgs e)
         {
             FilesOfInstructionCheckedListBox.Items.Clear();
+            _IsInstructionSelected = false;
+            PassInstruction.Enabled = false;
+
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
                 MessageBox.Show("Вы не выбрали инструктаж.");
-                PassInstruction.Enabled = false;
                 return;
             }
+
             Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
             int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
-            foreach (var listOfPaths in listsOfPathsOfNewInstr_global)
-            {
-                if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
-                {
-                    if (listOfPaths[db_filePath] == null)
-                    {
-                        if (selectedDict[db_typeOfInstruction].ToString() == "0") // Проверка что мы входим в вводный инструктаж только!
-                        {
-                            _IsInstructionSelected = true;
-                            PassInstruction.Enabled = true;
-                            return;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
-                            PassInstruction.Enabled = false;
-                            return;
-                        }
 
-                    }
-                    FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
+            // Check if this is an introductory instruction (type 0) - these don't require file checking
+            string instructionType = selectedDict[db_typeOfInstruction].ToString();
+            if (instructionType == "0")
+            {
+                // For introductory instructions, enable PassInstruction immediately
+                _IsInstructionSelected = true;
+                PassInstruction.Enabled = true;
+                return;
+            }
+
+            // For other instruction types, load normative instructions
+            bool hasNormativeInstructions = false;
+            foreach (var normativeInstruction in listsOfNormativeInstructionsOfNewInstr_global)
+            {
+                if (Convert.ToInt32(normativeInstruction[dB_instructionId].ToString()) == instructionId)
+                {
+                    string displayText = $"{normativeInstruction[db_normativeInstructionName]} ({normativeInstruction[db_normativeInstructionUrl]})";
+                    FilesOfInstructionCheckedListBox.Items.Add(displayText);
+                    hasNormativeInstructions = true;
                 }
             }
 
-            _IsInstructionSelected = true;
+            if (hasNormativeInstructions)
+            {
+                _IsInstructionSelected = true;
+                // PassInstruction will be enabled only when all normative instructions are checked
+                PassInstruction.Enabled = false;
+            }
+            else
+            {
+                // If no normative instructions found, something might be wrong
+                MessageBox.Show("Для данного инструктажа не найдены нормативные документы.");
+                _IsInstructionSelected = false;
+                PassInstruction.Enabled = false;
+            }
         }
 
         #endregion
@@ -632,49 +722,37 @@ namespace Kotova.Test1.ClientSide
             Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString()); //most likely suppress it, cause its not null.
             if (selectedDict[db_typeOfInstruction].ToString() == "0")
             {
-                MessageBox.Show("Ты не должен был входить в эту строчку, исправляй (HyperLinkForInstructionsFolder!");
+                MessageBox.Show("Вводный инструктаж не имеет связанных файлов.");
                 return;
             }
-            string? pathStr = selectedDict[dB_pos_users_pathToInstruction].ToString();
+            int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
+            var firstNormativeInstruction = listsOfNormativeInstructionsOfNewInstr_global
+                .FirstOrDefault(ni => Convert.ToInt32(ni[dB_instructionId].ToString()) == instructionId);
 
-            if (pathStr is null || pathStr.Length == 0)
+            if (firstNormativeInstruction != null && firstNormativeInstruction[db_normativeInstructionUrl] != null)
             {
-                MessageBox.Show("Путь пуст или отсутствует.");
-                PassInstruction.Enabled = false;
-                return;
+                string url = firstNormativeInstruction[db_normativeInstructionUrl].ToString();
+                if (!string.IsNullOrEmpty(url))
+                {
+                    OpenUrl(url); // New method
+                }
             }
-            string path = Path.GetFullPath(pathStr);
-            OpenFolderInExplorer(path);
-            if (_IsInstructionSelected) { _IsInstructionSelected = false; }
+            //if (_IsInstructionSelected) { _IsInstructionSelected = false; }
         }
-
-        private void OpenFolderInExplorer(string path)
+        private void OpenUrl(string url)
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                MessageBox.Show("Указанный путь отсутствует.");
-                PassInstruction.Enabled = false;
-                return;
-            }
-
-            // Get the full path and check if it exists
-            string fullPath = Path.GetFullPath(path);
-            if (!Directory.Exists(fullPath))
-            {
-                MessageBox.Show($"Путь '{fullPath}' не существует.");
-                PassInstruction.Enabled = false;
-                return;
-            }
-
-            // Open the folder in Windows Explorer
             try
             {
-                Process.Start("explorer.exe", fullPath);
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось открыть папку: {ex.Message}");
-                PassInstruction.Enabled = false;
+                MessageBox.Show($"Не удалось открыть URL: {ex.Message}");
             }
         }
 
@@ -695,20 +773,25 @@ namespace Kotova.Test1.ClientSide
         private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
         {
             if (!PassInstruction.Checked) { return; }
+
             if (ListOfInstructionsForUser.SelectedItem == null)
             {
                 MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstruction.Enabled = false;
+                PassInstruction.Checked = false;
                 return;
             }
+
             if (ConfirmAction())
             {
                 MessageBox.Show("Вы согласились, что прошли инструктаж.", "Действие подтверждено", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 PassInstruction.Enabled = false;
+
                 Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
                 await SendInstructionIsPassedToDB(selectedDict);
-                FilesOfInstructionCheckedListBox.Items.Clear();
 
+                FilesOfInstructionCheckedListBox.Items.Clear();
+                _IsInstructionSelected = false; // Reset the flag
             }
             else
             {
@@ -716,8 +799,6 @@ namespace Kotova.Test1.ClientSide
                 PassInstruction.Checked = false;
                 return;
             }
-
-
         }
 
         private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
@@ -791,21 +872,60 @@ namespace Kotova.Test1.ClientSide
         {
             this.BeginInvoke((System.Windows.Forms.MethodInvoker)delegate
             {
-                if (AreAllItemsChecked(FilesOfInstructionCheckedListBox))
-                {
-                    PassInstruction.Enabled = true;
-                }
-                else
-                {
-                    PassInstruction.Enabled = false;
-                }
-
+                // Open URL when item is checked
                 if (e.NewValue == CheckState.Checked)
                 {
-                    string selectedPath = FilesOfInstructionCheckedListBox.Items[e.Index].ToString();
-                    OpenFile(selectedPath);
+                    string selectedItem = FilesOfInstructionCheckedListBox.Items[e.Index].ToString();
+                    // Extract URL from the display text (format: "Name (URL)")
+                    int urlStart = selectedItem.LastIndexOf('(');
+                    int urlEnd = selectedItem.LastIndexOf(')');
+                    if (urlStart > 0 && urlEnd > urlStart)
+                    {
+                        string url = selectedItem.Substring(urlStart + 1, urlEnd - urlStart - 1);
+                        OpenUrl(url);
+                    }
                 }
+
+                // Update PassInstruction checkbox state based on conditions
+                UpdatePassInstructionState();
             });
+        }
+
+        private void UpdatePassInstructionState()
+        {
+            // Only enable PassInstruction if:
+            // 1. An instruction is selected
+            // 2. Either it's an introductory instruction (no files to check) 
+            //    OR all normative instructions have been checked
+
+            if (!_IsInstructionSelected)
+            {
+                PassInstruction.Enabled = false;
+                return;
+            }
+
+            // Check if this is an introductory instruction
+            if (ListOfInstructionsForUser.SelectedItem != null)
+            {
+                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
+                string instructionType = selectedDict[db_typeOfInstruction].ToString();
+
+                if (instructionType == "0") // Introductory instruction
+                {
+                    PassInstruction.Enabled = true;
+                    return;
+                }
+            }
+
+            // For other instruction types, check if all normative instructions are checked
+            if (FilesOfInstructionCheckedListBox.Items.Count > 0)
+            {
+                PassInstruction.Enabled = AreAllItemsChecked(FilesOfInstructionCheckedListBox);
+            }
+            else
+            {
+                PassInstruction.Enabled = false;
+            }
         }
 
         private bool AreAllItemsChecked(CheckedListBox checkedListBox)
@@ -922,25 +1042,17 @@ namespace Kotova.Test1.ClientSide
                 // Ensure old instructions are loaded before trying to fetch paths
                 if (listOfOldInstructions_global == null || listsOfPathsOfOldInstr_global == null)
                 {
-                    MessageBox.Show("Пожалуйста, дождитесь загрузки инструктажей.");
                     return;
                 }
 
-                List<string?>? listOfPaths = FetchOldInstructionsFilesByCause(cause);
-                if (listOfPaths == null || listOfPaths.Count == 0) return;
-
-                string[] pathArray = listOfPaths
-                    .Where(item => item is not null)
-                    .Select(item => item!.ToString()!)
-                    .ToArray();
-
-                if (pathArray is null || pathArray.Length == 0)
+                List<string> listOfNormativeInstructions = FetchOldInstructionsNormativeInstructionsByCause(cause);
+                if (listOfNormativeInstructions == null || listOfNormativeInstructions.Count == 0)
                 {
-                    listBoxOfPathsOfPassedInstructions.Text = "Файлы для данного инструктажа не найдены";
+                    listBoxOfPathsOfPassedInstructions.Items.Add("Нормативные инструкции для данного инструктажа не найдены");
                     return;
                 }
 
-                listBoxOfPathsOfPassedInstructions.Items.AddRange(pathArray);
+                listBoxOfPathsOfPassedInstructions.Items.AddRange(listOfNormativeInstructions.ToArray());
             }
             catch (Exception ex)
             {
@@ -977,7 +1089,7 @@ namespace Kotova.Test1.ClientSide
                 }
 
                 // If we successfully retrieved a non-null cause, call your method
-                List<string?>? listOfPaths = FetchOldInstructionsFilesByCause(cause);
+                List<string?>? listOfPaths = FetchOldInstructionsNormativeInstructionsByCause(cause);
                 if (listOfPaths is null || listOfPaths.Count == 0) return;
 
                 string[] pathArray = listOfPaths
@@ -997,7 +1109,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private List<string?>? FetchOldInstructionsFilesByCause(string? cause)
+        private List<string?>? FetchOldInstructionsNormativeInstructionsByCause(string? cause)
         {
             if (cause == null)
             {
@@ -1006,11 +1118,10 @@ namespace Kotova.Test1.ClientSide
             }
 
             // Add null check for listOfOldInstructions_global
-            if (listOfOldInstructions_global == null)
+            if (listsOfNormativeInstructionsOfOldInstr_global == null)
             {
-                Console.WriteLine("Warning: listOfOldInstructions_global is null");
-                MessageBox.Show("Ошибка: Список инструктажей не загружен.");
-                return null;
+                MessageBox.Show("Ошибка: Список нормативных инструкций не загружен.");
+                return new List<string>();
             }
 
             List<object?> listOfIds = GetInstructionIdsOfGivenCause(listOfOldInstructions_global, cause);
@@ -1038,25 +1149,29 @@ namespace Kotova.Test1.ClientSide
                 id = Convert.ToInt32(firstId); // Standard conversion if not JsonElement
             }
 
-            // Add null check for listsOfPathsOfOldInstr_global
-            if (listsOfPathsOfOldInstr_global == null)
+            if (listsOfNormativeInstructionsOfOldInstr_global == null)
             {
                 Console.WriteLine("Warning: listsOfPathsOfOldInstr_global is null");
                 MessageBox.Show("Ошибка: Список путей файлов не загружен.");
                 return null;
             }
 
-            List<string?> listOfPaths = GetPathsOfGivenId(listsOfPathsOfOldInstr_global, id);
-            return listOfPaths;
+            List<string> listOfNormativeInstructions = GetNormativeInstructionsOfGivenId(listsOfNormativeInstructionsOfOldInstr_global, id);
+            return listOfNormativeInstructions;
         }
 
-        private List<string?> GetPathsOfGivenId(List<Dictionary<string, object>> list, int id)
+        private List<string> GetNormativeInstructionsOfGivenId(List<Dictionary<string, object>> list, int id)
         {
             return list
-             .Where(dict => dict.ContainsKey(dB_instructionId) &&
-                GetIntValue(dict[dB_instructionId]) == id) // Safely extract int
-            .Select(dict => dict.ContainsKey(db_filePath) ? dict[db_filePath]?.ToString() : null)
-            .ToList();
+                .Where(dict => dict.ContainsKey(dB_instructionId) &&
+                    GetIntValue(dict[dB_instructionId]) == id)
+                .Select(dict =>
+                {
+                    string name = dict.ContainsKey(db_normativeInstructionName) ? dict[db_normativeInstructionName]?.ToString() ?? "Unknown" : "Unknown";
+                    string url = dict.ContainsKey(db_normativeInstructionUrl) ? dict[db_normativeInstructionUrl]?.ToString() ?? "" : "";
+                    return $"{name} ({url})";
+                })
+                .ToList();
         }
 
         private static int GetIntValue(object obj)
@@ -1097,7 +1212,18 @@ namespace Kotova.Test1.ClientSide
             {
                 return;
             }
-            OpenFile(selectedItem.ToString());
+            string selectedText = selectedItem.ToString();
+            // Extract URL from the display text (format: "Name (URL)")
+            int urlStart = selectedText.LastIndexOf('(');
+            int urlEnd = selectedText.LastIndexOf(')');
+            if (urlStart > 0 && urlEnd > urlStart)
+            {
+                string url = selectedText.Substring(urlStart + 1, urlEnd - urlStart - 1);
+                if (!string.IsNullOrEmpty(url))
+                {
+                    OpenUrl(url);
+                }
+            }
         }
 
         private void AdditionalSettingsForUserContextMenuStrip_Opening(object sender, CancelEventArgs e)

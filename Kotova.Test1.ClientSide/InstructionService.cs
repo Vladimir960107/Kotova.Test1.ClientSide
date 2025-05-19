@@ -42,8 +42,8 @@ namespace Kotova.Test1.ClientSide
         /// <summary>
         /// Fetches not passed instructions for the current user
         /// </summary>
-        /// <returns>A tuple containing a list of instructions and a list of file paths, or null if an error occurred</returns>
-        public async Task<(List<Dictionary<string, object>> Instructions, List<Dictionary<string, object>> Paths)?> GetNotPassedInstructionsAsync()
+        /// <returns>A tuple containing a list of instructions and a list of normative instructions, or null if an error occurred</returns>
+        public async Task<(List<Dictionary<string, object>> Instructions, List<Dictionary<string, object>> NormativeInstructions)?> GetNotPassedInstructionsAsync()
         {
             try
             {
@@ -71,38 +71,34 @@ namespace Kotova.Test1.ClientSide
                     var instructionsList = instructions.Select(instr => new Dictionary<string, object>
                     {
                         { "instruction_id", instr.InstructionId },
+                        { "department_id", instr.DepartmentId },
                         { "cause_of_instruction", instr.Cause },
-                        { "type_of_instruction", instr.Type ?? "Unknown" },
-                        { "when_was_send_to_user", instr.WhenAssigned },
-                        { "path_to_instruction", instr.FilePaths?.FirstOrDefault() ?? "" }
+                        { "end_date", instr.EndDate },
+                        { "type_of_instruction", instr.TypeOfInstruction },
+                        { "type", instr.Type ?? "Unknown" },
+                        { "when_was_sent_to_user", instr.WhenAssigned }
                     }).ToList();
 
-                    // Create the paths list
-                    var pathsList = new List<Dictionary<string, object>>();
+                    // Create the normative instructions list
+                    var normativeInstructionsList = new List<Dictionary<string, object>>();
                     foreach (var instruction in instructions)
                     {
-                        if (instruction.FilePaths != null && instruction.FilePaths.Any())
+                        if (instruction.NormativeInstructions != null && instruction.NormativeInstructions.Any())
                         {
-                            foreach (var filePath in instruction.FilePaths)
+                            foreach (var normativeInstruction in instruction.NormativeInstructions)
                             {
-                                pathsList.Add(new Dictionary<string, object>
+                                normativeInstructionsList.Add(new Dictionary<string, object>
                                 {
                                     { "instruction_id", instruction.InstructionId },
-                                    { "file_path", filePath }
+                                    { "id", normativeInstruction.Id },
+                                    { "name", normativeInstruction.Name },
+                                    { "url", normativeInstruction.Url }
                                 });
                             }
                         }
-                        else
-                        {
-                            pathsList.Add(new Dictionary<string, object>
-                            {
-                                { "instruction_id", instruction.InstructionId },
-                                { "file_path", null }
-                            });
-                        }
                     }
 
-                    return (instructionsList, pathsList);
+                    return (instructionsList, normativeInstructionsList);
                 }
             }
             catch (Exception ex)
@@ -115,8 +111,8 @@ namespace Kotova.Test1.ClientSide
         /// <summary>
         /// Fetches passed instructions for the current user
         /// </summary>
-        /// <returns>A tuple containing a list of instructions and a list of file paths, or null if an error occurred</returns>
-        public async Task<(List<Dictionary<string, object>> Instructions, List<Dictionary<string, object>> Paths)?> GetPassedInstructionsAsync()
+        /// <returns>A tuple containing a list of instructions and a list of normative instructions, or null if an error occurred</returns>
+        public async Task<(List<Dictionary<string, object>> Instructions, List<Dictionary<string, object>> NormativeInstructions)?> GetPassedInstructionsAsync()
         {
             try
             {
@@ -144,38 +140,35 @@ namespace Kotova.Test1.ClientSide
                     var instructionsList = instructions.Select(instr => new Dictionary<string, object>
                     {
                         { "instruction_id", instr.InstructionId },
+                        { "department_id", instr.DepartmentId },
                         { "cause_of_instruction", instr.Cause ?? "" },
-                        { "type_of_instruction", instr.Type ?? "Unknown" },
-                        { "date_when_passed", instr.WhenPassed },
-                        { "path_to_instruction", instr.FilePaths?.FirstOrDefault() ?? "" }
+                        { "end_date", instr.EndDate },
+                        { "type_of_instruction", instr.TypeOfInstruction },
+                        { "type", instr.Type ?? "Unknown" },
+                        { "when_was_sent_to_user", instr.WhenAssigned },
+                        { "date_when_passed", instr.WhenPassed }
                     }).ToList();
 
-                    // Create the paths list
-                    var pathsList = new List<Dictionary<string, object>>();
+                    // Create the normative instructions list
+                    var normativeInstructionsList = new List<Dictionary<string, object>>();
                     foreach (var instruction in instructions)
                     {
-                        if (instruction.FilePaths != null && instruction.FilePaths.Any())
+                        if (instruction.NormativeInstructions != null && instruction.NormativeInstructions.Any())
                         {
-                            foreach (var filePath in instruction.FilePaths)
+                            foreach (var normativeInstruction in instruction.NormativeInstructions)
                             {
-                                pathsList.Add(new Dictionary<string, object>
+                                normativeInstructionsList.Add(new Dictionary<string, object>
                                 {
                                     { "instruction_id", instruction.InstructionId },
-                                    { "file_path", filePath }
+                                    { "id", normativeInstruction.Id },
+                                    { "name", normativeInstruction.Name },
+                                    { "url", normativeInstruction.Url }
                                 });
                             }
                         }
-                        else
-                        {
-                            pathsList.Add(new Dictionary<string, object>
-                            {
-                                { "instruction_id", instruction.InstructionId },
-                                { "file_path", null }
-                            });
-                        }
                     }
 
-                    return (instructionsList, pathsList);
+                    return (instructionsList, normativeInstructionsList);
                 }
             }
             catch (Exception ex)
@@ -215,27 +208,37 @@ namespace Kotova.Test1.ClientSide
 
         #region DTOs
 
-        // Add these classes to match the server response format
+        // DTOs to match the updated server response format
         private class InstructionDto
         {
             public int InstructionId { get; set; }
+            public int DepartmentId { get; set; }
             public string Cause { get; set; }
-            public DateTime BeginDate { get; set; }
             public DateTime EndDate { get; set; }
             public string Type { get; set; }
+            public byte TypeOfInstruction { get; set; }
             public DateTime? WhenAssigned { get; set; }
-            public List<string> FilePaths { get; set; }
+            public List<NormativeInstructionDto> NormativeInstructions { get; set; } = new List<NormativeInstructionDto>();
         }
 
         private class PassedInstructionDto
         {
             public int InstructionId { get; set; }
+            public int DepartmentId { get; set; }
             public string Cause { get; set; }
-            public DateTime? BeginDate { get; set; }
-            public DateTime? EndDate { get; set; }
+            public DateTime EndDate { get; set; }
             public string Type { get; set; }
+            public byte TypeOfInstruction { get; set; }
+            public DateTime? WhenAssigned { get; set; }
             public DateTime? WhenPassed { get; set; }
-            public List<string> FilePaths { get; set; } = new List<string>();
+            public List<NormativeInstructionDto> NormativeInstructions { get; set; } = new List<NormativeInstructionDto>();
+        }
+
+        private class NormativeInstructionDto
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string Url { get; set; }
         }
 
         #endregion
