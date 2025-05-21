@@ -319,7 +319,7 @@ namespace Kotova.Test1.ClientSide
             UpdatePassInstructionState();
 
             // Open URL when checked
-            if (sender is System.Windows.Forms.CheckBox checkBox && checkBox.Tag is NormativeInstructionItem item)
+            if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.Tag is NormativeInstructionItem item)
             {
                 OpenUrl(item.Url);
             }

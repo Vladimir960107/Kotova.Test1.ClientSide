@@ -23,6 +23,9 @@
                 await _hubConnection.DisposeAsync();
                 _hubConnection = null;
             }
+
+            CloseAllWpfWindows();
+
             base.Dispose(disposing);
         }
 
@@ -58,6 +61,7 @@
             ListOfInstructionsForUser = new ListBox();
             ChiefTabControl = new TabControl();
             instructionManagementTabPage = new TabPage();
+            btnAddInstruction = new Button();
             instructionDetailsGroupBox = new Button();
             assignInstructionToGroupsButton = new Button();
             btnDeleteInstruction = new Button();
@@ -79,26 +83,23 @@
             columnHeader4 = new ColumnHeader();
             columnHeader5 = new ColumnHeader();
             columnHeader6 = new ColumnHeader();
-            tabPage3 = new TabPage();
+            tabPageForPassingInstruction = new TabPage();
             FilesOfInstructionCheckedListBox = new CheckedListBox();
             PassInstruction = new CheckBox();
             HyperLinkForInstructionsFolder = new Button();
             label8 = new Label();
-            tabPage4 = new TabPage();
-            listBoxOfPassedInstructions = new ListBox();
+            tabPageTrainingCompliance = new TabPage();
+            dataGridViewPassedInstructions = new DataGridView();
+            PersonName = new DataGridViewTextBoxColumn();
+            IsPassed = new DataGridViewTextBoxColumn();
+            DatePassed = new DataGridViewTextBoxColumn();
+            treeViewPassedInstructions = new TreeViewWithoutDoubleClick();
+            treeViewInstructions = new TreeViewWithoutDoubleClick();
             dataGridViewPeopleThatNotPassedInstr = new DataGridView();
             Names = new DataGridViewTextBoxColumn();
             Passed = new DataGridViewTextBoxColumn();
-            listBoxOfNotPassedByInstructions = new ListBox();
             TestButtonForInstructions = new Button();
-            tabPage5 = new TabPage();
-            DownloadAllEmployeesInTheDepartment = new Button();
-            checkedListBoxTypesOfInstruction = new CheckedListBoxWithoutDoubleClick();
-            label9 = new Label();
-            endDateInstructionExportRequest = new DateTimePicker();
-            label3 = new Label();
-            startDateInstructionExportRequest = new DateTimePicker();
-            ExportInstructionRequestButton = new Button();
+            tabPageEmployeeInstructionLog = new TabPage();
             toolTip1 = new ToolTip(components);
             LogOutButton = new Button();
             LabelTray = new Label();
@@ -107,16 +108,15 @@
             usernameLabel = new Label();
             label10 = new Label();
             button1 = new Button();
-            btnAddInstruction = new Button();
             tabPage2.SuspendLayout();
             tabPage1.SuspendLayout();
             ChiefTabControl.SuspendLayout();
             instructionManagementTabPage.SuspendLayout();
             groupBox1.SuspendLayout();
-            tabPage3.SuspendLayout();
-            tabPage4.SuspendLayout();
+            tabPageForPassingInstruction.SuspendLayout();
+            tabPageTrainingCompliance.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewPassedInstructions).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).BeginInit();
-            tabPage5.SuspendLayout();
             SuspendLayout();
             // 
             // submitInstructionToPeople
@@ -347,9 +347,9 @@
             ChiefTabControl.Controls.Add(tabPage1);
             ChiefTabControl.Controls.Add(tabPage2);
             ChiefTabControl.Controls.Add(instructionManagementTabPage);
-            ChiefTabControl.Controls.Add(tabPage3);
-            ChiefTabControl.Controls.Add(tabPage4);
-            ChiefTabControl.Controls.Add(tabPage5);
+            ChiefTabControl.Controls.Add(tabPageForPassingInstruction);
+            ChiefTabControl.Controls.Add(tabPageTrainingCompliance);
+            ChiefTabControl.Controls.Add(tabPageEmployeeInstructionLog);
             ChiefTabControl.Location = new Point(12, 23);
             ChiefTabControl.Name = "ChiefTabControl";
             ChiefTabControl.SelectedIndex = 0;
@@ -374,6 +374,16 @@
             instructionManagementTabPage.TabIndex = 5;
             instructionManagementTabPage.Text = "Управление инструктажами";
             instructionManagementTabPage.UseVisualStyleBackColor = true;
+            // 
+            // btnAddInstruction
+            // 
+            btnAddInstruction.Location = new Point(21, 476);
+            btnAddInstruction.Name = "btnAddInstruction";
+            btnAddInstruction.Size = new Size(75, 23);
+            btnAddInstruction.TabIndex = 7;
+            btnAddInstruction.Text = "Добавить";
+            btnAddInstruction.UseVisualStyleBackColor = true;
+            btnAddInstruction.Click += btnAddInstruction_Click;
             // 
             // instructionDetailsGroupBox
             // 
@@ -551,20 +561,20 @@
             columnHeader6.Text = "Закончен";
             columnHeader6.Width = 70;
             // 
-            // tabPage3
+            // tabPageForPassingInstruction
             // 
-            tabPage3.Controls.Add(FilesOfInstructionCheckedListBox);
-            tabPage3.Controls.Add(PassInstruction);
-            tabPage3.Controls.Add(ListOfInstructionsForUser);
-            tabPage3.Controls.Add(HyperLinkForInstructionsFolder);
-            tabPage3.Controls.Add(label8);
-            tabPage3.Location = new Point(4, 24);
-            tabPage3.Name = "tabPage3";
-            tabPage3.Padding = new Padding(3);
-            tabPage3.Size = new Size(667, 588);
-            tabPage3.TabIndex = 2;
-            tabPage3.Text = "Прохождение инструктажей";
-            tabPage3.UseVisualStyleBackColor = true;
+            tabPageForPassingInstruction.Controls.Add(FilesOfInstructionCheckedListBox);
+            tabPageForPassingInstruction.Controls.Add(PassInstruction);
+            tabPageForPassingInstruction.Controls.Add(ListOfInstructionsForUser);
+            tabPageForPassingInstruction.Controls.Add(HyperLinkForInstructionsFolder);
+            tabPageForPassingInstruction.Controls.Add(label8);
+            tabPageForPassingInstruction.Location = new Point(4, 24);
+            tabPageForPassingInstruction.Name = "tabPageForPassingInstruction";
+            tabPageForPassingInstruction.Padding = new Padding(3);
+            tabPageForPassingInstruction.Size = new Size(667, 588);
+            tabPageForPassingInstruction.TabIndex = 2;
+            tabPageForPassingInstruction.Text = "Прохождение инструктажей";
+            tabPageForPassingInstruction.UseVisualStyleBackColor = true;
             // 
             // FilesOfInstructionCheckedListBox
             // 
@@ -609,28 +619,64 @@
             label8.TabIndex = 36;
             label8.Text = "Лист непройденных инструктажей:";
             // 
-            // tabPage4
+            // tabPageTrainingCompliance
             // 
-            tabPage4.Controls.Add(listBoxOfPassedInstructions);
-            tabPage4.Controls.Add(dataGridViewPeopleThatNotPassedInstr);
-            tabPage4.Controls.Add(listBoxOfNotPassedByInstructions);
-            tabPage4.Controls.Add(TestButtonForInstructions);
-            tabPage4.Location = new Point(4, 24);
-            tabPage4.Name = "tabPage4";
-            tabPage4.Padding = new Padding(3);
-            tabPage4.Size = new Size(667, 588);
-            tabPage4.TabIndex = 3;
-            tabPage4.Text = "Контроль прохождения инстр.";
-            tabPage4.UseVisualStyleBackColor = true;
+            tabPageTrainingCompliance.Controls.Add(dataGridViewPassedInstructions);
+            tabPageTrainingCompliance.Controls.Add(treeViewPassedInstructions);
+            tabPageTrainingCompliance.Controls.Add(treeViewInstructions);
+            tabPageTrainingCompliance.Controls.Add(dataGridViewPeopleThatNotPassedInstr);
+            tabPageTrainingCompliance.Controls.Add(TestButtonForInstructions);
+            tabPageTrainingCompliance.Location = new Point(4, 24);
+            tabPageTrainingCompliance.Name = "tabPageTrainingCompliance";
+            tabPageTrainingCompliance.Padding = new Padding(3);
+            tabPageTrainingCompliance.Size = new Size(667, 588);
+            tabPageTrainingCompliance.TabIndex = 3;
+            tabPageTrainingCompliance.Text = "Контроль прохождения инстр.";
+            tabPageTrainingCompliance.UseVisualStyleBackColor = true;
             // 
-            // listBoxOfPassedInstructions
+            // dataGridViewPassedInstructions
             // 
-            listBoxOfPassedInstructions.FormattingEnabled = true;
-            listBoxOfPassedInstructions.ItemHeight = 15;
-            listBoxOfPassedInstructions.Location = new Point(25, 278);
-            listBoxOfPassedInstructions.Name = "listBoxOfPassedInstructions";
-            listBoxOfPassedInstructions.Size = new Size(280, 184);
-            listBoxOfPassedInstructions.TabIndex = 3;
+            dataGridViewPassedInstructions.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewPassedInstructions.Columns.AddRange(new DataGridViewColumn[] { PersonName, IsPassed, DatePassed });
+            dataGridViewPassedInstructions.Location = new Point(324, 272);
+            dataGridViewPassedInstructions.Name = "dataGridViewPassedInstructions";
+            dataGridViewPassedInstructions.ReadOnly = true;
+            dataGridViewPassedInstructions.Size = new Size(322, 248);
+            dataGridViewPassedInstructions.TabIndex = 6;
+            // 
+            // PersonName
+            // 
+            PersonName.HeaderText = "ФИО";
+            PersonName.Name = "PersonName";
+            PersonName.ReadOnly = true;
+            // 
+            // IsPassed
+            // 
+            IsPassed.HeaderText = "Пройден";
+            IsPassed.Name = "IsPassed";
+            IsPassed.ReadOnly = true;
+            // 
+            // DatePassed
+            // 
+            DatePassed.HeaderText = "Дата прохождения";
+            DatePassed.Name = "DatePassed";
+            DatePassed.ReadOnly = true;
+            // 
+            // treeViewPassedInstructions
+            // 
+            treeViewPassedInstructions.Location = new Point(25, 272);
+            treeViewPassedInstructions.Name = "treeViewPassedInstructions";
+            treeViewPassedInstructions.Size = new Size(263, 248);
+            treeViewPassedInstructions.TabIndex = 5;
+            treeViewPassedInstructions.AfterSelect += treeViewPassedInstructions_AfterSelect;
+            // 
+            // treeViewInstructions
+            // 
+            treeViewInstructions.Location = new Point(25, 59);
+            treeViewInstructions.Name = "treeViewInstructions";
+            treeViewInstructions.Size = new Size(263, 184);
+            treeViewInstructions.TabIndex = 4;
+            treeViewInstructions.AfterSelect += treeViewInstructions_AfterSelect;
             // 
             // dataGridViewPeopleThatNotPassedInstr
             // 
@@ -654,103 +700,25 @@
             Passed.Name = "Passed";
             Passed.ReadOnly = true;
             // 
-            // listBoxOfNotPassedByInstructions
-            // 
-            listBoxOfNotPassedByInstructions.FormattingEnabled = true;
-            listBoxOfNotPassedByInstructions.ItemHeight = 15;
-            listBoxOfNotPassedByInstructions.Location = new Point(25, 59);
-            listBoxOfNotPassedByInstructions.Name = "listBoxOfNotPassedByInstructions";
-            listBoxOfNotPassedByInstructions.Size = new Size(280, 184);
-            listBoxOfNotPassedByInstructions.TabIndex = 1;
-            listBoxOfNotPassedByInstructions.SelectedIndexChanged += listBoxOfNotPassedByInstructions_SelectedIndexChanged;
-            // 
             // TestButtonForInstructions
             // 
             TestButtonForInstructions.Location = new Point(192, 20);
             TestButtonForInstructions.Name = "TestButtonForInstructions";
             TestButtonForInstructions.Size = new Size(240, 23);
             TestButtonForInstructions.TabIndex = 0;
-            TestButtonForInstructions.Text = "Пока что тестовая кнопка";
+            TestButtonForInstructions.Text = "Обновление";
             TestButtonForInstructions.UseVisualStyleBackColor = true;
             TestButtonForInstructions.Click += TestButtonForInstructions_Click;
             // 
-            // tabPage5
+            // tabPageEmployeeInstructionLog
             // 
-            tabPage5.Controls.Add(DownloadAllEmployeesInTheDepartment);
-            tabPage5.Controls.Add(checkedListBoxTypesOfInstruction);
-            tabPage5.Controls.Add(label9);
-            tabPage5.Controls.Add(endDateInstructionExportRequest);
-            tabPage5.Controls.Add(label3);
-            tabPage5.Controls.Add(startDateInstructionExportRequest);
-            tabPage5.Controls.Add(ExportInstructionRequestButton);
-            tabPage5.Location = new Point(4, 24);
-            tabPage5.Name = "tabPage5";
-            tabPage5.Padding = new Padding(3);
-            tabPage5.Size = new Size(667, 588);
-            tabPage5.TabIndex = 4;
-            tabPage5.Text = "Учёт сотрудников";
-            tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // DownloadAllEmployeesInTheDepartment
-            // 
-            DownloadAllEmployeesInTheDepartment.Location = new Point(36, 371);
-            DownloadAllEmployeesInTheDepartment.Name = "DownloadAllEmployeesInTheDepartment";
-            DownloadAllEmployeesInTheDepartment.Size = new Size(207, 71);
-            DownloadAllEmployeesInTheDepartment.TabIndex = 6;
-            DownloadAllEmployeesInTheDepartment.Text = "Скачать данные обо всех сотрудниках";
-            DownloadAllEmployeesInTheDepartment.UseVisualStyleBackColor = true;
-            DownloadAllEmployeesInTheDepartment.Click += DownloadAllEmployeesInTheDepartment_Click;
-            // 
-            // checkedListBoxTypesOfInstruction
-            // 
-            checkedListBoxTypesOfInstruction.FormattingEnabled = true;
-            checkedListBoxTypesOfInstruction.Items.AddRange(new object[] { "Внеплановые;", "Первичные;", "Повторные;", "Повторные(для водителей);", "Целевые;" });
-            checkedListBoxTypesOfInstruction.Location = new Point(43, 116);
-            checkedListBoxTypesOfInstruction.Name = "checkedListBoxTypesOfInstruction";
-            checkedListBoxTypesOfInstruction.Size = new Size(334, 94);
-            checkedListBoxTypesOfInstruction.TabIndex = 5;
-            // 
-            // label9
-            // 
-            label9.AutoSize = true;
-            label9.Location = new Point(369, 28);
-            label9.Name = "label9";
-            label9.Size = new Size(105, 15);
-            label9.TabIndex = 4;
-            label9.Text = "По такую-то дату:";
-            // 
-            // endDateInstructionExportRequest
-            // 
-            endDateInstructionExportRequest.Location = new Point(369, 56);
-            endDateInstructionExportRequest.Name = "endDateInstructionExportRequest";
-            endDateInstructionExportRequest.Size = new Size(200, 23);
-            endDateInstructionExportRequest.TabIndex = 3;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new Point(43, 28);
-            label3.Name = "label3";
-            label3.Size = new Size(98, 15);
-            label3.TabIndex = 2;
-            label3.Text = "С такой-то даты:";
-            // 
-            // startDateInstructionExportRequest
-            // 
-            startDateInstructionExportRequest.Location = new Point(43, 56);
-            startDateInstructionExportRequest.Name = "startDateInstructionExportRequest";
-            startDateInstructionExportRequest.Size = new Size(200, 23);
-            startDateInstructionExportRequest.TabIndex = 1;
-            // 
-            // ExportInstructionRequestButton
-            // 
-            ExportInstructionRequestButton.Location = new Point(234, 237);
-            ExportInstructionRequestButton.Name = "ExportInstructionRequestButton";
-            ExportInstructionRequestButton.Size = new Size(162, 23);
-            ExportInstructionRequestButton.TabIndex = 0;
-            ExportInstructionRequestButton.Text = "Экспортировать данные";
-            ExportInstructionRequestButton.UseVisualStyleBackColor = true;
-            ExportInstructionRequestButton.Click += ExportInstructionRequestButton_Click;
+            tabPageEmployeeInstructionLog.Location = new Point(4, 24);
+            tabPageEmployeeInstructionLog.Name = "tabPageEmployeeInstructionLog";
+            tabPageEmployeeInstructionLog.Padding = new Padding(3);
+            tabPageEmployeeInstructionLog.Size = new Size(667, 588);
+            tabPageEmployeeInstructionLog.TabIndex = 4;
+            tabPageEmployeeInstructionLog.Text = "Учёт сотрудников";
+            tabPageEmployeeInstructionLog.UseVisualStyleBackColor = true;
             // 
             // LogOutButton
             // 
@@ -817,16 +785,6 @@
             button1.Text = "Задание выполнено";
             button1.UseVisualStyleBackColor = true;
             // 
-            // btnAddInstruction
-            // 
-            btnAddInstruction.Location = new Point(21, 476);
-            btnAddInstruction.Name = "btnAddInstruction";
-            btnAddInstruction.Size = new Size(75, 23);
-            btnAddInstruction.TabIndex = 7;
-            btnAddInstruction.Text = "Добавить";
-            btnAddInstruction.UseVisualStyleBackColor = true;
-            btnAddInstruction.Click += btnAddInstruction_Click;
-            // 
             // ChiefForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -852,17 +810,80 @@
             instructionManagementTabPage.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
-            tabPage3.ResumeLayout(false);
-            tabPage3.PerformLayout();
-            tabPage4.ResumeLayout(false);
+            tabPageForPassingInstruction.ResumeLayout(false);
+            tabPageForPassingInstruction.PerformLayout();
+            tabPageTrainingCompliance.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridViewPassedInstructions).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPeopleThatNotPassedInstr).EndInit();
-            tabPage5.ResumeLayout(false);
-            tabPage5.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
+
+
+
+
+            // Create report label
+            this.instructionReportLabel = new System.Windows.Forms.Label();
+            this.instructionReportLabel.AutoSize = true;
+            this.instructionReportLabel.Location = new System.Drawing.Point(20, 20);
+            this.instructionReportLabel.Name = "instructionReportLabel";
+            this.instructionReportLabel.Size = new System.Drawing.Size(300, 20);
+            this.instructionReportLabel.TabIndex = 0;
+            this.instructionReportLabel.Text = "Выберите тип и причину инструктажа:";
+            this.tabPageEmployeeInstructionLog.Controls.Add(this.instructionReportLabel);
+
+            // Create tree view
+            this.instructionReportTreeView = new System.Windows.Forms.TreeView();
+            this.instructionReportTreeView.HideSelection = false;
+            this.instructionReportTreeView.Location = new System.Drawing.Point(20, 50);
+            this.instructionReportTreeView.Name = "instructionReportTreeView";
+            this.instructionReportTreeView.Size = new System.Drawing.Size(600, 400);
+            this.instructionReportTreeView.TabIndex = 1;
+            this.instructionReportTreeView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                    | System.Windows.Forms.AnchorStyles.Left)
+                    | System.Windows.Forms.AnchorStyles.Right)));
+            this.instructionReportTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.InstructionReportTreeView_AfterSelect);
+            this.tabPageEmployeeInstructionLog.Controls.Add(this.instructionReportTreeView);
+
+            // Create export button
+            this.exportReportButton = new System.Windows.Forms.Button();
+            this.exportReportButton.Location = new System.Drawing.Point(20, 460);
+            this.exportReportButton.Name = "exportReportButton";
+            this.exportReportButton.Size = new System.Drawing.Size(250, 30);
+            this.exportReportButton.TabIndex = 2;
+            this.exportReportButton.Text = "Экспортировать данные о прохождении";
+            this.exportReportButton.UseVisualStyleBackColor = true;
+            this.exportReportButton.Enabled = false;
+            this.exportReportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.exportReportButton.Click += new System.EventHandler(this.ExportComplianceReport_Click);
+            this.tabPageEmployeeInstructionLog.Controls.Add(this.exportReportButton);
+
+            // Create refresh button
+            this.refreshReportButton = new System.Windows.Forms.Button();
+            this.refreshReportButton.Location = new System.Drawing.Point(290, 460);
+            this.refreshReportButton.Name = "refreshReportButton";
+            this.refreshReportButton.Size = new System.Drawing.Size(200, 30);
+            this.refreshReportButton.TabIndex = 3;
+            this.refreshReportButton.Text = "Обновить список инструктажей";
+            this.refreshReportButton.UseVisualStyleBackColor = true;
+            this.refreshReportButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.refreshReportButton.Click += new System.EventHandler(this.RefreshInstructionTree_Click);
+            this.tabPageEmployeeInstructionLog.Controls.Add(this.refreshReportButton);
+
+            // Create help label
+            this.helpReportLabel = new System.Windows.Forms.Label();
+            this.helpReportLabel.AutoSize = true;
+            this.helpReportLabel.Location = new System.Drawing.Point(20, 500);
+            this.helpReportLabel.Name = "helpReportLabel";
+            this.helpReportLabel.Size = new System.Drawing.Size(600, 20);
+            this.helpReportLabel.TabIndex = 4;
+            this.helpReportLabel.Text = "Выберите инструктаж и нажмите 'Экспортировать' для создания отчета о прохождении";
+            this.helpReportLabel.ForeColor = System.Drawing.Color.DarkBlue;
+            this.helpReportLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.tabPageEmployeeInstructionLog.Controls.Add(this.helpReportLabel);
         }
 
         #endregion
+        
         private Button submitInstructionToPeople;
         private Button SyncNamesWithDB;
         private CheckBox checkBoxIsForDrivers;
@@ -884,13 +905,13 @@
         private ToolTip toolTip1;
         private Button testButton;
         private Button LogOutButton;
-        private TabPage tabPage3;
+        private TabPage tabPageForPassingInstruction;
         private CheckBox PassInstruction;
         private Button HyperLinkForInstructionsFolder;
         private Label label8;
         private ListBox ListOfUnplannedInstructions;
         private CheckedListBox FilesOfInstructionCheckedListBox;
-        private TabPage tabPage4;
+        private TabPage tabPageTrainingCompliance;
         private Button TestButtonForInstructions;
         private ListBox listBoxOfNotPassedByInstructions;
         private CheckedListBox checkedListBoxNamesOfPeople;
@@ -898,22 +919,19 @@
         private DataGridViewTextBoxColumn Names;
         private DataGridViewTextBoxColumn Passed;
         private CheckedListBox checkedListBoxNamesOfPeopleCreatingInstr;
-        private ListBox listBoxOfPassedInstructions;
-        private TabPage tabPage5;
+        private TabPage tabPageEmployeeInstructionLog;
+        private System.Windows.Forms.TreeView instructionReportTreeView;
+        private System.Windows.Forms.Button exportReportButton;
+        private System.Windows.Forms.Button refreshReportButton;
+        private System.Windows.Forms.Label instructionReportLabel;
+        private System.Windows.Forms.Label helpReportLabel;
         private Label LabelTray;
         private Button RefreshTasksButton;
-        private Label label3;
-        private DateTimePicker startDateInstructionExportRequest;
-        private Button ExportInstructionRequestButton;
-        private CheckedListBoxWithoutDoubleClick checkedListBoxTypesOfInstruction;
-        private Label label9;
-        private DateTimePicker endDateInstructionExportRequest;
         private ListBox TrayOfTasksList;
         private Label usernameLabel;
         private Label label10;
         private Button button1;
         private Button SelectAllThePeopleInListBoxButton;
-        private Button DownloadAllEmployeesInTheDepartment;
         private CheckBox MissTheAssignmentOfInstrCheckedBox;
         private CheckedListBox ListOfNormativeInstrNames;
         private Button assignInstructionToGroupsButton;
@@ -939,5 +957,11 @@
         private Button btnDeleteInstruction;
         private Button btnEditInstruction;
         private Button btnAddInstruction;
+        private TreeViewWithoutDoubleClick treeViewInstructions;
+        private TreeViewWithoutDoubleClick treeViewPassedInstructions;
+        private DataGridView dataGridViewPassedInstructions;
+        private DataGridViewTextBoxColumn PersonName;
+        private DataGridViewTextBoxColumn IsPassed;
+        private DataGridViewTextBoxColumn DatePassed;
     }
 }

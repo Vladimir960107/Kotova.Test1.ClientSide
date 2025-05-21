@@ -1,23 +1,30 @@
-﻿using Kotova.CommonClasses;
+﻿using ClosedXML.Excel;
+using Kotova.CommonClasses;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using System.Text.Json;
-using System.Diagnostics;
-using System.Net.Http;
-using Microsoft.AspNetCore.SignalR.Client;
-using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Controls;
-using ClosedXML.Excel;
-using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using System.Windows.Controls.Primitives;
+using System.Windows.Forms;
+using Windows.UI.WindowManagement;
 using Windows.Web.Http;
-using WinForms = System.Windows.Forms;
 using HttpClient = System.Net.Http.HttpClient;
+using WinForms = System.Windows.Forms;
+
+using WinFormsColor = System.Drawing.Color;
+using WpfColor = System.Windows.Media.Color;
+using WpfWindow = System.Windows.Window;
+using WinFormsForm = System.Windows.Forms.Form;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -38,6 +45,9 @@ namespace Kotova.Test1.ClientSide
         public static readonly string SkipTheUnplannedInstructionURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/skip-the-unplanned-instruction";
 
 
+        private List<InstructionReportItem> cachedInstructions;
+
+
         public static readonly string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/create-random-task";
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ 3 СТРОЧКИ В ОБЩИЙ ФАЙЛ!
@@ -49,8 +59,11 @@ namespace Kotova.Test1.ClientSide
 
         private List<Dictionary<string, object>> listOfInstructions_global;
         private List<Dictionary<string, object>> listsOfPaths_global;
-        private List<InstructionForChief> instructionForChiefs_global;
+        private List<InstructionForChiefDto> instructionForChiefs_global;
+        private List<InstructionForChiefDto> passedInstructionsForChief_global;
         private List<Instruction> unplannedInstructions_global;
+
+        private static List<WpfWindow> _openWpfWindows = new List<WpfWindow>();
 
 
         static string? selectedFolderPath = null;
@@ -200,6 +213,469 @@ namespace Kotova.Test1.ClientSide
                 buttonCreateInstruction.Enabled = true;
             }
         }
+
+        // Initialize the tab with a tree view for instruction selection
+        private void InitializeComplianceReportTab()
+        {
+            // Clear the existing controls
+            tabPageEmployeeInstructionLog.Controls.Clear();
+
+            // Create a label for instructions
+            WinForms.Label instructionLabel = new WinForms.Label
+            {
+                Text = "Выберите тип и причину инструктажа:",
+                Location = new Point(20, 20),
+                Size = new Size(300, 20),
+                AutoSize = true
+            };
+            tabPageEmployeeInstructionLog.Controls.Add(instructionLabel);
+
+            // Create a tree view for instruction selection
+            instructionReportTreeView = new WinForms.TreeView
+            {
+                Location = new Point(20, 50),
+                Size = new Size(600, 400),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
+                HideSelection = false,
+                FullRowSelect = true
+            };
+            tabPageEmployeeInstructionLog.Controls.Add(instructionReportTreeView);
+
+            // Create export button
+            exportReportButton = new WinForms.Button
+            {
+                Text = "Экспортировать данные о прохождении",
+                Location = new Point(20, 460),
+                Size = new Size(250, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Enabled = false
+            };
+            exportReportButton.Click += ExportComplianceReport_Click;
+            tabPageEmployeeInstructionLog.Controls.Add(exportReportButton);
+
+            // Create refresh button
+            refreshReportButton = new WinForms.Button
+            {
+                Text = "Обновить список инструктажей",
+                Location = new Point(290, 460),
+                Size = new Size(200, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            refreshReportButton.Click += RefreshInstructionTree_Click;
+            tabPageEmployeeInstructionLog.Controls.Add(refreshReportButton);
+
+            // Add a help label
+            WinForms.Label helpLabel = new WinForms.Label
+            {
+                Text = "Выберите инструктаж и нажмите 'Экспортировать' для создания отчета о прохождении",
+                Location = new Point(20, 500),
+                Size = new Size(600, 20),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                ForeColor = Color.DarkBlue
+            };
+            tabPageEmployeeInstructionLog.Controls.Add(helpLabel);
+
+            // Attach selection event handler
+            instructionReportTreeView.AfterSelect += InstructionReportTreeView_AfterSelect;
+
+            // Load the instruction data
+            LoadInstructionTreeData();
+        }
+
+        // Event handler for tree node selection
+        private void InstructionReportTreeView_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            // Only enable export if an instruction (not a type) is selected
+            if (e.Node?.Tag != null && !e.Node.Tag.ToString().StartsWith("TYPE_"))
+            {
+                exportReportButton.Enabled = true;
+            }
+            else
+            {
+                exportReportButton.Enabled = false;
+            }
+        }
+
+        // Event handler for the refresh button
+        private async void RefreshInstructionTree_Click(object sender, EventArgs e)
+        {
+            await LoadInstructionTreeData();
+        }
+
+        // Load instruction data and populate the tree view
+        private async Task LoadInstructionTreeData()
+        {
+            try
+            {
+                // Show loading indicator
+                instructionReportTreeView.Nodes.Clear();
+                TreeNode loadingNode = new TreeNode("Загрузка данных...");
+                instructionReportTreeView.Nodes.Add(loadingNode);
+
+                // Disable buttons during loading
+                exportReportButton.Enabled = false;
+                refreshReportButton.Enabled = false;
+
+                // Fetch data from the server
+                cachedInstructions = await GetInstructionsWithComplianceData();
+
+                // Check if we got any data
+                if (cachedInstructions == null || cachedInstructions.Count == 0)
+                {
+                    instructionReportTreeView.Nodes.Clear();
+                    instructionReportTreeView.Nodes.Add(new TreeNode("Нет доступных инструктажей"));
+                    refreshReportButton.Enabled = true;
+                    return;
+                }
+
+                // Populate the tree view
+                instructionReportTreeView.Nodes.Clear();
+
+                // Group instructions by type
+                var instructionsByType = cachedInstructions
+                    .GroupBy(i => i.TypeOfInstruction)
+                    .OrderBy(g => g.Key);
+
+                // Create nodes for each type
+                foreach (var typeGroup in instructionsByType)
+                {
+                    // Create node for this type
+                    TreeNode typeNode = new TreeNode(GetInstructionTypeName(typeGroup.Key));
+                    typeNode.Tag = $"TYPE_{typeGroup.Key}";
+
+                    // Add child nodes for each instruction in this type
+                    foreach (var instruction in typeGroup.OrderByDescending(i => i.BeginDate))
+                    {
+                        // Format text to include completion information
+                        int totalEmployees = instruction.EmployeeData.Count;
+                        int passedCount = instruction.EmployeeData.Count(e => e.HasPassed);
+                        string completionStatus = totalEmployees > 0
+                            ? $" [{passedCount}/{totalEmployees} ({(passedCount * 100 / Math.Max(totalEmployees, 1))}%)]"
+                            : " [Нет сотрудников]";
+
+                        string nodeText = $"{instruction.CauseOfInstruction} (от {instruction.BeginDate:dd.MM.yyyy}){completionStatus}";
+
+                        // Create node for this instruction
+                        TreeNode instructionNode = new TreeNode(nodeText);
+                        instructionNode.Tag = instruction.InstructionId;
+
+                        // Set node color based on completion status
+                        if (totalEmployees > 0)
+                        {
+                            if (passedCount == totalEmployees)
+                            {
+                                instructionNode.ForeColor = Color.Green; // Fully completed
+                            }
+                            else if (passedCount >= totalEmployees / 2)
+                            {
+                                instructionNode.ForeColor = Color.DarkGreen; // More than half
+                            }
+                            else if (passedCount > 0)
+                            {
+                                instructionNode.ForeColor = Color.DarkOrange; // Some completed
+                            }
+                            else
+                            {
+                                instructionNode.ForeColor = Color.Red; // None completed
+                            }
+                        }
+
+                        typeNode.Nodes.Add(instructionNode);
+                    }
+
+                    instructionReportTreeView.Nodes.Add(typeNode);
+                }
+
+                // Expand all nodes
+                instructionReportTreeView.ExpandAll();
+
+                // Re-enable refresh button
+                refreshReportButton.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                // Show error
+                MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Clear tree and show error node
+                instructionReportTreeView.Nodes.Clear();
+                instructionReportTreeView.Nodes.Add(new TreeNode("Ошибка загрузки данных"));
+
+                // Re-enable refresh button
+                refreshReportButton.Enabled = true;
+            }
+        }
+
+        // Event handler for the export button
+        private async void ExportComplianceReport_Click(object sender, EventArgs e)
+        {
+            if (instructionReportTreeView.SelectedNode == null ||
+                instructionReportTreeView.SelectedNode.Tag == null ||
+                instructionReportTreeView.SelectedNode.Tag.ToString().StartsWith("TYPE_"))
+            {
+                MessageBox.Show("Пожалуйста, выберите конкретный инструктаж для экспорта.",
+                    "Выбор инструктажа", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                // Get selected instruction ID
+                int instructionId = Convert.ToInt32(instructionReportTreeView.SelectedNode.Tag);
+
+                // Get report data from server
+                var report = await GetInstructionComplianceReport(instructionId);
+
+                // Export to Excel
+                ExportToExcel(report);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при экспорте отчета: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Method to get instruction type name
+        private string GetInstructionTypeName(byte typeCode)
+        {
+            return typeCode switch
+            {
+                0 => "Вводный",
+                1 => "Внеплановый",
+                2 => "Первичный",
+                3 => "Повторный",
+                4 => "Повторный (для водителей)",
+                5 => "Целевой",
+                _ => $"Неизвестный тип ({typeCode})"
+            };
+        }
+
+        // Method to fetch instruction data from the server
+        private async Task<List<InstructionReportItem>> GetInstructionsWithComplianceData()
+        {
+            using (var httpClient = new HttpClient())
+            {
+                string jwtToken = _loginForm._jwtToken;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await httpClient.GetAsync(
+                    ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-instructions-with-compliance-data");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<InstructionReportItem>>(responseBody);
+                }
+                else
+                {
+                    throw new Exception($"Ошибка сервера: {response.StatusCode}");
+                }
+            }
+        }
+
+        // Method to fetch compliance report for a specific instruction
+        private async Task<InstructionReportItem> GetInstructionComplianceReport(int instructionId)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                string jwtToken = _loginForm._jwtToken;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await httpClient.GetAsync(
+                    ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/get-instruction-compliance-report/{instructionId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<InstructionReportItem>(responseBody);
+                }
+                else
+                {
+                    throw new Exception($"Ошибка сервера: {response.StatusCode}");
+                }
+            }
+        }
+
+        // Method to export data to Excel
+        private void ExportToExcel(InstructionReportItem report)
+        {
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx";
+                saveFileDialog.Title = "Сохранить отчет";
+                saveFileDialog.FileName = $"Отчет_инструктаж_{report.InstructionId}_{DateTime.Now:yyyyMMdd}.xlsx";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var worksheet = workbook.Worksheets.Add("Отчет");
+
+                            // Add title with instruction information
+                            worksheet.Cell("A1").Value = "ОТЧЕТ О ПРОХОЖДЕНИИ ИНСТРУКТАЖА";
+                            worksheet.Range("A1:G1").Merge();
+                            worksheet.Cell("A1").Style.Font.Bold = true;
+                            worksheet.Cell("A1").Style.Font.FontSize = 14;
+                            worksheet.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                            // Add instruction details
+                            worksheet.Cell("A3").Value = "Причина инструктажа:";
+                            worksheet.Cell("B3").Value = report.CauseOfInstruction;
+                            worksheet.Range("B3:G3").Merge();
+
+                            worksheet.Cell("A4").Value = "Тип инструктажа:";
+                            worksheet.Cell("B4").Value = report.TypeName;
+                            worksheet.Range("B4:G4").Merge();
+
+                            worksheet.Cell("A5").Value = "Период:";
+                            worksheet.Cell("B5").Value = $"{report.BeginDate:dd.MM.yyyy} - {report.EndDate:dd.MM.yyyy}";
+                            worksheet.Range("B5:G5").Merge();
+
+                            // Add statistics
+                            worksheet.Cell("A7").Value = "Сотрудников всего:";
+                            worksheet.Cell("B7").Value = report.EmployeeData.Count;
+
+                            worksheet.Cell("D7").Value = "Прошли инструктаж:";
+                            int passedCount = report.EmployeeData.Count(e => e.HasPassed);
+                            worksheet.Cell("E7").Value = passedCount;
+
+                            worksheet.Cell("F7").Value = "Не прошли:";
+                            worksheet.Cell("G7").Value = report.EmployeeData.Count - passedCount;
+
+                            // Percentage
+                            worksheet.Cell("A8").Value = "Процент прохождения:";
+                            double percentage = report.EmployeeData.Count > 0
+                                ? (double)passedCount / report.EmployeeData.Count * 100
+                                : 0;
+                            worksheet.Cell("B8").Value = $"{percentage:F1}%";
+
+                            // Style for header cells
+                            var headerStyle = workbook.Style;
+                            headerStyle.Font.Bold = true;
+                            headerStyle.Fill.BackgroundColor = XLColor.LightGray;
+                            headerStyle.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            headerStyle.Border.OutsideBorder = XLBorderStyleValues.Thin;
+
+                            // Add column headers at row 10
+                            worksheet.Cell("A10").Value = "№";
+                            worksheet.Cell("B10").Value = "ФИО сотрудника";
+                            worksheet.Cell("C10").Value = "Должность";
+                            worksheet.Cell("D10").Value = "Дата рождения";
+                            worksheet.Cell("E10").Value = "Дата прохождения";
+                            worksheet.Cell("F10").Value = "Статус";
+                            worksheet.Cell("G10").Value = "Назначил инструктаж";
+                            worksheet.Cell("H10").Value = "Нормативные документы";
+
+                            // Apply style to headers
+                            worksheet.Range("A10:H10").Style = headerStyle;
+
+                            // Add employee data starting at row 11
+                            int rowIndex = 11;
+
+                            // Sort employees: passed first (chronologically), then not passed
+                            var sortedEmployees = report.EmployeeData
+                                .OrderBy(e => e.HasPassed ? 0 : 1) // Passed first, not passed after
+                                .ThenBy(e => e.DatePassed) // Sort by date (earliest first)
+                                .ThenBy(e => e.FullName) // Then by name
+                                .ToList();
+
+                            for (int i = 0; i < sortedEmployees.Count; i++)
+                            {
+                                var employee = sortedEmployees[i];
+
+                                // Row number
+                                worksheet.Cell($"A{rowIndex}").Value = i + 1;
+
+                                // Employee information
+                                worksheet.Cell($"B{rowIndex}").Value = employee.FullName;
+                                worksheet.Cell($"C{rowIndex}").Value = employee.Position;
+                                worksheet.Cell($"D{rowIndex}").Value = employee.BirthDate.ToString("dd.MM.yyyy");
+
+                                // Date passed
+                                worksheet.Cell($"E{rowIndex}").Value = employee.HasPassed && employee.DatePassed.HasValue
+                                    ? employee.DatePassed.Value.ToString("dd.MM.yyyy HH:mm")
+                                    : "-";
+
+                                // Status
+                                worksheet.Cell($"F{rowIndex}").Value = employee.HasPassed ? "Пройден" : "Не пройден";
+
+                                // Who assigned
+                                worksheet.Cell($"G{rowIndex}").Value = employee.AssignedBy;
+
+                                // Normative documents
+                                worksheet.Cell($"H{rowIndex}").Value = string.Join(", ", employee.NormativeDocuments);
+
+                                // Color coding based on status
+                                if (employee.HasPassed)
+                                {
+                                    worksheet.Range($"A{rowIndex}:H{rowIndex}").Style.Fill.BackgroundColor = XLColor.LightGreen;
+                                }
+                                else
+                                {
+                                    worksheet.Range($"A{rowIndex}:H{rowIndex}").Style.Fill.BackgroundColor = XLColor.LightSalmon;
+                                }
+
+                                rowIndex++;
+                            }
+
+                            // Adjust column widths
+                            worksheet.Column(1).Width = 5;  // №
+                            worksheet.Column(2).Width = 30; // ФИО
+                            worksheet.Column(3).Width = 25; // Должность
+                            worksheet.Column(4).Width = 15; // Дата рождения
+                            worksheet.Column(5).Width = 20; // Дата прохождения
+                            worksheet.Column(6).Width = 10; // Статус
+                            worksheet.Column(7).Width = 35; // Назначил
+                            worksheet.Column(8).Width = 40; // Нормативные документы
+
+                            // Add borders to data
+                            worksheet.Range($"A10:H{rowIndex - 1}").Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
+                            worksheet.Range($"A10:H{rowIndex - 1}").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+                            // Add timestamp
+                            worksheet.Cell($"A{rowIndex + 2}").Value = $"Отчет сформирован: {DateTime.Now:dd.MM.yyyy HH:mm:ss}";
+                            worksheet.Range($"A{rowIndex + 2}:H{rowIndex + 2}").Merge();
+
+                            // Save workbook
+                            workbook.SaveAs(saveFileDialog.FileName);
+
+                            // Show success message
+                            MessageBox.Show($"Отчет успешно сохранен в файл: {saveFileDialog.FileName}",
+                                "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            // Try to open the file
+                            try
+                            {
+                                Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = saveFileDialog.FileName,
+                                    UseShellExecute = true
+                                });
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Не удалось автоматически открыть файл: {ex.Message}",
+                                    "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Ошибка при создании Excel-файла: {ex.Message}",
+                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+
+
+
+
 
         private async void buttonSyncManualyInstrWithDB_Click(object sender, EventArgs e)
         {
@@ -469,15 +945,27 @@ namespace Kotova.Test1.ClientSide
 
         private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (ChiefTabControl.SelectedTab.Text == "Прохождение инструктажей")
+            if (ChiefTabControl.SelectedTab == tabPageForPassingInstruction)
             {
-                ListOfUnplannedInstructions.Items.Clear();
-                ListOfInstructionsForUser.Items.Clear();
-                bool IsEmpty = await DownloadInstructionsForUserFromServer(_userName);
-                if (IsEmpty == true)
+                ShowWpfInstructionViewer();
+
+                // Optionally switch to another tab to avoid empty tab content
+                // This prevents user confusion when they see an empty tab
+                if (ChiefTabControl.TabPages.Count > 0 && ChiefTabControl.SelectedTab == tabPageForPassingInstruction)
                 {
-                    MessageBox.Show("Все инструктажи пройдены!");
+                    // Find any tab other than tabPage3
+                    for (int i = 0; i < ChiefTabControl.TabPages.Count; i++)
+                    {
+                        if (ChiefTabControl.TabPages[i] != tabPageForPassingInstruction)
+                        {
+                            ChiefTabControl.SelectedTab = ChiefTabControl.TabPages[i];
+                            break;
+                        }
+                    }
                 }
+
+                // Early return to skip other processing for this tab
+                return;
             }
             if (ChiefTabControl.SelectedTab.Text == "Внеплановые инструктажи")
             {
@@ -486,6 +974,7 @@ namespace Kotova.Test1.ClientSide
             }
             if (ChiefTabControl.SelectedTab == instructionManagementTabPage)
             {
+                InitializeComplianceReportTab();
             }
 
             if (ChiefTabControl.SelectedTab.Text == "Создание инструктажа")
@@ -534,7 +1023,205 @@ namespace Kotova.Test1.ClientSide
                     SyncNamesWithDB.Enabled = true; // Re-enable the button after the operation completes
                 }
             }
+            if (ChiefTabControl.SelectedTab == tabPageTrainingCompliance)
+            {
+                bool success = await FetchNotPassedInstructionsForChief();
+
+                // Optionally fetch passed instructions if needed
+                if (success)
+                {
+                    await FetchPassedInstructionsForChief();
+                }
+            }
         }
+
+
+        /// <summary>
+        /// Opens the WPF instruction viewer window for the chief
+        /// </summary>
+        private void ShowWpfInstructionViewer()
+        {
+            try
+            {
+                // Check if window is already open
+                var existingWindow = _openWpfWindows.OfType<InstructionViewerWindow>().FirstOrDefault();
+                if (existingWindow != null && existingWindow.IsLoaded)
+                {
+                    // Bring existing window to front
+                    existingWindow.Activate();
+                    existingWindow.WindowState = System.Windows.WindowState.Normal;
+                    return;
+                }
+
+                // Create new WPF window with chief mode enabled
+                var wpfWindow = new InstructionViewerWindow(_loginForm._jwtToken, _userName, isChief: true);
+                wpfWindow.Title = $"Просмотр инструктажей - {_userName} (Руководитель)";
+
+                // Center over parent form
+                CenterWpfWindowOverWinForm(wpfWindow, this);
+
+                // Apply theme to match parent
+                ApplyWinFormThemeToWpf(wpfWindow, this.BackColor);
+
+                // Set icon safely
+                SetWpfWindowIconSafe(wpfWindow, this);
+
+                // Show window
+                wpfWindow.Show();
+
+                // Track the window
+                TrackWpfWindow(wpfWindow);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии окна просмотра инструктажей: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Centers WPF window over Windows Forms parent
+        /// </summary>
+        private static void CenterWpfWindowOverWinForm(WpfWindow wpfWindow, WinFormsForm parentForm)
+        {
+            if (parentForm != null && wpfWindow != null)
+            {
+                // Ensure WPF window size is loaded
+                wpfWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+
+                // Calculate center position
+                var parentLocation = parentForm.Location;
+                var parentSize = parentForm.Size;
+
+                wpfWindow.Left = parentLocation.X + (parentSize.Width - wpfWindow.Width) / 2;
+                wpfWindow.Top = parentLocation.Y + (parentSize.Height - wpfWindow.Height) / 2;
+
+                // Ensure window is visible on screen
+                var screen = Screen.FromControl(parentForm);
+                if (wpfWindow.Left < screen.WorkingArea.Left)
+                    wpfWindow.Left = screen.WorkingArea.Left;
+                if (wpfWindow.Top < screen.WorkingArea.Top)
+                    wpfWindow.Top = screen.WorkingArea.Top;
+                if (wpfWindow.Left + wpfWindow.Width > screen.WorkingArea.Right)
+                    wpfWindow.Left = screen.WorkingArea.Right - wpfWindow.Width;
+                if (wpfWindow.Top + wpfWindow.Height > screen.WorkingArea.Bottom)
+                    wpfWindow.Top = screen.WorkingArea.Bottom - wpfWindow.Height;
+            }
+        }
+
+        /// <summary>
+        /// Applies Windows Forms theme colors to WPF window
+        /// </summary>
+        private static void ApplyWinFormThemeToWpf(WpfWindow wpfWindow, WinFormsColor formsBackColor)
+        {
+            try
+            {
+                // Convert Windows Forms color to WPF color
+                var wpfColor = WpfColor.FromArgb(
+                    formsBackColor.A,
+                    formsBackColor.R,
+                    formsBackColor.G,
+                    formsBackColor.B);
+
+                wpfWindow.Background = new System.Windows.Media.SolidColorBrush(wpfColor);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not apply theme: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Safely sets icon for WPF window
+        /// </summary>
+        private static void SetWpfWindowIconSafe(WpfWindow wpfWindow, WinFormsForm parentForm)
+        {
+            try
+            {
+                // Try to get icon from parent form
+                if (parentForm?.Icon != null)
+                {
+                    var bitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                        parentForm.Icon.Handle,
+                        System.Windows.Int32Rect.Empty,
+                        System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+                    wpfWindow.Icon = bitmap;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not set icon from parent: {ex.Message}");
+            }
+
+            // Fallback: Create simple programmatic icon
+            try
+            {
+                CreateSimpleWpfIcon(wpfWindow);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not create fallback icon: {ex.Message}");
+                // No icon is fine too
+            }
+        }
+
+        /// <summary>
+        /// Creates a simple blue square icon programmatically
+        /// </summary>
+        private static void CreateSimpleWpfIcon(WpfWindow wpfWindow)
+        {
+            var drawingGroup = new System.Windows.Media.DrawingGroup();
+
+            // Create a simple blue square icon
+            var geometryDrawing = new System.Windows.Media.GeometryDrawing(
+                new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.DodgerBlue),
+                new System.Windows.Media.Pen(new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Navy), 1),
+                new System.Windows.Media.RectangleGeometry(new System.Windows.Rect(0, 0, 16, 16))
+            );
+
+            drawingGroup.Children.Add(geometryDrawing);
+            var drawingImage = new System.Windows.Media.DrawingImage(drawingGroup);
+            wpfWindow.Icon = drawingImage;
+        }
+
+        /// <summary>
+        /// Tracks WPF windows to prevent duplicates and manage cleanup
+        /// </summary>
+        private static void TrackWpfWindow(WpfWindow window)
+        {
+            // Clean up closed windows first
+            _openWpfWindows.RemoveAll(w => w == null || !w.IsLoaded);
+
+            // Add new window to tracking
+            _openWpfWindows.Add(window);
+
+            // Remove from tracking when window is closed
+            window.Closed += (s, e) => _openWpfWindows.Remove(window);
+        }
+
+        /// <summary>
+        /// Closes all tracked WPF windows
+        /// </summary>
+        private static void CloseAllWpfWindows()
+        {
+            foreach (var window in _openWpfWindows.ToList())
+            {
+                try
+                {
+                    if (window != null && window.IsLoaded)
+                    {
+                        window.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error closing WPF window: {ex.Message}");
+                }
+            }
+            _openWpfWindows.Clear();
+        }
+
 
         public class EmployeeData
         {
@@ -980,110 +1667,360 @@ namespace Kotova.Test1.ClientSide
 
         private async void TestButtonForInstructions_Click(object sender, EventArgs e)
         {
+            bool success = await FetchNotPassedInstructionsForChief();
+
+            // Optionally fetch passed instructions if needed
+            if (success)
+            {
+                await FetchPassedInstructionsForChief();
+            }
+        }
+
+        /// <summary>
+        /// Fetches not passed instructions from the server and populates the TreeView
+        /// </summary>
+        /// <returns>True if data was successfully fetched, false otherwise</returns>
+        private async Task<bool> FetchNotPassedInstructionsForChief()
+        {
             try
             {
-
+                // Clear previous data
                 dataGridViewPeopleThatNotPassedInstr.Rows.Clear();
-                listBoxOfNotPassedByInstructions.Items.Clear();
+                treeViewInstructions.Nodes.Clear(); // Using TreeView instead of ListBox
+
+                // Show loading indicator
+                Cursor = Cursors.WaitCursor;
+
                 using (var httpClient = new HttpClient())
                 {
+                    // Get the JWT token from the login form
                     string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                    var response = await httpClient.GetAsync(getNotPassedInstructionURL);
-
+                    // Make the API call to get not passed instructions
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief");
 
                     if (response.IsSuccessStatusCode)
                     {
                         var jsonResponse = await response.Content.ReadAsStringAsync();
-                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChief>>(jsonResponse);
 
+                        // Deserialize the response to the new DTO format
+                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChiefDto>>(
+                            jsonResponse,
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        // Check for null result
                         if (result is null)
                         {
-                            MessageBox.Show("Произошла ошибка при получении данных с сервера!");
-                            return;
+                            MessageBox.Show("Произошла ошибка при получении данных с сервера!",
+                                "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
                         }
 
+                        // Check for empty result
                         if (result.Count == 0)
                         {
-                            MessageBox.Show("Похоже все инструктажи всеми пройдены!");
-                            return;
+                            MessageBox.Show("Похоже все инструктажи всеми пройдены!",
+                                "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return true; // Consider empty result as success
                         }
+
+                        // Store the results globally
                         instructionForChiefs_global = result;
-                        List<string> namesOfInstructions = result
-                            .Select(i => $"[{i.InstructionId}]: {i.CauseOfInstruction}")
-                            .ToList();
-                        listBoxOfNotPassedByInstructions.Items.AddRange(namesOfInstructions.ToArray());
 
+                        // Group instructions by type
+                        var instructionsByType = result.GroupBy(i => i.TypeOfInstruction ?? "Неизвестный тип");
 
+                        // Populate the TreeView with instruction types and causes
+                        foreach (var typeGroup in instructionsByType)
+                        {
+                            // Create a parent node for each instruction type
+                            TreeNode typeNode = new TreeNode(typeGroup.Key);
+                            typeNode.Tag = "Type"; // Mark as a type node
+
+                            // Add child nodes for each instruction in this type
+                            foreach (var instruction in typeGroup)
+                            {
+                                TreeNode causeNode = new TreeNode($"[{instruction.InstructionId}]: {instruction.CauseOfInstruction}");
+                                causeNode.Tag = instruction.InstructionId; // Store instruction ID in the Tag property
+                                typeNode.Nodes.Add(causeNode);
+                            }
+
+                            // Add the type node to the TreeView
+                            treeViewInstructions.Nodes.Add(typeNode);
+                        }
+
+                        // Expand all nodes for better visibility
+                        treeViewInstructions.ExpandAll();
+
+                        // Optional: Select the first instruction if available
+                        if (treeViewInstructions.Nodes.Count > 0 && treeViewInstructions.Nodes[0].Nodes.Count > 0)
+                        {
+                            treeViewInstructions.SelectedNode = treeViewInstructions.Nodes[0].Nodes[0];
+                        }
+
+                        return true;
                     }
                     else
                     {
+                        // Handle error response
                         string errorMessage = await response.Content.ReadAsStringAsync();
-                        //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        MessageBox.Show($"Провал. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Не удалось получить данные. Код статуса: {response.StatusCode}\nОшибка: {errorMessage}",
+                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Exception handling for networking errors, etc.
-                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Handle exceptions
+                MessageBox.Show($"Произошла ошибка при получении непройденных инструктажей: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            finally
+            {
+                // Restore cursor
+                Cursor = Cursors.Default;
             }
         }
 
-        private void listBoxOfNotPassedByInstructions_SelectedIndexChanged(object sender, EventArgs e)
+        private void treeViewInstructions_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            dataGridViewPeopleThatNotPassedInstr.Rows.Clear();
-            if (listBoxOfNotPassedByInstructions.SelectedItem is null)
+            try
             {
-                return;
-            }
+                // Clear the current data grid
+                dataGridViewPeopleThatNotPassedInstr.Rows.Clear();
 
-            var instructionString = listBoxOfNotPassedByInstructions.SelectedItem.ToString();
-            string pattern = @"^\[(\d+)\]:\s(.+)$";
-            if (Regex.IsMatch(instructionString, pattern))
-            {
-                Match match = Regex.Match(instructionString, pattern);
-                if (match.Success)
+                // Only process selection of instruction nodes (child nodes), not type nodes (parent nodes)
+                TreeNode selectedNode = e.Node;
+
+                // Skip if it's a type node or null
+                if (selectedNode == null || selectedNode.Tag is string tag && tag == "Type")
                 {
-                    int instructionId = int.Parse(match.Groups[1].Value);
-                    string causeOfInstruction = match.Groups[2].Value;
+                    return;
+                }
 
-                    // Find the corresponding InstructionForChief object
-                    var matchingInstruction = instructionForChiefs_global.FirstOrDefault(i =>
-                        i.InstructionId == instructionId &&
-                        i.CauseOfInstruction == causeOfInstruction);
-
-
-
+                // Get the instruction ID from the node's Tag
+                if (selectedNode.Tag is int instructionId)
+                {
+                    // Find the matching instruction
+                    var matchingInstruction = instructionForChiefs_global.FirstOrDefault(i => i.InstructionId == instructionId);
 
                     if (matchingInstruction != null)
                     {
+                        // Display instruction details in a label if needed
+                        // instructionDetailsLabel.Text = $"Инструктаж: {matchingInstruction.CauseOfInstruction} (Срок до: {matchingInstruction.EndDate.ToShortDateString()})";
+
+                        // Populate the data grid with person statuses
                         foreach (var person in matchingInstruction.Persons)
                         {
-                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(person.PersonName, person.Passed ? "Да" : "Нет");
-                            if (!person.Passed)
+                            int rowIndex = dataGridViewPeopleThatNotPassedInstr.Rows.Add(
+                                person.PersonName,
+                                person.Passed ? "Да" : "Нет"
+                            );
+
+                            // Color the row based on passed status
+                            dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor =
+                                person.Passed ? Color.LightGreen : Color.LightCoral;
+                        }
+
+                        // Optionally add a status summary
+                        // statusLabel.Text = $"Прошли: {matchingInstruction.Persons.Count(p => p.Passed)} из {matchingInstruction.Persons.Count}";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при отображении данных инструктажа: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task FetchPassedInstructionsForChief()
+        {
+            try
+            {
+                // Clear previous data
+                dataGridViewPassedInstructions.Rows.Clear();
+                treeViewPassedInstructions.Nodes.Clear();
+
+                // Show loading indicator
+                Cursor = Cursors.WaitCursor;
+
+                using (var httpClient = new HttpClient())
+                {
+                    // Get the JWT token from the login form
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    // Make the API call to get passed instructions
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-passed-instructions-for-chief");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                        // Deserialize the response to the new DTO format
+                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChiefDto>>(
+                            jsonResponse,
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        // Check for null result
+                        if (result is null)
+                        {
+                            MessageBox.Show("Произошла ошибка при получении данных с сервера!",
+                                "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        // Check for empty result
+                        if (result.Count == 0)
+                        {
+                            MessageBox.Show("Нет пройденных инструктажей!",
+                                "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
+
+                        // Store the results globally
+                        passedInstructionsForChief_global = result;
+
+                        // Group instructions by type
+                        var instructionsByType = result.GroupBy(i => i.TypeOfInstruction ?? "Неизвестный тип");
+
+                        // Populate the TreeView with instruction types and causes
+                        foreach (var typeGroup in instructionsByType)
+                        {
+                            // Create a parent node for each instruction type
+                            TreeNode typeNode = new TreeNode(typeGroup.Key);
+                            typeNode.Tag = "Type"; // Mark as a type node
+
+                            // Add child nodes for each instruction in this type, sorted by PassedPercentage in descending order
+                            foreach (var instruction in typeGroup.OrderByDescending(i => i.PassedPercentage))
                             {
-                                dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;
+                                string completionStatus = instruction.IsPassedByEveryone ? "[ЗАВЕРШЕН]" : $"[{instruction.PassedPercentage:F0}%]";
+                                TreeNode causeNode = new TreeNode($"{completionStatus} [{instruction.InstructionId}]: {instruction.CauseOfInstruction}");
+                                causeNode.Tag = instruction.InstructionId; // Store instruction ID in the Tag property
+
+                                // Set node color based on completion status
+                                if (instruction.IsPassedByEveryone)
+                                {
+                                    causeNode.ForeColor = Color.Green;
+                                }
+                                else if (instruction.PassedPercentage >= 75)
+                                {
+                                    causeNode.ForeColor = Color.DarkGreen;
+                                }
+                                else if (instruction.PassedPercentage >= 50)
+                                {
+                                    causeNode.ForeColor = Color.Orange;
+                                }
+                                else
+                                {
+                                    causeNode.ForeColor = Color.DarkOrange;
+                                }
+
+                                typeNode.Nodes.Add(causeNode);
                             }
-                            else
-                            {
-                                dataGridViewPeopleThatNotPassedInstr.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Green;
-                            }
+
+                            // Add the type node to the TreeView
+                            treeViewPassedInstructions.Nodes.Add(typeNode);
+                        }
+
+                        // Expand all nodes for better visibility
+                        treeViewPassedInstructions.ExpandAll();
+
+                        // Optional: Select the first instruction if available
+                        if (treeViewPassedInstructions.Nodes.Count > 0 && treeViewPassedInstructions.Nodes[0].Nodes.Count > 0)
+                        {
+                            treeViewPassedInstructions.SelectedNode = treeViewPassedInstructions.Nodes[0].Nodes[0];
                         }
                     }
                     else
                     {
-                        MessageBox.Show("No matching instruction found.");
+                        // Handle error response
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Не удалось получить данные. Код статуса: {response.StatusCode}\nОшибка: {errorMessage}",
+                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Invalid format.");
+                // Handle exceptions
+                MessageBox.Show($"Произошла ошибка: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // Restore cursor
+                Cursor = Cursors.Default;
             }
         }
+
+        private void treeViewPassedInstructions_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            try
+            {
+                // Clear the current data grid
+                dataGridViewPassedInstructions.Rows.Clear();
+
+                // Only process selection of instruction nodes (child nodes), not type nodes (parent nodes)
+                TreeNode selectedNode = e.Node;
+
+                // Skip if it's a type node or null
+                if (selectedNode == null || selectedNode.Tag is string tag && tag == "Type")
+                {
+                    return;
+                }
+
+                // Get the instruction ID from the node's Tag
+                if (selectedNode.Tag is int instructionId)
+                {
+                    // Find the matching instruction
+                    var matchingInstruction = passedInstructionsForChief_global.FirstOrDefault(i => i.InstructionId == instructionId);
+
+                    if (matchingInstruction != null)
+                    {
+                        // Display instruction details in labels if needed
+                        // lblInstructionCause.Text = matchingInstruction.CauseOfInstruction;
+                        // lblDateRange.Text = $"Дата: {matchingInstruction.BeginDate.ToShortDateString()} - {matchingInstruction.EndDate.ToShortDateString()}";
+                        // lblCompletionStatus.Text = matchingInstruction.IsPassedByEveryone ? "Статус: Завершен" : $"Статус: В процессе ({matchingInstruction.PassedPercentage:F0}%)";
+
+                        // Sort people by passed status and date
+                        var sortedPersons = matchingInstruction.Persons
+                            .OrderByDescending(p => p.Passed)
+                            .ThenByDescending(p => p.DatePassed);
+
+                        // Populate the data grid with person statuses
+                        foreach (var person in sortedPersons)
+                        {
+                            string passedDate = person.Passed && person.DatePassed.HasValue
+                                ? person.DatePassed.Value.ToString("dd.MM.yyyy HH:mm")
+                                : "-";
+
+                            int rowIndex = dataGridViewPassedInstructions.Rows.Add(
+                                person.PersonName,
+                                person.Passed ? "Да" : "Нет",  // IsPassed column
+                                passedDate
+                            );
+
+                            // Color the row based on passed status
+                            dataGridViewPassedInstructions.Rows[rowIndex].DefaultCellStyle.BackColor =
+                                person.Passed ? Color.LightGreen : Color.LightCoral;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при отображении данных инструктажа: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
 
         private async void RefreshTasksButton_Click(object sender, EventArgs e)
         {
@@ -1134,71 +2071,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async void ExportInstructionRequestButton_Click(object sender, EventArgs e)
-        {
-            DateTime startDate = startDateInstructionExportRequest.Value.Date;
-            DateTime endDate = endDateInstructionExportRequest.Value.Date;
-            List<int> selectedIndices = checkedListBoxTypesOfInstruction.CheckedIndices.Cast<int>().ToList();
-            List<byte> shiftedIndices = selectedIndices.Select(index => (byte)(index + 1)).ToList();
-
-            ExportInstructionRequestButton.Enabled = false;
-            try
-            {
-                InstructionExportRequest instructionExportRequest = new InstructionExportRequest(startDate, endDate, shiftedIndices);
-
-
-
-                using (var httpClient = new HttpClient())
-                {
-                    string jwtToken = _loginForm._jwtToken;
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                    string jsonData = JsonConvert.SerializeObject(instructionExportRequest);
-
-                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-                    var uri = new Uri(instructionDataExportURL);
-                    var response = await httpClient.PostAsync(uri, content);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        //MessageBox.Show("Данные успешно отправлены на сервер и инструктажи скачаны.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        var errorMessage = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Не удалось отправить данные на сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        ExportInstructionRequestButton.Enabled = true;
-                        return;
-                    }
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonConvert.DeserializeObject<List<InstructionExportInstance>>(jsonResponse);
-
-                    if (result == null || !result.Any())
-                    {
-                        MessageBox.Show("Нет инструктажей за этот период.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        ExportInstructionRequestButton.Enabled = true;
-                        return;
-                    }
-
-                    result = result.OrderBy(i => i.DateWhenPassedByEmployee).ToList();
-                    foreach (var instance in result)
-                    {
-                        instance.DateWhenPassedByEmployee = instance.DateWhenPassedByEmployee.Date;
-                    }
-
-                    ExportToExcelWithSaveDialog(result);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-            finally
-            {
-                ExportInstructionRequestButton.Enabled = true;
-            }
-        }
+       
 
         void ExportToExcelWithSaveDialog(List<InstructionExportInstance> data)
         {
@@ -1329,7 +2202,7 @@ namespace Kotova.Test1.ClientSide
         }
 
 
-        private string? InstructionTypeToName(byte instructionType)
+        private string? InstructionTypeToName(byte instructionType) //TODO: Убери этот хардкод и скачай с базы данных данные.
         {
             string? result = instructionType switch
             {
@@ -1367,59 +2240,6 @@ namespace Kotova.Test1.ClientSide
             SelectAllThePeopleInListBoxButton.Text = allSelected ? "Выбрать всех людей" : "Не выбрать никого";
         }
 
-        private async void DownloadAllEmployeesInTheDepartment_Click(object sender, EventArgs e)
-        {
-            DownloadAllEmployeesInTheDepartment.Enabled = false;
-            try
-            {
-                using (var folderDialog = new FolderBrowserDialog())
-                {
-                    DialogResult result = folderDialog.ShowDialog();
-
-                    if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(folderDialog.SelectedPath))
-                    {
-                        string selectedFolderPath = folderDialog.SelectedPath;
-
-                        // Download the file from the server
-                        using (var client = new HttpClient())
-                        {
-                            string jwtToken = _loginForm._jwtToken;
-                            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                            var response = await client.GetAsync(DownloadExcelFileUrl);
-                            if (response.IsSuccessStatusCode)
-                            {
-                                var fileBytes = await response.Content.ReadAsByteArrayAsync();
-
-                                // Define the file name (you can extract it from the response or hardcode it)
-                                string fileName = "DepartmentEmployees.xlsx";
-
-                                // Save the file to the selected folder
-                                string filePath = Path.Combine(selectedFolderPath, fileName);
-                                File.WriteAllBytes(filePath, fileBytes);
-
-                                MessageBox.Show($"File downloaded successfully to {filePath}");
-                            }
-                            else
-                            {
-                                MessageBox.Show("Failed to download the file.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show("No folder selected. Download canceled.");
-                    }
-                }
-            }
-            catch
-            {
-                MessageBox.Show("что-то пошло не так при скачке файла");
-            }
-            finally
-            {
-                DownloadAllEmployeesInTheDepartment.Enabled = true;
-            }
-        }
 
         private async void SkipTheAssignmentOfInstrCheckedBox_CheckedChanged(object sender, EventArgs e)
         {
@@ -1716,21 +2536,6 @@ namespace Kotova.Test1.ClientSide
                 instructionsListView.Items.Add(item);
             }
         }
-
-        private string GetInstructionTypeName(byte typeCode) //TODO: Убери этот хардкод и скачай с базы данных данные.
-        {
-            return typeCode switch
-            {
-                0 => "Вводный",
-                1 => "Внеплановый",
-                2 => "Первичный",
-                3 => "Повторный",
-                4 => "Повторный (для водителей)",
-                5 => "Целевой",
-                _ => "Неизвестный тип"
-            };
-        }
-
         #endregion
 
 
@@ -1856,5 +2661,7 @@ namespace Kotova.Test1.ClientSide
         {
             await RefreshInstructionsListView();
         }
+
+        
     }
 }

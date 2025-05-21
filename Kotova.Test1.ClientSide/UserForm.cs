@@ -29,6 +29,11 @@ using System.Windows.Controls;
 using Control = System.Windows.Forms.Control;
 using System.Windows.Forms.Integration;
 using WPF = System.Windows;
+using Windows.UI.WindowManagement;
+using WinFormsColor = System.Drawing.Color;
+using WpfColor = System.Windows.Media.Color;
+using WpfWindow = System.Windows.Window;
+using WinFormsForm = System.Windows.Forms.Form;
 
 
 
@@ -45,6 +50,8 @@ namespace Kotova.Test1.ClientSide
         public const string dB_pos_users_pathToInstruction = "path_to_instruction";
 
         public Dictionary<Control, Rectangle> controlsOriginalSizes;
+
+        private static List<WpfWindow> _openWpfWindows = new List<WpfWindow>();
 
         public const string dB_instructionId = "instruction_id"; //ВЫНЕСИ ЭТИ СЛЕДУЮЩИЕ СТРОЧКИ В ОБЩИЙ ФАЙЛ!
         public const string db_filePath = "file_path";
@@ -132,6 +139,8 @@ namespace Kotova.Test1.ClientSide
             _signUpForm = new SignUpForm(loginForm, this);
             _ = RefreshNewInstructionsInternal();
             _ = RefreshOldInstructionsInternal();
+
+            InitializeWpfIntegration();
         }
 
         // Logger implementation for the form
@@ -159,26 +168,43 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        #region WPF Integration
+        #region WPF Integration for UserForm
 
-        // Add these using statements at the top:
-        // using System.Windows.Forms.Integration;
-        // using System.Windows;
-
-        // Method to show the WPF window from Windows Forms
+        /// <summary>
+        /// Opens the WPF instruction viewer window
+        /// </summary>
         private void ShowWpfInstructionViewer()
         {
             try
             {
-                // Create and show the WPF instruction viewer window
+                // Check if window is already open
+                var existingWindow = _openWpfWindows.OfType<InstructionViewerWindow>().FirstOrDefault();
+                if (existingWindow != null && existingWindow.IsLoaded)
+                {
+                    // Bring existing window to front
+                    existingWindow.Activate();
+                    existingWindow.WindowState = System.Windows.WindowState.Normal;
+                    return;
+                }
+
+                // Create new WPF window
                 var wpfWindow = new InstructionViewerWindow(_loginForm._jwtToken, _userName, isChief: false);
                 wpfWindow.Title = $"Просмотр инструктажей - {_userName}";
 
-                // Show the window
+                // Center over parent form
+                CenterWpfWindowOverWinForm(wpfWindow, this);
+
+                // Apply theme to match parent
+                ApplyWinFormThemeToWpf(wpfWindow, this.BackColor);
+
+                // Set icon safely
+                SetWpfWindowIconSafe(wpfWindow, this);
+
+                // Show window
                 wpfWindow.Show();
 
-                // Optional: Make it modal if needed
-                // wpfWindow.ShowDialog();
+                // Track the window
+                TrackWpfWindow(wpfWindow);
             }
             catch (Exception ex)
             {
@@ -186,39 +212,247 @@ namespace Kotova.Test1.ClientSide
                     "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void AddWpfViewerButton()
+
+        /// <summary>
+        /// Centers WPF window over Windows Forms parent
+        /// </summary>
+        private static void CenterWpfWindowOverWinForm(WpfWindow wpfWindow, WinFormsForm parentForm)
         {
-            var btnWpfViewer = new WPF.Forms.Button()
+            if (parentForm != null && wpfWindow != null)
             {
-                Text = "Открыть WPF просмотрщик",
-                Size = new Size(200, 30),
-                Location = new Point(10, 40), // Adjust as needed
-                BackColor = Color.LightGreen
-            };
-            btnWpfViewer.Click += (sender, e) => ShowWpfInstructionViewer();
+                // Ensure WPF window size is loaded
+                wpfWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
 
-            // Add to the form (adjust the parent container as needed)
-            this.Controls.Add(btnWpfViewer);
-            btnWpfViewer.BringToFront();
+                // Calculate center position
+                var parentLocation = parentForm.Location;
+                var parentSize = parentForm.Size;
+
+                wpfWindow.Left = parentLocation.X + (parentSize.Width - wpfWindow.Width) / 2;
+                wpfWindow.Top = parentLocation.Y + (parentSize.Height - wpfWindow.Height) / 2;
+
+                // Ensure window is visible on screen
+                var screen = Screen.FromControl(parentForm);
+                if (wpfWindow.Left < screen.WorkingArea.Left)
+                    wpfWindow.Left = screen.WorkingArea.Left;
+                if (wpfWindow.Top < screen.WorkingArea.Top)
+                    wpfWindow.Top = screen.WorkingArea.Top;
+                if (wpfWindow.Left + wpfWindow.Width > screen.WorkingArea.Right)
+                    wpfWindow.Left = screen.WorkingArea.Right - wpfWindow.Width;
+                if (wpfWindow.Top + wpfWindow.Height > screen.WorkingArea.Bottom)
+                    wpfWindow.Top = screen.WorkingArea.Bottom - wpfWindow.Height;
+            }
         }
 
-        private void InitializeWpfFeatures()
+        /// <summary>
+        /// Applies Windows Forms theme colors to WPF window
+        /// </summary>
+        private static void ApplyWinFormThemeToWpf(WpfWindow wpfWindow, WinFormsColor formsBackColor)
         {
-            // For UserForm
-            InitializeWpfIntegration();
-            AddWpfViewerButton();
+            try
+            {
+                // Convert Windows Forms color to WPF color
+                var wpfColor = WpfColor.FromArgb(
+                    formsBackColor.A,
+                    formsBackColor.R,
+                    formsBackColor.G,
+                    formsBackColor.B);
+
+                wpfWindow.Background = new System.Windows.Media.SolidColorBrush(wpfColor);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not apply theme: {ex.Message}");
+            }
         }
 
+        /// <summary>
+        /// Safely sets icon for WPF window
+        /// </summary>
+        private static void SetWpfWindowIconSafe(WpfWindow wpfWindow, WinFormsForm parentForm)
+        {
+            try
+            {
+                // Try to get icon from parent form
+                if (parentForm?.Icon != null)
+                {
+                    var bitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                        parentForm.Icon.Handle,
+                        System.Windows.Int32Rect.Empty,
+                        System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+                    wpfWindow.Icon = bitmap;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not set icon from parent: {ex.Message}");
+            }
+
+            // Fallback: Create simple programmatic icon
+            try
+            {
+                CreateSimpleWpfIcon(wpfWindow);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Could not create fallback icon: {ex.Message}");
+                // No icon is fine too
+            }
+        }
+
+        /// <summary>
+        /// Creates a simple blue square icon programmatically
+        /// </summary>
+        private static void CreateSimpleWpfIcon(WpfWindow wpfWindow)
+        {
+            var drawingGroup = new System.Windows.Media.DrawingGroup();
+
+            // Create a simple blue square icon
+            var geometryDrawing = new System.Windows.Media.GeometryDrawing(
+                new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.DodgerBlue),
+                new System.Windows.Media.Pen(new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Navy), 1),
+                new System.Windows.Media.RectangleGeometry(new System.Windows.Rect(0, 0, 16, 16))
+            );
+
+            drawingGroup.Children.Add(geometryDrawing);
+            var drawingImage = new System.Windows.Media.DrawingImage(drawingGroup);
+            wpfWindow.Icon = drawingImage;
+        }
+
+        /// <summary>
+        /// Tracks WPF windows to prevent duplicates and manage cleanup
+        /// </summary>
+        private static void TrackWpfWindow(WpfWindow window)
+        {
+            // Clean up closed windows first
+            _openWpfWindows.RemoveAll(w => w == null || !w.IsLoaded);
+
+            // Add new window to tracking
+            _openWpfWindows.Add(window);
+
+            // Remove from tracking when window is closed
+            window.Closed += (s, e) => _openWpfWindows.Remove(window);
+        }
+
+        /// <summary>
+        /// Closes all tracked WPF windows
+        /// </summary>
+        private static void CloseAllWpfWindows()
+        {
+            foreach (var window in _openWpfWindows.ToList())
+            {
+                try
+                {
+                    if (window != null && window.IsLoaded)
+                    {
+                        window.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error closing WPF window: {ex.Message}");
+                }
+            }
+            _openWpfWindows.Clear();
+        }
+
+        #endregion
+
+        #region UserForm Integration Methods
+
+        /// <summary>
+        /// Initialize WPF integration features
+        /// Call this in UserForm constructor after InitializeComponent()
+        /// </summary>
         private void InitializeWpfIntegration()
         {
-            // Add to existing context menu
-            var wpfViewerItem = new ToolStripMenuItem("Новый просмотрщик инструктажей (WPF)");
-            wpfViewerItem.Click += (sender, e) => ShowWpfInstructionViewer();
+            // Add to context menu
+            AddWpfViewerToContextMenu();
 
-            // Add separator and new item
-            AdditionalSettingsForUserContextMenuStrip.Items.Add(new ToolStripSeparator());
-            AdditionalSettingsForUserContextMenuStrip.Items.Add(wpfViewerItem);
+            // Add button to form
+            //AddWpfViewerButton();
+
+            // Handle form closing to cleanup WPF windows
+            this.FormClosing += UserForm_FormClosing_WpfCleanup;
         }
+
+        /// <summary>
+        /// Adds WPF viewer option to the context menu
+        /// </summary>
+        private void AddWpfViewerToContextMenu()
+        {
+            try
+            {
+                if (AdditionalSettingsForUserContextMenuStrip != null)
+                {
+                    // Add separator
+                    AdditionalSettingsForUserContextMenuStrip.Items.Add(new ToolStripSeparator());
+
+                    // Add WPF viewer menu item
+                    var wpfViewerMenuItem = new ToolStripMenuItem("Новый просмотрщик инструктажей (WPF)")
+                    {
+                        ToolTipText = "Открыть современный просмотрщик инструктажей",
+                        BackColor = System.Drawing.Color.LightBlue
+                    };
+                    wpfViewerMenuItem.Click += (sender, e) => ShowWpfInstructionViewer();
+
+                    AdditionalSettingsForUserContextMenuStrip.Items.Add(wpfViewerMenuItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding WPF viewer to context menu: {ex.Message}");
+            }
+        }
+
+        /*/// <summary>
+        /// Adds a button to open WPF viewer
+        /// </summary>
+        private void AddWpfViewerButton()
+        {
+            try
+            {
+                var btnWpfViewer = new WPF.Forms.Button
+                {
+                    Text = "WPF Просмотрщик",
+                    Size = new Size(160, 35),
+                    Location = new Point(10, 10),
+                    BackColor = WinFormsColor.LightGreen,
+                    ForeColor = WinFormsColor.Black,
+                    UseVisualStyleBackColor = false,
+                    Font = new System.Drawing.Font("Segoe UI", 9F, FontStyle.Regular),
+                    Cursor = Cursors.Hand,
+                    FlatStyle = FlatStyle.Flat
+                };
+
+                btnWpfViewer.FlatAppearance.BorderColor = WinFormsColor.DarkGreen;
+                btnWpfViewer.FlatAppearance.BorderSize = 1;
+                btnWpfViewer.FlatAppearance.MouseOverBackColor = WinFormsColor.LimeGreen;
+
+                btnWpfViewer.Click += (sender, e) => ShowWpfInstructionViewer();
+
+                // Add to the form (you might want to add it to a specific panel)
+                this.Controls.Add(btnWpfViewer);
+                btnWpfViewer.BringToFront();
+
+                // Optional: Add tooltip
+                var toolTip = new WPF.Forms.ToolTip();
+                toolTip.SetToolTip(btnWpfViewer, "Открыть новый просмотрщик инструктажей с современным интерфейсом");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding WPF viewer button: {ex.Message}");
+            }
+        }*/
+
+        /// <summary>
+        /// Handles form closing to cleanup WPF windows
+        /// </summary>
+        private void UserForm_FormClosing_WpfCleanup(object sender, FormClosingEventArgs e)
+        {
+            CloseAllWpfWindows();
+        }
+
 
         #endregion
 
