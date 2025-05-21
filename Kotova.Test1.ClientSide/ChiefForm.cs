@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Kotova.CommonClasses;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -18,13 +19,13 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using Windows.UI.WindowManagement;
 using Windows.Web.Http;
+using Color = System.Drawing.Color;
 using HttpClient = System.Net.Http.HttpClient;
 using WinForms = System.Windows.Forms;
-
 using WinFormsColor = System.Drawing.Color;
+using WinFormsForm = System.Windows.Forms.Form;
 using WpfColor = System.Windows.Media.Color;
 using WpfWindow = System.Windows.Window;
-using WinFormsForm = System.Windows.Forms.Form;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -498,180 +499,173 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        // Method to export data to Excel
         private void ExportToExcel(InstructionReportItem report)
         {
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
                 saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx";
-                saveFileDialog.Title = "Сохранить отчет";
+                saveFileDialog.Title = "Save Excel File";
                 saveFileDialog.FileName = $"Отчет_инструктаж_{report.InstructionId}_{DateTime.Now:yyyyMMdd}.xlsx";
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    try
+                    string filePath = saveFileDialog.FileName;
+
+                    using (var workbook = new XLWorkbook())
                     {
-                        using (var workbook = new XLWorkbook())
+                        var worksheet = workbook.Worksheets.Add("Data");
+
+                        // Установка шрифта Times New Roman 12 для всего листа
+                        worksheet.Style.Font.FontName = "Times New Roman";
+                        worksheet.Style.Font.FontSize = 12;
+
+
+
+                        // Add column headers - exactly as in the other method
+                        worksheet.Cell(1, 1).Value = "Дата проведения инструктажа по охране труда";
+                        worksheet.Cell(1, 2).Value = "Фамилия, имя, отчество (при наличии) работника, прошедшего инструктаж по охране труда";
+                        worksheet.Cell(1, 3).Value = "Профессия (должность) работника, прошедшего инструктаж по охране труда";
+                        worksheet.Cell(1, 4).Value = "Число, месяц, год рождения работника, прошедшего инструктаж по охране труда";
+                        worksheet.Cell(1, 5).Value = "Вид инструктажа по охране труда";
+                        worksheet.Cell(1, 6).Value = "Причина проведения инструктажа по охране труда (для внепланового или целевого инструктажа по охране труда)";
+                        worksheet.Cell(1, 7).Value = "Фамилия, имя отчество (при наличии), профессия (должность) работника, проводившего инструктаж по охране труда";
+                        worksheet.Cell(1, 8).Value = "Наименование локального акта (локальных актов), в объеме требований которого проведён инструктаж по охране труда";
+                        worksheet.Cell(1, 9).Value = "Подпись работника, проводившего инструктаж по охране труда";
+                        worksheet.Cell(1, 10).Value = "Подпись работника, прошедшего инструктаж по охране труда";
+
+                        // Устанавливаем выравнивание для заголовков (верхнее выравнивание и по центру)
+                        for (int col = 1; col <= 10; col++)
                         {
-                            var worksheet = workbook.Worksheets.Add("Отчет");
+                            var cell = worksheet.Cell(1, col);
+                            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            cell.Style.Alignment.WrapText = true;
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        }
 
-                            // Add title with instruction information
-                            worksheet.Cell("A1").Value = "ОТЧЕТ О ПРОХОЖДЕНИИ ИНСТРУКТАЖА";
-                            worksheet.Range("A1:G1").Merge();
-                            worksheet.Cell("A1").Style.Font.Bold = true;
-                            worksheet.Cell("A1").Style.Font.FontSize = 14;
-                            worksheet.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        // Добавление нумерации столбцов во вторую строку (среднее выравнивание и по центру)
+                        for (int col = 1; col <= 10; col++)
+                        {
+                            var cell = worksheet.Cell(2, col);
+                            cell.Value = col;
+                            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                        }
 
-                            // Add instruction details
-                            worksheet.Cell("A3").Value = "Причина инструктажа:";
-                            worksheet.Cell("B3").Value = report.CauseOfInstruction;
-                            worksheet.Range("B3:G3").Merge();
+                        // Сортировка сотрудников
+                        var sortedEmployees = report.EmployeeData
+                            .OrderBy(e => e.HasPassed ? 0 : 1)
+                            .ThenBy(e => e.DatePassed)
+                            .ThenBy(e => e.FullName)
+                            .ToList();
 
-                            worksheet.Cell("A4").Value = "Тип инструктажа:";
-                            worksheet.Cell("B4").Value = report.TypeName;
-                            worksheet.Range("B4:G4").Merge();
+                        // Добавление данных, начиная с третьей строки
+                        for (int i = 0; i < sortedEmployees.Count; i++)
+                        {
+                            var employee = sortedEmployees[i];
+                            int rowIndex = i + 3; // Начинаем с 3 строки
 
-                            worksheet.Cell("A5").Value = "Период:";
-                            worksheet.Cell("B5").Value = $"{report.BeginDate:dd.MM.yyyy} - {report.EndDate:dd.MM.yyyy}";
-                            worksheet.Range("B5:G5").Merge();
+                            // Колонка 1: Дата проведения инструктажа
+                            worksheet.Cell(rowIndex, 1).Value = employee.HasPassed && employee.DatePassed.HasValue
+                                ? employee.DatePassed.Value.ToString("dd.MM.yyyy")
+                                : DateTime.Now.ToString("dd.MM.yyyy");
 
-                            // Add statistics
-                            worksheet.Cell("A7").Value = "Сотрудников всего:";
-                            worksheet.Cell("B7").Value = report.EmployeeData.Count;
+                            // Колонка 2: ФИО работника (с Alt+Enter между словами)
+                            string[] nameParts = employee.FullName.Split(' ');
+                            worksheet.Cell(rowIndex, 2).Value = string.Join("\n", nameParts);
 
-                            worksheet.Cell("D7").Value = "Прошли инструктаж:";
-                            int passedCount = report.EmployeeData.Count(e => e.HasPassed);
-                            worksheet.Cell("E7").Value = passedCount;
+                            // Колонка 3: Профессия (должность) (с Alt+Enter между словами)
+                            string[] positionParts = employee.Position.Split(' ');
+                            worksheet.Cell(rowIndex, 3).Value = string.Join("\n", positionParts);
 
-                            worksheet.Cell("F7").Value = "Не прошли:";
-                            worksheet.Cell("G7").Value = report.EmployeeData.Count - passedCount;
+                            // Колонка 4: Дата рождения
+                            worksheet.Cell(rowIndex, 4).Value = employee.BirthDate.ToString("dd.MM.yyyy");
 
-                            // Percentage
-                            worksheet.Cell("A8").Value = "Процент прохождения:";
-                            double percentage = report.EmployeeData.Count > 0
-                                ? (double)passedCount / report.EmployeeData.Count * 100
-                                : 0;
-                            worksheet.Cell("B8").Value = $"{percentage:F1}%";
-
-                            // Style for header cells
-                            var headerStyle = workbook.Style;
-                            headerStyle.Font.Bold = true;
-                            headerStyle.Fill.BackgroundColor = XLColor.LightGray;
-                            headerStyle.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-                            headerStyle.Border.OutsideBorder = XLBorderStyleValues.Thin;
-
-                            // Add column headers at row 10
-                            worksheet.Cell("A10").Value = "№";
-                            worksheet.Cell("B10").Value = "ФИО сотрудника";
-                            worksheet.Cell("C10").Value = "Должность";
-                            worksheet.Cell("D10").Value = "Дата рождения";
-                            worksheet.Cell("E10").Value = "Дата прохождения";
-                            worksheet.Cell("F10").Value = "Статус";
-                            worksheet.Cell("G10").Value = "Назначил инструктаж";
-                            worksheet.Cell("H10").Value = "Нормативные документы";
-
-                            // Apply style to headers
-                            worksheet.Range("A10:H10").Style = headerStyle;
-
-                            // Add employee data starting at row 11
-                            int rowIndex = 11;
-
-                            // Sort employees: passed first (chronologically), then not passed
-                            var sortedEmployees = report.EmployeeData
-                                .OrderBy(e => e.HasPassed ? 0 : 1) // Passed first, not passed after
-                                .ThenBy(e => e.DatePassed) // Sort by date (earliest first)
-                                .ThenBy(e => e.FullName) // Then by name
-                                .ToList();
-
-                            for (int i = 0; i < sortedEmployees.Count; i++)
+                            // Колонка 5: Вид инструктажа
+                            string typeName = report.TypeName;
+                            if (typeName == "Повторный (Для водителей)")
                             {
-                                var employee = sortedEmployees[i];
+                                typeName = "Повторный";
+                            }
+                            worksheet.Cell(rowIndex, 5).Value = typeName;
 
-                                // Row number
-                                worksheet.Cell($"A{rowIndex}").Value = i + 1;
-
-                                // Employee information
-                                worksheet.Cell($"B{rowIndex}").Value = employee.FullName;
-                                worksheet.Cell($"C{rowIndex}").Value = employee.Position;
-                                worksheet.Cell($"D{rowIndex}").Value = employee.BirthDate.ToString("dd.MM.yyyy");
-
-                                // Date passed
-                                worksheet.Cell($"E{rowIndex}").Value = employee.HasPassed && employee.DatePassed.HasValue
-                                    ? employee.DatePassed.Value.ToString("dd.MM.yyyy HH:mm")
-                                    : "-";
-
-                                // Status
-                                worksheet.Cell($"F{rowIndex}").Value = employee.HasPassed ? "Пройден" : "Не пройден";
-
-                                // Who assigned
-                                worksheet.Cell($"G{rowIndex}").Value = employee.AssignedBy;
-
-                                // Normative documents
-                                worksheet.Cell($"H{rowIndex}").Value = string.Join(", ", employee.NormativeDocuments);
-
-                                // Color coding based on status
-                                if (employee.HasPassed)
-                                {
-                                    worksheet.Range($"A{rowIndex}:H{rowIndex}").Style.Fill.BackgroundColor = XLColor.LightGreen;
-                                }
-                                else
-                                {
-                                    worksheet.Range($"A{rowIndex}:H{rowIndex}").Style.Fill.BackgroundColor = XLColor.LightSalmon;
-                                }
-
-                                rowIndex++;
+                            // Колонка 6: Причина проведения (только для внепланового или целевого)
+                            if (report.TypeOfInstruction == 1 || report.TypeOfInstruction == 5)
+                            {
+                                worksheet.Cell(rowIndex, 6).Value = report.CauseOfInstruction;
+                            }
+                            else
+                            {
+                                worksheet.Cell(rowIndex, 6).Value = "";
                             }
 
-                            // Adjust column widths
-                            worksheet.Column(1).Width = 5;  // №
-                            worksheet.Column(2).Width = 30; // ФИО
-                            worksheet.Column(3).Width = 25; // Должность
-                            worksheet.Column(4).Width = 15; // Дата рождения
-                            worksheet.Column(5).Width = 20; // Дата прохождения
-                            worksheet.Column(6).Width = 10; // Статус
-                            worksheet.Column(7).Width = 35; // Назначил
-                            worksheet.Column(8).Width = 40; // Нормативные документы
+                            // Колонка 7: Проводивший инструктаж
+                            worksheet.Cell(rowIndex, 7).Value = employee.AssignedBy;
 
-                            // Add borders to data
-                            worksheet.Range($"A10:H{rowIndex - 1}").Style.Border.OutsideBorder = XLBorderStyleValues.Medium;
-                            worksheet.Range($"A10:H{rowIndex - 1}").Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+                            // Колонка 8: Локальные акты
+                            worksheet.Cell(rowIndex, 8).Value = string.Join("; ", employee.NormativeDocuments);
 
-                            // Add timestamp
-                            worksheet.Cell($"A{rowIndex + 2}").Value = $"Отчет сформирован: {DateTime.Now:dd.MM.yyyy HH:mm:ss}";
-                            worksheet.Range($"A{rowIndex + 2}:H{rowIndex + 2}").Merge();
+                            // Колонка 9-10: Подписи (пусто)
+                            worksheet.Cell(rowIndex, 9).Value = "";
+                            worksheet.Cell(rowIndex, 10).Value = "";
 
-                            // Save workbook
-                            workbook.SaveAs(saveFileDialog.FileName);
-
-                            // Show success message
-                            MessageBox.Show($"Отчет успешно сохранен в файл: {saveFileDialog.FileName}",
-                                "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                            // Try to open the file
-                            try
+                            // Устанавливаем выравнивание по верхнему краю для всех ячеек в строке
+                            for (int col = 1; col <= 10; col++)
                             {
-                                Process.Start(new ProcessStartInfo
-                                {
-                                    FileName = saveFileDialog.FileName,
-                                    UseShellExecute = true
-                                });
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show($"Не удалось автоматически открыть файл: {ex.Message}",
-                                    "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                worksheet.Cell(rowIndex, col).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                                worksheet.Cell(rowIndex, col).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                                worksheet.Cell(rowIndex, col).Style.Alignment.WrapText = true;
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Ошибка при создании Excel-файла: {ex.Message}",
-                            "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                        // Настройка полей страницы - в ДЮЙМАХ (0.5 см ≈ 0.197 дюйма)
+                        worksheet.PageSetup.Margins.Left = 0.197;  // 0.5 см в дюймах
+                        worksheet.PageSetup.Margins.Right = 0.197; // 0.5 см в дюймах
+                        worksheet.PageSetup.Margins.Top = 0.394;   // 1 см в дюймах
+                        worksheet.PageSetup.Margins.Bottom = 0.394; // 1 см в дюймах
+
+                        // Настройка ширины столбцов в соответствии с изображением и с учетом формата A4
+                        worksheet.Column(1).Width = 12;  // Дата проведения
+                        worksheet.Column(2).Width = 20;  // ФИО - немного уменьшил
+                        worksheet.Column(3).Width = 12;  // Профессия (должность)
+                        worksheet.Column(4).Width = 12;  // Число, месяц, год рождения - уменьшил
+                        worksheet.Column(5).Width = 14;  // Вид инструктажа - уменьшил
+                        worksheet.Column(6).Width = 14;  // Причина проведения
+                        worksheet.Column(7).Width = 20;  // Фамилия, имя отчество проводящего - уменьшил
+                        worksheet.Column(8).Width = 28;  // Наименование локального акта - уменьшил
+                        worksheet.Column(9).Width = 11;   // Подпись работника, проводившего - уменьшил
+                        worksheet.Column(10).Width = 11;  // Подпись работника, прошедшего - уменьшил
+
+                        // Настройка параметров страницы
+                        worksheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
+                        worksheet.PageSetup.FitToPages(1, 1); // Уместить на 1 страницу по ширине и 1 по высоте
+                        worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape; // Альбомная ориентация
+                        worksheet.PageSetup.ScaleHFWithDocument = true; // Масштабировать колонтитулы вместе с документом
+
+                        // Сохранение и открытие файла
+                        workbook.SaveAs(filePath);
+
+                        MessageBox.Show($"Отчет успешно сохранен в файл: {filePath}",
+                            "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        try
+                        {
+                            Process.Start(new ProcessStartInfo
+                            {
+                                FileName = filePath,
+                                UseShellExecute = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Не удалось автоматически открыть файл: {ex.Message}",
+                                "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
                     }
                 }
             }
         }
-
 
 
 
@@ -903,7 +897,7 @@ namespace Kotova.Test1.ClientSide
             {
                 string fullName = match.Groups[1].Value;  // ФИО
                 string birthDate = match.Groups[2].Value; // BirthDate (Дата рождения)
-                return Tuple.Create(fullName, birthDate);
+                return System.Tuple.Create(fullName, birthDate);
             }
             else
             {
