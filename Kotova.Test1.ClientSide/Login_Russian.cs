@@ -13,8 +13,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Windows.UI.WindowManagement;
 using static Kotova.Test1.ClientSide.Program;
 using static System.Net.Mime.MediaTypeNames;
+using System.Windows; 
+using System.Collections.Generic;
+using MessageBox = System.Windows.Forms.MessageBox;
+using Kotova.Test1.ClientSide.ManagementWPF;
+using SystemColors = System.Drawing.SystemColors;
 
 
 namespace Kotova.Test1.ClientSide
@@ -230,6 +236,42 @@ namespace Kotova.Test1.ClientSide
         }
 
 
+        private System.Windows.Window CreateWPFManagementWindow(Login_Russian loginForm, string username, string fullName, string departmentName)
+        {
+            try
+            {
+                // Create API service with your existing authentication
+                var apiService = new ManagementWPF.Services.ApiService(
+                    ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/instructions");
+                apiService.SetAuthToken(_jwtToken);
+
+                // Create ViewModel with user info
+                var mainViewModel = new ManagementWPF.ViewModels.MainViewModel(apiService, fullName);
+                
+
+                // Create and configure WPF window
+                var mainWindow = new ManagementWPF.Views.MainWindow(mainViewModel);
+
+                // Set window properties
+                mainWindow.Title = $"Система управления инструктажами - {fullName}";
+                mainWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+
+                // Handle window closing to return to login
+                mainWindow.Closed += (s, e) => {
+                    this.ShowForm();
+                };
+
+                return mainWindow;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска системы управления: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return null;
+            }
+        }
+
+
 
         private void OpenFormBasedOnRole(string role, string username, string fullName, string departmentName)
         {
@@ -240,6 +282,7 @@ namespace Kotova.Test1.ClientSide
             }
 
             Form formToOpen = null;
+            Window wpfWindow = null;
 
             switch (role)
             {
@@ -252,8 +295,12 @@ namespace Kotova.Test1.ClientSide
                 case "Coordinator":
                     formToOpen = new CoordinatorForm(this, username, fullName, departmentName);
                     break;
+                case "DeputyChief": // Add this case
+                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
+                    break;
                 case "Management":
-                    formToOpen = new ManagementForm(this, username, fullName, departmentName);
+                    //formToOpen = new ManagementForm(this, username, fullName, departmentName);
+                    wpfWindow = CreateWPFManagementWindow(this, username, fullName, departmentName);
                     break;
                 case "Admin":
                     formToOpen = new AdminForm(this, username, fullName);
@@ -285,11 +332,21 @@ namespace Kotova.Test1.ClientSide
                                 chiefForm._signUpForm.Show();
                             else if (formToOpen is CoordinatorForm coordForm && coordForm._signUpForm != null)
                                 coordForm._signUpForm.Show();
-                            else if (formToOpen is ManagementForm mgmtForm && mgmtForm._signUpForm != null)
-                                mgmtForm._signUpForm.Show();
+                            /*else if (formToOpen is ManagementForm mgmtForm && mgmtForm._signUpForm != null)
+                                mgmtForm._signUpForm.Show();*/
                         }));
                     });
                 }
+            }
+            if (wpfWindow != null)
+            {
+                this.Hide();
+                wpfWindow.Show();
+
+                // Handle window closing to show login form again
+                wpfWindow.Closed += (s, e) => {
+                    this.ShowForm();
+                };
             }
         }
 

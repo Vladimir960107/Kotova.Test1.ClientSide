@@ -9,6 +9,8 @@ using System.Net.Http.Headers;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 // WPF namespaces
 using WPFWindow = System.Windows.Window;
@@ -31,10 +33,12 @@ namespace Kotova.Test1.ClientSide
     public partial class InstructionAssignmentManager : WPFWindow
     {
         private string _instructionName;
+        private byte _instructionType;
         private List<EmployeeInfo> _employees;
         private List<NormativeInstructionInfo> _normativeInstructions;
         private string _jwtToken;
         private string _assignmentEndpoint;
+        private string _currentUserRole; // Add this field
 
         private ObservableCollection<GroupAssignment> _groups = new ObservableCollection<GroupAssignment>();
         private WPFControls.ListView groupsListView;
@@ -46,22 +50,367 @@ namespace Kotova.Test1.ClientSide
             List<EmployeeInfo> employees,
             List<NormativeInstructionInfo> normativeInstructions,
             string jwtToken,
-            string assignmentEndpoint)
+            string assignmentEndpoint,
+            byte instructionType = 255)
         {
             _instructionName = instructionName;
             _employees = employees;
             _normativeInstructions = normativeInstructions;
             _jwtToken = jwtToken;
             _assignmentEndpoint = assignmentEndpoint;
+            _instructionType = instructionType;
+            _currentUserRole = GetRoleFromToken(jwtToken);
 
-            Title = $"Назначение инструктажа: {instructionName}";
+            Title = $"Назначение инструктажа: {instructionName} ({GetRoleDisplayName(_currentUserRole)})";
             Width = 1000;
             Height = 700;
             WindowStartupLocation = WPF.WindowStartupLocation.CenterScreen;
 
-            BuildUI();
+            BuildUI(); // Build UI first
+
+            // MOVED: Apply role-based filtering AFTER UI is built
+            ApplyRoleBasedFiltering();
         }
 
+        /// <summary>
+        /// Applies role-based filtering to determine which employees can be assigned instructions
+        /// </summary>
+        private void ApplyRoleBasedFiltering()
+        {
+            // Add null check for employeesListView
+            if (employeesListView == null)
+            {
+                Console.WriteLine("Warning: employeesListView is null, cannot apply filtering");
+                return;
+            }
+
+            // Clear current employee list
+            employeesListView.Items.Clear();
+
+            // Get allowed roles based on current user's role
+            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+
+            // Debug output
+            //Console.WriteLine($"Current user role: {_currentUserRole}");
+            //Console.WriteLine($"Allowed roles: {string.Join(", ", allowedRoles)}");
+            //Console.WriteLine($"Total employees: {_employees?.Count ?? 0}");
+
+            // Filter employees based on allowed roles
+            if (_employees != null)
+            {
+                foreach (var employee in _employees)
+                {
+                    //Console.WriteLine($"Checking employee: {employee.FullName}, Role: {employee.Role}");
+
+                    // Check if this employee's role is allowed for assignment
+                    if (allowedRoles.Contains(employee.Role))
+                    {
+                        // Additional filtering based on instruction type
+                        if (ShouldIncludeEmployeeForInstructionType(employee, _instructionType))
+                        {
+                            employeesListView.Items.Add(new WPFControls.CheckBox
+                            {
+                                Content = $"{employee.FullName} ({employee.BirthDate}) - {GetRoleDisplayName(employee.Role)}",
+                                Tag = employee,
+                                Margin = new WPF.Thickness(2)
+                            });
+                            //Console.WriteLine($"Added employee: {employee.FullName}");
+                        }
+                        /*else
+                        {
+                           Console.WriteLine($"Employee {employee.FullName} excluded by instruction type filter");
+                        }*/
+                    }
+                    /*else
+                    {
+                        Console.WriteLine($"Employee {employee.FullName} excluded by role filter");
+                    }*/
+                }
+            }
+
+            //Console.WriteLine($"Final employee count in ListView: {employeesListView.Items.Count}");
+
+            // Show information about filtering
+            ShowFilteringInfo();
+        }
+
+        /// <summary>
+        /// Determines if an employee should be included based on instruction type restrictions
+        /// </summary>
+        private bool ShouldIncludeEmployeeForInstructionType(EmployeeInfo employee, byte instructionType)
+        {
+            // For Вводный (0) and Внеплановый (1) instructions, 
+            // don't allow assignment to DeputyChief regardless of current user role
+            if (instructionType == 0 || instructionType == 1)
+            {
+                return employee.Role != "DeputyChief";
+            }
+
+            // For other instruction types, no additional restrictions
+            return true;
+        }
+
+
+        /* // Add this enhanced debugging to ApplyRoleBasedFiltering method
+
+         private void ApplyRoleBasedFiltering()
+         {
+             Console.WriteLine("=== APPLY ROLE FILTERING DEBUG ===");
+
+             if (employeesListView == null)
+             {
+                 Console.WriteLine("ERROR: employeesListView is null! UI not built properly.");
+                 WPF.MessageBox.Show("Error: Employee list view is not initialized!", "Debug Error", WPF.MessageBoxButton.OK);
+                 return;
+             }
+
+             Console.WriteLine($"employeesListView found, current items count: {employeesListView.Items.Count}");
+             employeesListView.Items.Clear();
+
+             var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+             Console.WriteLine($"Current user role: '{_currentUserRole}'");
+             Console.WriteLine($"Allowed roles: [{string.Join(", ", allowedRoles)}]");
+
+             // **CRITICAL DEBUG: Check the actual employee data**
+             Console.WriteLine($"=== EMPLOYEE DATA DEBUG ===");
+             Console.WriteLine($"_employees is null: {_employees == null}");
+             Console.WriteLine($"_employees count: {_employees?.Count ?? 0}");
+
+             if (_employees == null)
+             {
+                 Console.WriteLine("ERROR: _employees is null!");
+                 WPF.MessageBox.Show("ERROR: No employee data was passed to InstructionAssignmentManager!", "Debug Error", WPF.MessageBoxButton.OK);
+                 return;
+             }
+
+             if (_employees.Count == 0)
+             {
+                 Console.WriteLine("ERROR: _employees is empty!");
+                 WPF.MessageBox.Show("ERROR: Employee list is empty!", "Debug Error", WPF.MessageBoxButton.OK);
+                 return;
+             }
+
+             int addedCount = 0;
+             int processedCount = 0;
+
+             foreach (var employee in _employees)
+             {
+                 processedCount++;
+                 Console.WriteLine($"\n--- Processing Employee {processedCount} ---");
+                 Console.WriteLine($"Employee object is null: {employee == null}");
+
+                 if (employee == null)
+                 {
+                     Console.WriteLine("Skipping null employee");
+                     continue;
+                 }
+
+                 Console.WriteLine($"FullName: '{employee.FullName ?? "NULL"}'");
+                 Console.WriteLine($"Role: '{employee.Role ?? "NULL"}'");
+                 Console.WriteLine($"BirthDate: '{employee.BirthDate ?? "NULL"}'");
+
+                 // Check if any of the employee properties are null/empty
+                 if (string.IsNullOrEmpty(employee.FullName))
+                 {
+                     Console.WriteLine("WARNING: Employee FullName is null or empty!");
+                     continue;
+                 }
+
+                 if (string.IsNullOrEmpty(employee.Role))
+                 {
+                     Console.WriteLine("WARNING: Employee Role is null or empty!");
+                     continue;
+                 }
+
+                 // **CRITICAL: Check exact role matching**
+                 Console.WriteLine($"Checking if '{employee.Role}' is in allowed roles:");
+                 foreach (var allowedRole in allowedRoles)
+                 {
+                     bool matches = allowedRole == employee.Role;
+                     Console.WriteLine($"  '{allowedRole}' == '{employee.Role}' ? {matches}");
+                 }
+
+                 bool roleAllowed = allowedRoles.Contains(employee.Role);
+                 Console.WriteLine($"Role allowed result: {roleAllowed}");
+
+                 if (roleAllowed)
+                 {
+                     bool instructionTypeAllowed = ShouldIncludeEmployeeForInstructionType(employee, _instructionType);
+                     Console.WriteLine($"Instruction type allowed: {instructionTypeAllowed}");
+
+                     if (instructionTypeAllowed)
+                     {
+                         var checkBox = new WPFControls.CheckBox
+                         {
+                             Content = $"{employee.FullName} ({employee.BirthDate}) - {GetRoleDisplayName(employee.Role)}",
+                             Tag = employee,
+                             Margin = new WPF.Thickness(2)
+                         };
+
+                         employeesListView.Items.Add(checkBox);
+                         addedCount++;
+                         Console.WriteLine($"✓ SUCCESSFULLY ADDED: {employee.FullName}");
+                     }
+                     else
+                     {
+                         Console.WriteLine($"✗ Excluded by instruction type filter");
+                     }
+                 }
+                 else
+                 {
+                     Console.WriteLine($"✗ Excluded by role filter");
+                 }
+             }
+
+             Console.WriteLine($"\n=== FILTERING SUMMARY ===");
+             Console.WriteLine($"Total employees processed: {processedCount}");
+             Console.WriteLine($"Total employees added: {addedCount}");
+             Console.WriteLine($"Final ListView count: {employeesListView.Items.Count}");
+
+             if (addedCount == 0)
+             {
+                 string message = $"No employees were added!\n\n" +
+                                 $"Your role: {GetRoleDisplayName(_currentUserRole)}\n" +
+                                 $"You can assign to: {string.Join(", ", allowedRoles.Select(GetRoleDisplayName))}\n" +
+                                 $"Total employees checked: {processedCount}";
+
+                 Console.WriteLine($"SHOWING MESSAGE BOX: {message}");
+                 WPF.MessageBox.Show(message, "No Employees Available", WPF.MessageBoxButton.OK, WPF.MessageBoxImage.Information);
+             }
+
+             Console.WriteLine("=== APPLY ROLE FILTERING DEBUG END ===");
+         }
+
+         // Also add this method to debug the ShouldIncludeEmployeeForInstructionType method
+         private bool ShouldIncludeEmployeeForInstructionType(EmployeeInfo employee, byte instructionType)
+         {
+             Console.WriteLine($"  ShouldIncludeEmployeeForInstructionType: Employee={employee.FullName}, Type={instructionType}");
+
+             // For Вводный (0) and Внеплановый (1) instructions, 
+             // don't allow assignment to DeputyChief regardless of current user role
+             if (instructionType == 0 || instructionType == 1)
+             {
+                 bool shouldExclude = employee.Role == "DeputyChief";
+                 Console.WriteLine($"  Instruction type {instructionType} - excluding DeputyChief: {shouldExclude}");
+                 return !shouldExclude;
+             }
+
+             // For other instruction types, no additional restrictions
+             Console.WriteLine($"  Instruction type {instructionType} - no additional restrictions");
+             return true;
+         }*/
+
+
+
+        /// <summary>
+        /// Gets the list of roles that the current user can assign instructions to
+        /// </summary>
+        private List<string> GetAllowedRolesForAssignment(string currentUserRole)
+        {
+            var allowedRoles = new List<string>();
+
+            //Console.WriteLine($"Determining allowed roles for current user role: '{currentUserRole}'");
+
+            switch (currentUserRole?.ToLower())
+            {
+                case "chiefofdepartment":
+                case "chief": 
+                    // Chief can assign to: Users, Coordinators, and Deputies
+                    allowedRoles.AddRange(new[] { "User", "Coordinator", "DeputyChief" });
+                    //Console.WriteLine("User is Chief - can assign to User, Coordinator, DeputyChief");
+                    break;
+
+                case "deputychief":
+                case "deputy":
+                    // Deputy can assign to: Users and Coordinators (NOT Chiefs)
+                    allowedRoles.AddRange(new[] { "User", "Coordinator" });
+                    //Console.WriteLine("User is Deputy - can assign to User, Coordinator");
+                    break;
+
+                case "coordinator":
+                    // Coordinator can assign to: Users only
+                    allowedRoles.Add("User");
+                    //Console.WriteLine("User is Coordinator - can assign to User only");
+                    break;
+
+                default:
+                    // Default case - no assignment permissions
+                    Console.WriteLine($"Unknown or unauthorized role: '{currentUserRole}' - no assignment permissions");
+                    break;
+            }
+            
+            //Console.WriteLine($"Final allowed roles: [{string.Join(", ", allowedRoles)}]");
+            return allowedRoles;
+        }
+
+        
+
+        /// <summary>
+        /// Shows information about current filtering applied
+        /// </summary>
+        private void ShowFilteringInfo()
+        {
+            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+            var roleNames = allowedRoles.Select(GetRoleDisplayName).ToList();
+
+            string infoText = $"Доступно для назначения: {string.Join(", ", roleNames)}";
+
+            if (_instructionType == 0 || _instructionType == 1)
+            {
+                infoText += "\n(Заместители исключены для данного типа инструктажа)";
+            }
+
+            // You can display this info in a status bar or info panel if needed
+            Console.WriteLine($"Role filtering info: {infoText}");
+        }
+
+        /// <summary>
+        /// Extracts role from JWT token
+        /// </summary>
+        private string GetRoleFromToken(string jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+                return string.Empty;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return string.Empty;
+
+                var roleClaim = jsonToken.Claims.FirstOrDefault(claim =>
+                     claim.Type == ClaimTypes.Role ||
+                     claim.Type == "role" ||
+                     claim.Type == "roles" ||
+                     claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+
+                return roleClaim?.Value ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Converts role code to display name
+        /// </summary>
+        private string GetRoleDisplayName(string role)
+        {
+            return role switch
+            {
+                "ChiefOfDepartment" or "Chief" or "Management" => "Руководитель",
+                "DeputyChief" or "Deputy" => "Заместитель",
+                "Coordinator" => "Координатор",
+                "User" => "Сотрудник",
+                "Administrator" or "Admin" => "Администратор",
+                _ => role ?? "Неизвестная роль"
+            };
+        }
+
+        // Rest of your existing code remains the same...
         private void BuildUI()
         {
             // Create main grid
@@ -124,11 +473,22 @@ namespace Kotova.Test1.ClientSide
 
             var employeesHeader = new WPFControls.TextBlock
             {
-                Text = "Сотрудники",
+                Text = "Доступные сотрудники",
                 FontWeight = WPF.FontWeights.Bold,
                 Margin = new WPF.Thickness(5)
             };
             WPFControls.DockPanel.SetDock(employeesHeader, WPFControls.Dock.Top);
+
+            // Add info text about filtering
+            var filterInfoText = new WPFControls.TextBlock
+            {
+                Text = GetFilteringInfoText(),
+                FontSize = 10,
+                Foreground = WPF.Media.Brushes.DarkBlue,
+                Margin = new WPF.Thickness(5, 0, 5, 5),
+                TextWrapping = WPF.TextWrapping.Wrap
+            };
+            WPFControls.DockPanel.SetDock(filterInfoText, WPFControls.Dock.Top);
 
             employeesListView = new WPFControls.ListView
             {
@@ -136,17 +496,8 @@ namespace Kotova.Test1.ClientSide
                 SelectionMode = WPFControls.SelectionMode.Multiple
             };
 
-            foreach (var employee in _employees)
-            {
-                employeesListView.Items.Add(new WPFControls.CheckBox
-                {
-                    Content = $"{employee.FullName} ({employee.BirthDate})",
-                    Tag = employee,
-                    Margin = new WPF.Thickness(2)
-                });
-            }
-
             employeesPanel.Children.Add(employeesHeader);
+            employeesPanel.Children.Add(filterInfoText);
             employeesPanel.Children.Add(employeesListView);
 
             WPFControls.Grid.SetColumn(employeesPanel, 1);
@@ -222,6 +573,142 @@ namespace Kotova.Test1.ClientSide
             Content = grid;
         }
 
+        /// <summary>
+        /// Gets filtering information text for display
+        /// </summary>
+        private string GetFilteringInfoText()
+        {
+            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+            var roleNames = allowedRoles.Select(GetRoleDisplayName).ToList();
+
+            string baseText = $"Вы можете назначать инструктажи: {string.Join(", ", roleNames)}";
+
+            if (_instructionType == 0 || _instructionType == 1)
+            {
+                baseText += "\nЗаместители исключены для данного типа инструктажа.";
+            }
+
+            return baseText;
+        }
+
+        // Validation method to check assignment permissions before saving
+        private bool ValidateAssignmentPermissions()
+        {
+            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+
+            foreach (var group in _groups)
+            {
+                foreach (var employee in group.Employees)
+                {
+                    // Check if this employee's role is allowed
+                    if (!allowedRoles.Contains(employee.Role))
+                    {
+                        WPF.MessageBox.Show($"У вас нет прав назначать инструктажи сотруднику {employee.FullName} (роль: {GetRoleDisplayName(employee.Role)})",
+                            "Недостаточно прав", WPF.MessageBoxButton.OK, WPF.MessageBoxImage.Warning);
+                        return false;
+                    }
+
+                    // Check instruction type restrictions
+                    if (!ShouldIncludeEmployeeForInstructionType(employee, _instructionType))
+                    {
+                        WPF.MessageBox.Show($"Данный тип инструктажа не может быть назначен сотруднику {employee.FullName} (роль: {GetRoleDisplayName(employee.Role)})",
+                            "Ограничение по типу инструктажа", WPF.MessageBoxButton.OK, WPF.MessageBoxImage.Warning);
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        // Rest of your existing event handlers remain the same, but add validation to SaveButton_Click
+        private async void SaveButton_Click(object sender, WPF.RoutedEventArgs e)
+        {
+            if (_groups.Count == 0)
+            {
+                WPF.MessageBox.Show("Добавьте хотя бы одну группу.");
+                return;
+            }
+
+            // Validate assignment permissions
+            if (!ValidateAssignmentPermissions())
+            {
+                return; // Validation failed, don't proceed
+            }
+
+            if (WPF.MessageBox.Show("Вы уверены, что хотите сохранить и назначить инструктаж выбранным группам?",
+                "Подтверждение", WPF.MessageBoxButton.YesNo) == WPF.MessageBoxResult.Yes)
+            {
+                try
+                {
+                    int successCount = 0;
+                    int totalAssignments = 0;
+
+                    foreach (var group in _groups)
+                    {
+                        // Skip empty groups
+                        if (group.Employees.Count == 0 || group.NormativeInstructionIds.Count == 0)
+                            continue;
+
+                        // Convert employees to tuples
+                        var employeeTuples = group.Employees
+                            .Select(e => Tuple.Create(e.FullName, e.BirthDate))
+                            .ToList();
+
+                        // Create package
+                        InstructionPackage package = new InstructionPackage(
+                            employeeTuples,
+                            _instructionName,
+                            group.NormativeInstructionIds
+                        );
+
+                        // Serialize and encrypt
+                        string jsonData = JsonConvert.SerializeObject(package);
+                        string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+
+                        // Send request
+                        using (var httpClient = new HttpClient())
+                        {
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
+
+                            var uri = new Uri(_assignmentEndpoint);
+                            var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+
+                            var response = await httpClient.PostAsync(uri, content);
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                successCount++;
+                            }
+                            else
+                            {
+                                var errorMessage = await response.Content.ReadAsStringAsync();
+                                WPF.MessageBox.Show($"Ошибка при назначении группы '{group.Name}': {errorMessage}");
+                            }
+                        }
+
+                        totalAssignments++;
+                    }
+
+                    if (successCount == totalAssignments)
+                    {
+                        WPF.MessageBox.Show("Все группы успешно назначены.");
+                        DialogResult = true;
+                        Close();
+                    }
+                    else
+                    {
+                        WPF.MessageBox.Show($"Назначено {successCount} из {totalAssignments} групп.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    WPF.MessageBox.Show($"Ошибка при назначении: {ex.Message}");
+                }
+            }
+        }
+
+        // Keep all your other existing event handlers (GroupsListView_SelectionChanged, AddGroupButton_Click, etc.)
         private void GroupsListView_SelectionChanged(object sender, WPFControls.SelectionChangedEventArgs e)
         {
             if (groupsListView.SelectedItem is GroupAssignment selectedGroup)
@@ -347,86 +834,6 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private async void SaveButton_Click(object sender, WPF.RoutedEventArgs e)
-        {
-            if (_groups.Count == 0)
-            {
-                WPF.MessageBox.Show("Добавьте хотя бы одну группу.");
-                return;
-            }
-
-            if (WPF.MessageBox.Show("Вы уверены, что хотите сохранить и назначить инструктаж выбранным группам?",
-                "Подтверждение", WPF.MessageBoxButton.YesNo) == WPF.MessageBoxResult.Yes)
-            {
-                try
-                {
-                    int successCount = 0;
-                    int totalAssignments = 0;
-
-                    foreach (var group in _groups)
-                    {
-                        // Skip empty groups
-                        if (group.Employees.Count == 0 || group.NormativeInstructionIds.Count == 0)
-                            continue;
-
-                        // Convert employees to tuples
-                        var employeeTuples = group.Employees
-                            .Select(e => Tuple.Create(e.FullName, e.BirthDate))
-                            .ToList();
-
-                        // Create package
-                        InstructionPackage package = new InstructionPackage(
-                            employeeTuples,
-                            _instructionName,
-                            group.NormativeInstructionIds
-                        );
-
-                        // Serialize and encrypt
-                        string jsonData = JsonConvert.SerializeObject(package);
-                        string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
-
-                        // Send request
-                        using (var httpClient = new HttpClient())
-                        {
-                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
-
-                            var uri = new Uri(_assignmentEndpoint);
-                            var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
-
-                            var response = await httpClient.PostAsync(uri, content);
-
-                            if (response.IsSuccessStatusCode)
-                            {
-                                successCount++;
-                            }
-                            else
-                            {
-                                var errorMessage = await response.Content.ReadAsStringAsync();
-                                WPF.MessageBox.Show($"Ошибка при назначении группы '{group.Name}': {errorMessage}");
-                            }
-                        }
-
-                        totalAssignments++;
-                    }
-
-                    if (successCount == totalAssignments)
-                    {
-                        WPF.MessageBox.Show("Все группы успешно назначены.");
-                        DialogResult = true;
-                        Close();
-                    }
-                    else
-                    {
-                        WPF.MessageBox.Show($"Назначено {successCount} из {totalAssignments} групп.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    WPF.MessageBox.Show($"Ошибка при назначении: {ex.Message}");
-                }
-            }
-        }
-
         private void CancelButton_Click(object sender, WPF.RoutedEventArgs e)
         {
             DialogResult = false;
@@ -434,6 +841,7 @@ namespace Kotova.Test1.ClientSide
         }
     }
 
+    // Keep your existing GroupAssignment and TextInputDialog classes unchanged
     public class GroupAssignment : INotifyPropertyChanged
     {
         private string _name;
@@ -481,18 +889,6 @@ namespace Kotova.Test1.ClientSide
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-    }
-
-    public class EmployeeInfo
-    {
-        public string FullName { get; set; }
-        public string BirthDate { get; set; }
-    }
-
-    public class NormativeInstructionInfo
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
     }
 
     public class TextInputDialog : WPFWindow

@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Irony.Parsing;
 using Kotova.CommonClasses;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.IdentityModel.Tokens;
@@ -8,9 +9,11 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -566,10 +569,10 @@ namespace Kotova.Test1.ClientSide
                             var employee = sortedEmployees[i];
                             int rowIndex = i + 3; // Начинаем с 3 строки
 
-                            // Колонка 1: Дата проведения инструктажа
+                            // Колонка 1: Дата проведения инструктажа - пустая для непройденных инструктажей
                             worksheet.Cell(rowIndex, 1).Value = employee.HasPassed && employee.DatePassed.HasValue
                                 ? employee.DatePassed.Value.ToString("dd.MM.yyyy")
-                                : DateTime.Now.ToString("dd.MM.yyyy");
+                                : ""; // Пустое значение вместо текущей даты для непройденных инструктажей
 
                             // Колонка 2: ФИО работника (с Alt+Enter между словами)
                             string[] nameParts = employee.FullName.Split(' ');
@@ -733,7 +736,7 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                SyncNamesWithDB.Enabled = false; // Assuming this is a button, disable it to prevent multiple clicks
+                SyncNamesWithDB.Enabled = false;
                 checkedListBoxNamesOfPeople.Items.Clear();
 
                 using (var httpClient = new HttpClient())
@@ -745,36 +748,40 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
-
                         string responseBody = await response.Content.ReadAsStringAsync();
                         List<EmployeeData> result = JsonConvert.DeserializeObject<List<EmployeeData>>(responseBody);
+
                         if (result is null)
                         {
                             throw new Exception("тело ответа пусто");
                         }
-                        string[] resultArray = result.Select(e => $"{e.FullName} ({e.BirthDate})").ToArray();
 
-                        //ListBoxNamesOfPeople.Items.AddRange(resultArray);
+                        // DEBUG: Show the first few employees' exact data
+                        for (int i = 0; i < Math.Min(3, result.Count); i++)
+                        {
+                            var emp = result[i];
+                            string formatted = $"{emp.FullName} ({emp.BirthDate})";
+                            MessageBox.Show($"Employee {i + 1}:\nName: '{emp.FullName}'\nBirthDate: '{emp.BirthDate}'\nFormatted: '{formatted}'",
+                                "Debug Employee Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+
+                        string[] resultArray = result.Select(e => $"{e.FullName} ({e.BirthDate})").ToArray();
                         checkedListBoxNamesOfPeople.Items.AddRange(resultArray);
-                        // Successfully called the ImportIntoDB endpoint, handle accordingly
-                        //MessageBox.Show("Имена успешно синхронизированы с базой данных.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
                         string errorMessage = await response.Content.ReadAsStringAsync();
-                        //MessageBox.Show($"Failed to sync names with DB. Status code: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         MessageBox.Show($"Не удалось синхронизировать имена с базой данных. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Exception handling for networking errors, etc.
                 MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
-                SyncNamesWithDB.Enabled = true; // Re-enable the button after the operation completes
+                SyncNamesWithDB.Enabled = true;
             }
         }
 
@@ -802,6 +809,7 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
+
                 // Check if at least one normative instruction is selected
                 var selectedNormativeInstructions = new List<int>();
                 foreach (ListBoxItem item in ListOfNormativeInstrNames.SelectedItems)
@@ -820,7 +828,22 @@ namespace Kotova.Test1.ClientSide
                 {
                     foreach (var item in listOfNames)
                     {
-                        listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(item.ToString()));
+                        string itemText = item.ToString();
+
+                        // Parse the format: "FullName (BirthDate) - Role"
+                        var parts = itemText.Split(" - ");
+                        string nameAndBirthDate;
+
+                        if (parts.Length >= 2)
+                        {
+                            nameAndBirthDate = parts[0]; // Remove the role part
+                        }
+                        else
+                        {
+                            nameAndBirthDate = itemText; // Use as-is if no role
+                        }
+
+                        listOfNamesAndBirthDateString.Add(DeconstructNameAndBirthDate(nameAndBirthDate));
                     }
 
                     string instructionNameString = selectedInstruction.ToString();
@@ -886,24 +909,185 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private Tuple<string, string> DeconstructNameAndBirthDate(string? nameWithBirthDate)
+        /*private async void submitInstructionToPeople_Click(object sender, EventArgs e)
         {
-            string pattern = @"^(.+?)\s\((\d{4}-\d{2}-\d{2})\)$"; //Эта строка соответсвует birthDate_format в Server side
-            if (nameWithBirthDate == null) { throw new ArgumentException("nameWithBirthDate is null! in DeconstructNameAndBirthDate"); }
-            Regex regex = new Regex(pattern);
-            Match match = regex.Match(nameWithBirthDate);
+            Console.WriteLine("=== submitInstructionToPeople_Click STARTED ===");
 
-            if (match.Success)
+            submitInstructionToPeople.Enabled = false;
+            try
             {
-                string fullName = match.Groups[1].Value;  // ФИО
-                string birthDate = match.Groups[2].Value; // BirthDate (Дата рождения)
-                return System.Tuple.Create(fullName, birthDate);
+                var listOfNames = checkedListBoxNamesOfPeople.CheckedItems;
+                Console.WriteLine($"Number of checked items: {listOfNames.Count}");
+
+                List<Tuple<string, string>> listOfNamesAndBirthDateString = new List<Tuple<string, string>>();
+                if (listOfNames.Count == 0)
+                {
+                    Console.WriteLine("ERROR: No people selected");
+                    MessageBox.Show("Люди не выбраны!");
+                    submitInstructionToPeople.Enabled = true;
+                    return;
+                }
+
+                var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
+                Console.WriteLine($"Selected instruction: {selectedInstruction?.ToString() ?? "NULL"}");
+
+                if (selectedInstruction is null)
+                {
+                    Console.WriteLine("ERROR: No instruction selected");
+                    MessageBox.Show("Инструкция не выбрана!");
+                    submitInstructionToPeople.Enabled = true;
+                    return;
+                }
+
+                // Check if at least one normative instruction is selected
+                var selectedNormativeInstructions = new List<int>();
+                Console.WriteLine($"Checking normative instructions. Count: {ListOfNormativeInstrNames.SelectedItems.Count}");
+
+                foreach (ListBoxItem item in ListOfNormativeInstrNames.SelectedItems)
+                {
+                    Console.WriteLine($"Adding normative instruction ID: {item.Value}");
+                    selectedNormativeInstructions.Add(item.Value);
+                }
+
+                if (selectedNormativeInstructions.Count == 0)
+                {
+                    Console.WriteLine("ERROR: No normative instructions selected");
+                    MessageBox.Show("Выберите хотя бы одну нормативную инструкцию!");
+                    submitInstructionToPeople.Enabled = true;
+                    return;
+                }
+
+                try
+                {
+                    Console.WriteLine("=== Processing selected people ===");
+                    int itemIndex = 0;
+
+                    foreach (var item in listOfNames)
+                    {
+                        itemIndex++;
+                        string itemText = item.ToString();
+                        Console.WriteLine($"Processing item {itemIndex}: '{itemText}'");
+
+                        // Parse the format: "FullName (BirthDate) - Role"
+                        var parts = itemText.Split(" - ");
+                        Console.WriteLine($"Split into {parts.Length} parts:");
+                        for (int i = 0; i < parts.Length; i++)
+                        {
+                            Console.WriteLine($"  Part {i}: '{parts[i]}'");
+                        }
+
+                        string nameAndBirthDate;
+                        if (parts.Length >= 2)
+                        {
+                            nameAndBirthDate = parts[0]; // Remove the role part
+                            Console.WriteLine($"Extracted nameAndBirthDate (with role): '{nameAndBirthDate}'");
+                        }
+                        else
+                        {
+                            nameAndBirthDate = itemText; // Use as-is if no role
+                            Console.WriteLine($"Using full text as nameAndBirthDate (no role): '{nameAndBirthDate}'");
+                        }
+
+                        Console.WriteLine($"About to call DeconstructNameAndBirthDate with: '{nameAndBirthDate}'");
+
+                        try
+                        {
+                            var result = DeconstructNameAndBirthDate(nameAndBirthDate);
+                            Console.WriteLine($"DeconstructNameAndBirthDate succeeded. Name: '{result.Item1}', Date: '{result.Item2}'");
+                            listOfNamesAndBirthDateString.Add(result);
+                        }
+                        catch (Exception deconstructEx)
+                        {
+                            Console.WriteLine($"ERROR in DeconstructNameAndBirthDate: {deconstructEx.Message}");
+                            Console.WriteLine($"Input was: '{nameAndBirthDate}'");
+                            throw; // Re-throw to be caught by outer catch
+                        }
+                    }
+
+                    Console.WriteLine($"Successfully processed {listOfNamesAndBirthDateString.Count} people");
+
+                    string instructionNameString = selectedInstruction.ToString();
+                    Console.WriteLine($"Instruction name: '{instructionNameString}'");
+
+                    // Include the selected normative instruction IDs in the package
+                    InstructionPackage package = new InstructionPackage(
+                        listOfNamesAndBirthDateString,
+                        instructionNameString,
+                        selectedNormativeInstructions
+                    );
+
+                    Console.WriteLine("Creating package and serializing...");
+                    string jsonData = JsonConvert.SerializeObject(package);
+                    Console.WriteLine($"JSON data length: {jsonData.Length}");
+
+                    string encryptedJsonData = Encryption_Kotova.EncryptString(jsonData);
+                    Console.WriteLine($"Encrypted data length: {encryptedJsonData.Length}");
+
+                    try
+                    {
+                        Console.WriteLine("Sending HTTP request...");
+                        using (var httpClient = new HttpClient())
+                        {
+                            string jwtToken = _loginForm._jwtToken;
+                            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                            var uri = new Uri(urlSubmitInstructionToPeople);
+                            Console.WriteLine($"Target URL: {uri}");
+
+                            var content = new StringContent(encryptedJsonData, Encoding.UTF8, "application/json");
+                            var response = await httpClient.PostAsync(uri, content);
+
+                            Console.WriteLine($"Response status code: {response.StatusCode}");
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                Console.WriteLine("SUCCESS: Data sent successfully");
+                                MessageBox.Show("Данные успешно отправлены на сервер и инструктаж назначен людям.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                var errorMessage = await response.Content.ReadAsStringAsync();
+                                Console.WriteLine($"ERROR: Server returned error. Status: {response.StatusCode}, Message: {errorMessage}");
+                                MessageBox.Show($"Не получилось отправить данные не сервер. Status code: {response.StatusCode},Error: {errorMessage} ", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                    catch (Exception httpEx)
+                    {
+                        Console.WriteLine($"ERROR in HTTP request: {httpEx.Message}");
+                        Console.WriteLine($"Stack trace: {httpEx.StackTrace}");
+                        MessageBox.Show($"Ошибка произошла при отправке данных: {httpEx.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    finally
+                    {
+                        Console.WriteLine("HTTP request completed, re-enabling button and syncing...");
+                        submitInstructionToPeople.Enabled = true;
+                        await SyncManuallyInstrWithDBInternal();
+                    }
+                }
+                catch (Exception processingEx)
+                {
+                    Console.WriteLine($"ERROR in processing loop: {processingEx.Message}");
+                    Console.WriteLine($"Stack trace: {processingEx.StackTrace}");
+                    MessageBox.Show($"Какая-то ошибка произошла при назначении инструктажа:{processingEx.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    Console.WriteLine("Processing completed, re-enabling button");
+                    submitInstructionToPeople.Enabled = true;
+                }
             }
-            else
+            catch (Exception mainEx)
             {
-                throw new ArgumentException("nameWithBirthDate doesn't match the pattern! in DeconstructNameAndBirthDate");
+                Console.WriteLine($"ERROR in main try block: {mainEx.Message}");
+                Console.WriteLine($"Stack trace: {mainEx.StackTrace}");
+                MessageBox.Show($"Неожиданная ошибка: {mainEx.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
+
+            Console.WriteLine("=== submitInstructionToPeople_Click FINISHED ===");
+        }*/
+
+
 
         private async void LogOutForm_Click(object sender, EventArgs e)
         {
@@ -939,28 +1123,30 @@ namespace Kotova.Test1.ClientSide
 
         private async void ChiefTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
+
             if (ChiefTabControl.SelectedTab == tabPageForPassingInstruction)
             {
                 ShowWpfInstructionViewer();
 
-                // Optionally switch to another tab to avoid empty tab content
-                // This prevents user confusion when they see an empty tab
-                if (ChiefTabControl.TabPages.Count > 0 && ChiefTabControl.SelectedTab == tabPageForPassingInstruction)
+                // Add a label to the empty tab to inform the user
+                if (tabPageForPassingInstruction.Controls.Count == 0)
                 {
-                    // Find any tab other than tabPage3
-                    for (int i = 0; i < ChiefTabControl.TabPages.Count; i++)
+                    var infoLabel = new System.Windows.Forms.Label
                     {
-                        if (ChiefTabControl.TabPages[i] != tabPageForPassingInstruction)
-                        {
-                            ChiefTabControl.SelectedTab = ChiefTabControl.TabPages[i];
-                            break;
-                        }
-                    }
+                        Text = "Окно просмотра инструктажей открыто в отдельном окне.\nЕсли окно не видно, проверьте панель задач.",
+                        Dock = System.Windows.Forms.DockStyle.Fill,
+                        TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                        Font = new System.Drawing.Font(this.Font.FontFamily, 12, System.Drawing.FontStyle.Regular),
+                        ForeColor = System.Drawing.Color.DarkBlue
+                    };
+                    tabPageForPassingInstruction.Controls.Add(infoLabel);
                 }
 
-                // Early return to skip other processing for this tab
+                // Don't switch tabs - let user stay on this tab
                 return;
             }
+
+
             if (ChiefTabControl.SelectedTab.Text == "Внеплановые инструктажи")
             {
                 await SyncManuallyInstrWithDBInternal();
@@ -1033,6 +1219,9 @@ namespace Kotova.Test1.ClientSide
         /// <summary>
         /// Opens the WPF instruction viewer window for the chief
         /// </summary>
+        /// <summary>
+        /// Opens the WPF instruction viewer window for the chief
+        /// </summary>
         private void ShowWpfInstructionViewer()
         {
             try
@@ -1047,9 +1236,18 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                // Create new WPF window with chief mode enabled
-                var wpfWindow = new InstructionViewerWindow(_loginForm._jwtToken, _userName, isChief: true);
-                wpfWindow.Title = $"Просмотр инструктажей - {_userName} (Руководитель)";
+                // Allow completion for Chiefs and DeputyChiefs
+                var role = GetCurrentUserRole();
+                bool allowCompletion = (role == "DeputyChief");
+
+                // Create new WPF window with appropriate settings
+                var wpfWindow = new InstructionViewerWindow(
+                    _loginForm._jwtToken,
+                    _userName,
+                    isChief: true,
+                    allowCompletion: allowCompletion);
+
+                wpfWindow.Title = $"Просмотр инструктажей - {_userName} ({TranslateRole(role)})";
 
                 // Center over parent form
                 CenterWpfWindowOverWinForm(wpfWindow, this);
@@ -1071,6 +1269,55 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Ошибка при открытии окна просмотра инструктажей: {ex.Message}",
                     "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        // Helper method to get current user's role
+        private string GetCurrentUserRole()
+        {
+            // Parse JWT token to extract role or get it from login form
+            // This is just a placeholder - implement based on your authentication system
+            return GetRoleFromToken(_loginForm._jwtToken) ?? "Unknown";
+        }
+
+        public string GetRoleFromToken(string jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+                return string.Empty;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return string.Empty;
+
+                // Try standard role claim first
+                var roleClaim = jsonToken.Claims.FirstOrDefault(claim =>
+                     claim.Type == ClaimTypes.Role ||  // Full URI format
+                     claim.Type == "role" ||           // Short format common in newer JWT implementations
+                     claim.Type == "roles" ||          // Plural version sometimes used
+                     claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"); // Explicit URI
+
+                return roleClaim?.Value ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty; // Return empty string for any parsing errors
+            }
+        }
+
+        // Helper method to translate role names to Russian
+        private string TranslateRole(string role)
+        {
+            return role switch
+            {
+                "ChiefOfDepartment" => "Руководитель",
+                "DeputyChief" => "Заместитель",
+                "Administrator" => "Администратор",
+                "User" => "Пользователь",
+                _ => role
+            };
         }
 
         /// <summary>
@@ -1226,235 +1473,7 @@ namespace Kotova.Test1.ClientSide
 
 
 
-        private async Task<bool> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в User.cs в совершенно отдельном файле.
-        {
-            if (userName is null)
-            {
-                throw new ArgumentNullException(nameof(userName));
-            }
-            string url = DownloadInstructionForUserURL;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    string jwtToken = _loginForm._jwtToken;
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                    System.Net.Http.HttpResponseMessage response = await client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
 
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = System.Text.Json.JsonSerializer.Deserialize<QueryResult>(jsonResponse);
-                    if (result.Result1.Count == 0)
-                    {
-                        return true;
-                    }
-
-                    listOfInstructions_global = result.Result1;
-                    listsOfPaths_global = result.Result2;
-                    foreach (Dictionary<string, object> temp in result.Result1)
-                    {
-                        ListOfInstructionsForUser.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
-
-                    }
-                    return false;
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                // Handle any exceptions here
-                MessageBox.Show($"Ошибка: {ex.Message}");
-                Console.WriteLine($"Couldn't download instructions for user(Chief) from server: {ex.Message}"); //TODO: Нужно чтобы здесь не выбрасывалось резко из приложения, если что. По идее, наверное?
-                return false;
-            }
-        }
-
-        private void InstructionsToPass_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            FilesOfInstructionCheckedListBox.Items.Clear();
-            HyperLinkForInstructionsFolder.Enabled = true;
-            if (ListOfInstructionsForUser.SelectedItem == null)
-            {
-                MessageBox.Show("Вы не выбрали инструктаж.");
-                PassInstruction.Enabled = false;
-                HyperLinkForInstructionsFolder.Enabled = false;
-                return;
-            }
-            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
-            int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
-
-            List<string> listOfPath = new List<string>();
-            foreach (var listOfPaths in listsOfPaths_global)
-            {
-                if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
-                {
-                    if (listOfPaths[db_filePath] == null)
-                    {
-                        if (selectedDict[db_typeOfInstruction].ToString() == "0") // Проверка что мы входим в вводный инструктаж только!
-                        {
-                            PassInstruction.Enabled = true;
-                            HyperLinkForInstructionsFolder.Enabled = false;
-                            return;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
-                            PassInstruction.Enabled = false;
-                            HyperLinkForInstructionsFolder.Enabled = false;
-                            return;
-                        }
-
-                    }
-                    FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
-                }
-            }
-            HyperLinkForInstructionsFolder.Enabled = true;
-        }
-
-        private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
-        {
-            HyperLinkForInstructionsFolder.Enabled = false;
-            if (ListOfInstructionsForUser.SelectedItem == null)
-            {
-                MessageBox.Show("Вы не выбрали инструктаж.");
-                PassInstruction.Enabled = false;
-                return;
-            }
-            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString()); //most likely suppress it, cause its not null.
-            string? pathStr = selectedDict[DataBaseNames.tableName_sql_pathToInstruction].ToString();
-
-            if (pathStr is null || pathStr.Length == 0)
-            {
-                MessageBox.Show("Путь пуст или отсутствует.");
-                PassInstruction.Enabled = false;
-                return;
-            }
-            string path = Path.GetFullPath(pathStr);
-            OpenFolderInExplorer(path);
-
-        }
-
-        private void OpenFolderInExplorer(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                MessageBox.Show("Указанный путь пуст или отсутствует.");
-                PassInstruction.Enabled = false;
-                return;
-            }
-
-            // Get the full path and check if it exists
-            string fullPath = Path.GetFullPath(path);
-            if (!Directory.Exists(fullPath))
-            {
-                MessageBox.Show($"Путь '{fullPath}' не существует.");
-                PassInstruction.Enabled = false;
-                return;
-            }
-
-            // Open the folder in Windows Explorer
-            try
-            {
-                Process.Start("explorer.exe", fullPath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Не получилось открыть папку: {ex.Message}");
-                PassInstruction.Enabled = false;
-            }
-        }
-
-        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedItemStr)
-        {
-
-            foreach (Dictionary<string, object> tempD in listOfInstructions_global)
-            {
-                Dictionary<string, object> selectedDictionary = listOfInstructions_global.FirstOrDefault(tempD => tempD[DataBaseNames.tableName_sql_INSTRUCTIONS_cause].ToString() == selectedItemStr);
-                if (selectedDictionary != null)
-                {
-                    return selectedDictionary; // HERE WE DIDN't CHECK  THAT названия инструктажей не повторяется, а просто вернули первое попавшееся. Проверку бы!
-                }
-            }
-            throw new Exception("Corresponding Dictionary not found!");
-
-        }
-
-        private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!PassInstruction.Checked) { return; }
-            if (ConfirmAction("Вы прошли инструктаж?"))
-            {
-                MessageBox.Show("Вы согласились с прохождением инструктажа.", "Действите подтверждено", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                PassInstruction.Enabled = false;
-                if (ListOfInstructionsForUser.SelectedItem == null)
-                {
-                    MessageBox.Show("Вы не выбрали инструктаж.");
-                    PassInstruction.Enabled = false;
-                    return;
-                }
-                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
-                await SendInstructionIsPassedToDB(selectedDict);
-                FilesOfInstructionCheckedListBox.Items.Clear();
-            }
-            else
-            {
-                MessageBox.Show("Вы не согласились с прохождением инструктажа.", "Действие отменено", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                PassInstruction.Checked = false;
-                return;
-            }
-        }
-
-        private bool ConfirmAction(string message)
-        {
-            var result = MessageBox.Show(message, "Подтвердить действие", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
-        {
-            string url = SendInstructionIsPassedURL;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    string jwtToken = _loginForm._jwtToken;
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                    string jsonData = System.Text.Json.JsonSerializer.Serialize(selectedDict);
-
-                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-
-                    System.Net.Http.HttpResponseMessage response = await client.PostAsync(url, content);
-                    response.EnsureSuccessStatusCode();
-
-                    var jsonResponse = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Все хорошо, обновляем лист инструктажей.");
-                        ListOfInstructionsForUser.Items.Clear();
-                        DownloadInstructionsForUserFromServer(_userName);
-                    }
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-
-                // Handle any exceptions here
-                MessageBox.Show($"Error: {ex.Message}");
-            }
-            finally
-            {
-                PassInstruction.Checked = false;
-            }
-        }
 
         private void PopulateTreeView(string directoryValue, TreeNode parentNode)
         {
@@ -1494,57 +1513,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        private void UpdateParentNodes(TreeNode treeNode, bool nodeChecked)
-        {
-            TreeNode currentNode = treeNode;
 
-            while (currentNode.Parent != null)
-            {
-                if (nodeChecked)
-                {
-                    // If the current node is checked, ensure the parent is also checked
-                    currentNode.Parent.Checked = true;
-                }
-                else
-                {
-                    // If the current node is unchecked, ensure the parent is unchecked
-                    // only if all its siblings are also unchecked
-                    bool allSiblingsUnchecked = true;
-
-                    foreach (TreeNode sibling in currentNode.Parent.Nodes)
-                    {
-                        if (sibling.Checked)
-                        {
-                            allSiblingsUnchecked = false;
-                            break;
-                        }
-                    }
-
-                    if (allSiblingsUnchecked)
-                    {
-                        currentNode.Parent.Checked = false;
-                    }
-                }
-
-                currentNode = currentNode.Parent;
-            }
-        }
-
-        public static List<string> GetSelectedFilePaths(System.Windows.Forms.TreeView treeView)
-        {
-            HashSet<string> uniqueFilePaths = new HashSet<string>();
-
-            foreach (TreeNode node in treeView.Nodes)
-            {
-                CollectFilePaths(node, uniqueFilePaths);
-            }
-
-            // Sort the paths
-            List<string> sortedFilePaths = uniqueFilePaths.ToList();
-            sortedFilePaths.Sort();
-
-            return sortedFilePaths;
-        }
 
         private static void CollectFilePaths(TreeNode node, HashSet<string> filePaths)
         {
@@ -1609,55 +1578,7 @@ namespace Kotova.Test1.ClientSide
             Dir = 1
         }
 
-        private void FilesOfInstructionCheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            this.BeginInvoke((MethodInvoker)delegate
-            {
-                if (AreAllItemsChecked(FilesOfInstructionCheckedListBox))
-                {
-                    PassInstruction.Enabled = true;
-                }
-                else
-                {
-                    PassInstruction.Enabled = false;
-                }
 
-                if (e.NewValue == CheckState.Checked)
-                {
-                    string selectedPath = FilesOfInstructionCheckedListBox.Items[e.Index].ToString();
-                    OpenFile(selectedPath);
-                }
-            });
-
-        }
-        private bool AreAllItemsChecked(CheckedListBox checkedListBox)
-        {
-            for (int index = 0; index < checkedListBox.Items.Count; index++)
-            {
-                if (!checkedListBox.GetItemChecked(index))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private void OpenFile(string filePath)
-        {
-            try
-            {
-                ProcessStartInfo psi = new ProcessStartInfo
-                {
-                    FileName = filePath,
-                    UseShellExecute = true
-                };
-                Process.Start(psi);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Не получилось открыть файл: {ex.Message}");
-            }
-        }
 
         private async void TestButtonForInstructions_Click(object sender, EventArgs e)
         {
@@ -2065,7 +1986,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-       
+
 
         void ExportToExcelWithSaveDialog(List<InstructionExportInstance> data)
         {
@@ -2235,72 +2156,7 @@ namespace Kotova.Test1.ClientSide
         }
 
 
-        private async void SkipTheAssignmentOfInstrCheckedBox_CheckedChanged(object sender, EventArgs e)
-        {
-            System.Windows.Forms.CheckBox checkBox = sender as System.Windows.Forms.CheckBox;
 
-
-            if (checkBox != null && checkBox.Checked)
-            {
-                var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
-                if (selectedInstruction is null)
-                {
-                    MessageBox.Show("Инструкция не выбрана!");
-                    checkBox.Checked = false;
-                    return;
-                }
-                if (ConfirmAction("Вы уверены, что хотите не назначить людей для данного инструктажа?"))
-                {
-                    await SkipTheAssignmentOfInstrInternal();
-                }
-                else
-                {
-                    MessageBox.Show("Вы не подтвердили действие");
-                }
-                checkBox.Checked = false;
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        private async Task SkipTheAssignmentOfInstrInternal()
-        {
-            try
-            {
-                using (var httpClient = new HttpClient())
-                {
-                    string url = SkipTheUnplannedInstructionURL;
-                    string jwtToken = _loginForm._jwtToken;
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-                    var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
-
-                    Instruction instructionToSkip = unplannedInstructions_global
-        .FirstOrDefault(ins => ins.cause_of_instruction == selectedInstruction.ToString());
-                    string jsonData = JsonConvert.SerializeObject(instructionToSkip);
-
-                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-                    // Send PUT request to the server
-                    System.Net.Http.HttpResponseMessage response = await httpClient.PatchAsync(url, content);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-
-                        MessageBox.Show("Инструктаж успешно пропущен!");
-                        await SyncManuallyInstrWithDBInternal();
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Ошибка при пропуске инструктажа: {response.StatusCode}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Произошла ошибка: {ex.Message}");
-            }
-        }
         private async Task<bool> SyncNormativeInstructionNamesWithDBInternal()
         {
             try
@@ -2408,6 +2264,24 @@ namespace Kotova.Test1.ClientSide
 
             return result;
         }
+        /*private List<EmployeeInfo> ConvertItemsToEmployeeList(CheckedListBox.ObjectCollection items)
+        {
+            Console.WriteLine("*** ConvertItemsToEmployeeList called ***");
+            var result = new List<EmployeeInfo>();
+
+            foreach (var item in items)
+            {
+                Console.WriteLine($"ConvertItemsToEmployeeList processing: '{item}'");
+                var tuple = DeconstructNameAndBirthDate(item.ToString());
+                result.Add(new EmployeeInfo
+                {
+                    FullName = tuple.Item1,
+                    BirthDate = tuple.Item2
+                });
+            }
+
+            return result;
+        }*/
 
         private List<NormativeInstructionInfo> ConvertItemsToNormativeInstructionsList(System.Windows.Forms.ListBox.ObjectCollection items)
         {
@@ -2439,21 +2313,281 @@ namespace Kotova.Test1.ClientSide
                 }
 
                 var selectedItem = instructionsListView.SelectedItems[0];
-                string selectedInstructionName = selectedItem.SubItems[1].Text; // Cause column
+                // FIX: Now cause is in column 2 (index 2), not column 1
+                string selectedInstructionName = selectedItem.SubItems[2].Text; // Cause column (now correct)
+                byte instructionType = GetInstructionTypeFromSelectedItem(selectedItem);
 
-                // Fetch employee data
-                await SyncNamesWithDBInternal();
+                // Fetch employee data with roles
+                await SyncEmployeesWithRolesAsync();
 
                 // Fetch normative instruction names
                 await SyncNormativeInstructionNamesWithDBInternal();
 
-                // Show the assignment manager
-                ShowInstructionAssignmentManager(selectedInstructionName);
+                // Show the assignment manager with the instruction type
+                ShowInstructionAssignmentManager(selectedInstructionName, instructionType);
             }
             catch (Exception ex)
             {
                 WinForms.MessageBox.Show($"Ошибка: {ex.Message}", "Error", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
             }
+        }
+
+        private async Task SyncEmployeesWithRolesAsync()
+        {
+            try
+            {
+                checkedListBoxNamesOfPeople.Items.Clear();
+
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    // IMPORTANT: Set Accept-Charset header
+                    httpClient.DefaultRequestHeaders.AcceptCharset.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("utf-8"));
+
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-employees-with-roles");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // IMPORTANT: Explicitly specify UTF-8 encoding when reading response
+                        var responseBytes = await response.Content.ReadAsByteArrayAsync();
+                        string responseBody = System.Text.Encoding.UTF8.GetString(responseBytes);
+
+                        //Console.WriteLine($"Raw response body: {responseBody}");
+
+                        var employees = JsonConvert.DeserializeObject<List<dynamic>>(responseBody);
+
+                        if (employees == null)
+                        {
+                            throw new Exception("тело ответа пусто");
+                        }
+
+                        // Convert to the format expected by the UI
+                        var employeeInfoList = employees
+                            .Select(e => new
+                            {
+                                FullName = e.FullName?.ToString() ?? "",
+                                BirthDate = e.BirthDate?.ToString() ?? "",
+                                Role = e.Role?.ToString() ?? "User"
+                            })
+                            .Where(e => !string.IsNullOrWhiteSpace(e.FullName) && !string.IsNullOrWhiteSpace(e.BirthDate))
+                            .ToList();
+
+                        //Console.WriteLine($"Parsed {employeeInfoList.Count} valid employees");
+
+                        string[] resultArray = employeeInfoList.Select(e => $"{e.FullName} ({e.BirthDate}) - {e.Role}").ToArray();
+
+                        /*foreach (var item in resultArray)
+                        {
+                            Console.WriteLine($"Adding to list: '{item}'");
+                        }*/
+
+                        checkedListBoxNamesOfPeople.Items.AddRange(resultArray);
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Не получилось синхронизировать данные сотрудников. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in SyncEmployeesWithRolesAsync: {ex}");
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Update the existing ShowInstructionAssignmentManager method
+        private void ShowInstructionAssignmentManager(string instructionName, byte instructionType)
+        {
+            var assignmentManager = new InstructionAssignmentManager(
+                instructionName,
+                ConvertItemsToEmployeeListWithRoles(checkedListBoxNamesOfPeople.Items),
+                ConvertItemsToNormativeInstructionsList(ListOfNormativeInstrNames.Items),
+                _loginForm._jwtToken,
+                urlSubmitInstructionToPeople,
+                instructionType
+            );
+
+            assignmentManager.ShowDialog();
+        }
+
+
+        /*private List<EmployeeInfo> ConvertItemsToEmployeeListWithRoles(CheckedListBox.ObjectCollection items)
+        {
+            Console.WriteLine("*** ConvertItemsToEmployeeListWithRoles called ***");
+            var result = new List<EmployeeInfo>();
+
+            foreach (var item in items)
+            {
+                string itemText = item.ToString();
+                Console.WriteLine($"ConvertItemsToEmployeeListWithRoles processing: '{itemText}'");
+
+                // Parse the format: "FullName (BirthDate) - Role"
+                var parts = itemText.Split(" - ");
+                if (parts.Length >= 2)
+                {
+                    string nameAndBirthDate = parts[0]; // "John Doe (2023-01-15)"
+                    string role = parts[1]; // "User"
+
+                    Console.WriteLine($"With role - nameAndBirthDate: '{nameAndBirthDate}', role: '{role}'");
+
+                    var tuple = DeconstructNameAndBirthDate(nameAndBirthDate);
+                    result.Add(new EmployeeInfo
+                    {
+                        FullName = tuple.Item1,
+                        BirthDate = tuple.Item2,
+                        Role = role
+                    });
+                }
+                else
+                {
+                    Console.WriteLine($"No role found, processing directly: '{itemText}'");
+                    var tuple = DeconstructNameAndBirthDate(itemText);
+                    result.Add(new EmployeeInfo
+                    {
+                        FullName = tuple.Item1,
+                        BirthDate = tuple.Item2,
+                        Role = "User" // Default role
+                    });
+                }
+            }
+
+            return result;
+        }*/
+        private List<EmployeeInfo> ConvertItemsToEmployeeListWithRoles(CheckedListBox.ObjectCollection items)
+        {
+            var result = new List<EmployeeInfo>();
+
+            foreach (var item in items)
+            {
+                string itemText = item.ToString();
+
+                // Parse the format: "FullName (BirthDate) - Role"
+                var parts = itemText.Split(" - ");
+                if (parts.Length >= 2)
+                {
+                    string nameAndBirthDate = parts[0]; // "John Doe (2023-01-15)"
+                    string role = parts[1]; // "User"
+
+                    // Now use the original DeconstructNameAndBirthDate method on the clean nameAndBirthDate
+                    var tuple = DeconstructNameAndBirthDate(nameAndBirthDate);
+                    result.Add(new EmployeeInfo
+                    {
+                        FullName = tuple.Item1,
+                        BirthDate = tuple.Item2,
+                        Role = role
+                    });
+                }
+                else
+                {
+                    // Fallback for old format without role
+                    var tuple = DeconstructNameAndBirthDate(itemText);
+                    result.Add(new EmployeeInfo
+                    {
+                        FullName = tuple.Item1,
+                        BirthDate = tuple.Item2,
+                        Role = "User" // Default role
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        private Tuple<string, string> DeconstructNameAndBirthDate(string? nameWithBirthDate)
+        {
+            if (string.IsNullOrWhiteSpace(nameWithBirthDate))
+            {
+                throw new ArgumentException("nameWithBirthDate is null or empty! in DeconstructNameAndBirthDate");
+            }
+
+            // Check for obviously malformed input
+            if (nameWithBirthDate.Trim() == "()" || nameWithBirthDate.Trim().StartsWith("()"))
+            {
+                throw new ArgumentException($"nameWithBirthDate '{nameWithBirthDate}' appears to have missing name or birth date data!");
+            }
+
+            string pattern = @"^(.+?)\s\((\d{4}-\d{2}-\d{2})\)$";
+            Regex regex = new Regex(pattern);
+            Match match = regex.Match(nameWithBirthDate);
+
+            if (match.Success)
+            {
+                string fullName = match.Groups[1].Value.Trim();
+                string birthDate = match.Groups[2].Value;
+
+                // Additional validation
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    throw new ArgumentException($"Extracted name is empty from '{nameWithBirthDate}'");
+                }
+
+                return System.Tuple.Create(fullName, birthDate);
+            }
+            else
+            {
+                throw new ArgumentException($"nameWithBirthDate '{nameWithBirthDate}' doesn't match the expected pattern 'Name (YYYY-MM-DD)'!");
+            }
+        }
+
+        /*private Tuple<string, string> DeconstructNameAndBirthDate(string? nameWithBirthDate)
+        {
+            // This should ALWAYS show when the method is called
+            Console.WriteLine($"*** DeconstructNameAndBirthDate called with: '{nameWithBirthDate ?? "NULL"}' ***");
+            System.Diagnostics.Debug.WriteLine($"*** DeconstructNameAndBirthDate called with: '{nameWithBirthDate ?? "NULL"}' ***");
+
+            if (nameWithBirthDate == null)
+            {
+                Console.WriteLine("ERROR: Input is null");
+                throw new ArgumentException("nameWithBirthDate is null! in DeconstructNameAndBirthDate");
+            }
+
+            // Check for obviously malformed input
+            if (nameWithBirthDate.Trim() == "()" || nameWithBirthDate.Trim().StartsWith("()"))
+            {
+                Console.WriteLine($"ERROR: Input appears malformed: '{nameWithBirthDate}'");
+                throw new ArgumentException($"nameWithBirthDate '{nameWithBirthDate}' appears to have missing name or birth date data!");
+            }
+
+            string pattern = @"^(.+?)\s\((\d{4}-\d{2}-\d{2})\)$";
+            Regex regex = new Regex(pattern);
+            Match match = regex.Match(nameWithBirthDate);
+
+            if (match.Success)
+            {
+                string fullName = match.Groups[1].Value;
+                string birthDate = match.Groups[2].Value;
+                Console.WriteLine($"SUCCESS: Name: '{fullName}', Date: '{birthDate}'");
+                return System.Tuple.Create(fullName, birthDate);
+            }
+            else
+            {
+                Console.WriteLine($"ERROR: Pattern mismatch. Input: '{nameWithBirthDate}'");
+                throw new ArgumentException($"nameWithBirthDate '{nameWithBirthDate}' doesn't match the pattern! Expected format: 'Name (YYYY-MM-DD)'");
+            }
+        }*/
+
+
+        // Helper method to get instruction type from selected item
+        private byte GetInstructionTypeFromSelectedItem(WinForms.ListViewItem item)
+        {
+            // Now the columns are in the correct order:
+            // 0: ID, 1: Type, 2: Cause, 3: Start Date, 4: End Date, 5: Assigned, 6: Completed
+            string typeText = item.SubItems[1].Text; // Type column (now correct)
+
+            return typeText switch
+            {
+                "Вводный" => 0,
+                "Внеплановый" => 1,
+                "Первичный" => 2,
+                "Повторный" => 3,
+                "Повторный (для водителей)" => 4,
+                "Целевой" => 5,
+                _ => 255 // Default value
+            };
         }
 
         private async void btnAddInstruction_Click(object sender, EventArgs e)
@@ -2521,16 +2655,56 @@ namespace Kotova.Test1.ClientSide
             foreach (var instruction in instructions)
             {
                 var item = new WinForms.ListViewItem(instruction.instruction_id.ToString());
-                item.SubItems.Add(instruction.cause_of_instruction);
-                item.SubItems.Add(GetInstructionTypeName(instruction.type_of_instruction));
-                item.SubItems.Add(instruction.begin_date.ToString("dd.MM.yyyy"));
-                item.SubItems.Add(instruction.end_date.ToString("dd.MM.yyyy"));
-                item.SubItems.Add(instruction.is_assigned_to_people ? "Назначен" : "Не назначен");
+                // FIX: Add items in the correct order to match column headers
+                item.SubItems.Add(GetInstructionTypeName(instruction.type_of_instruction)); // Column 1: Type
+                item.SubItems.Add(instruction.cause_of_instruction);  // Column 2: Cause
+                item.SubItems.Add(instruction.begin_date.ToString("dd.MM.yyyy")); // Column 3: Start Date
+                item.SubItems.Add(instruction.end_date.ToString("dd.MM.yyyy")); // Column 4: End Date
+                item.SubItems.Add(instruction.is_assigned_to_people ? "Назначен" : "Не назначен"); // Column 5: Assigned
+                item.SubItems.Add(instruction.is_passed_by_everyone ? "Завершен" : "В процессе"); // Column 6: Completed
 
                 instructionsListView.Items.Add(item);
             }
         }
         #endregion
+
+        public async Task<List<EmployeeInfo>> GetEmployeesByRoleAsync(string roleFilter = null)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-employees-with-roles");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        var employees = JsonConvert.DeserializeObject<List<EmployeeInfo>>(responseBody);
+
+                        // Filter by role if specified
+                        if (!string.IsNullOrEmpty(roleFilter))
+                        {
+                            employees = employees.Where(e => e.Role == roleFilter).ToList();
+                        }
+
+                        return employees;
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Failed to get employees: {response.StatusCode}");
+                        return new List<EmployeeInfo>();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}");
+                return new List<EmployeeInfo>();
+            }
+        }
 
 
 
@@ -2656,6 +2830,423 @@ namespace Kotova.Test1.ClientSide
             await RefreshInstructionsListView();
         }
 
-        
+
+        private bool ConfirmAction(string message)
+        {
+            var result = MessageBox.Show(message, "Подтвердить действие", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        private async void SkipTheAssignmentOfInstrCheckedBox_CheckedChanged(object sender, EventArgs e)
+        {
+            System.Windows.Forms.CheckBox checkBox = sender as System.Windows.Forms.CheckBox;
+
+
+            if (checkBox != null && checkBox.Checked)
+            {
+                var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
+                if (selectedInstruction is null)
+                {
+                    MessageBox.Show("Инструкция не выбрана!");
+                    checkBox.Checked = false;
+                    return;
+                }
+                if (ConfirmAction("Вы уверены, что хотите не назначить людей для данного инструктажа?"))
+                {
+                    await SkipTheAssignmentOfInstrInternal();
+                }
+                else
+                {
+                    MessageBox.Show("Вы не подтвердили действие");
+                }
+                checkBox.Checked = false;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        private async Task SkipTheAssignmentOfInstrInternal()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string url = SkipTheUnplannedInstructionURL;
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    var selectedInstruction = ListOfUnplannedInstructions.SelectedItem;
+
+                    Instruction instructionToSkip = unplannedInstructions_global
+        .FirstOrDefault(ins => ins.cause_of_instruction == selectedInstruction.ToString());
+                    string jsonData = JsonConvert.SerializeObject(instructionToSkip);
+
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+                    // Send PUT request to the server
+                    System.Net.Http.HttpResponseMessage response = await httpClient.PatchAsync(url, content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+
+                        MessageBox.Show("Инструктаж успешно пропущен!");
+                        await SyncManuallyInstrWithDBInternal();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Ошибка при пропуске инструктажа: {response.StatusCode}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}");
+            }
+        }
     }
+
+
+
+
+    #region OLD PARTS OF CODE, THAT ARE NOT IN USE ANYMORE
+
+
+    #region Passing instructions as User by Chief
+    /*private async Task<bool> DownloadInstructionsForUserFromServer(string? userName) // по факту эта функция должна быть вместе с в User.cs в совершенно отдельном файле.
+        {
+            if (userName is null)
+            {
+                throw new ArgumentNullException(nameof(userName));
+            }
+            string url = DownloadInstructionForUserURL;
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+                    System.Net.Http.HttpResponseMessage response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var result = System.Text.Json.JsonSerializer.Deserialize<QueryResult>(jsonResponse);
+                    if (result.Result1.Count == 0)
+                    {
+                        return true;
+                    }
+
+                    listOfInstructions_global = result.Result1;
+                    listsOfPaths_global = result.Result2;
+                    foreach (Dictionary<string, object> temp in result.Result1)
+                    {
+                        ListOfInstructionsForUser.Items.Add(temp[DataBaseNames.tableName_sql_INSTRUCTIONS_cause]);
+
+                    }
+                    return false;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                // Handle any exceptions here
+                MessageBox.Show($"Ошибка: {ex.Message}");
+                Console.WriteLine($"Couldn't download instructions for user(Chief) from server: {ex.Message}"); //TODO: Нужно чтобы здесь не выбрасывалось резко из приложения, если что. По идее, наверное?
+                return false;
+            }
+        }
+
+
+
+
+        
+
+        private void InstructionsToPass_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            FilesOfInstructionCheckedListBox.Items.Clear();
+            HyperLinkForInstructionsFolder.Enabled = true;
+            if (ListOfInstructionsForUser.SelectedItem == null)
+            {
+                MessageBox.Show("Вы не выбрали инструктаж.");
+                PassInstruction.Enabled = false;
+                HyperLinkForInstructionsFolder.Enabled = false;
+                return;
+            }
+            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
+            int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
+
+            List<string> listOfPath = new List<string>();
+            foreach (var listOfPaths in listsOfPaths_global)
+            {
+                if (Convert.ToInt32(listOfPaths[dB_instructionId].ToString()) == instructionId)
+                {
+                    if (listOfPaths[db_filePath] == null)
+                    {
+                        if (selectedDict[db_typeOfInstruction].ToString() == "0") // Проверка что мы входим в вводный инструктаж только!
+                        {
+                            PassInstruction.Enabled = true;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ooops, Что-то пошло не так. Проверь эту строчку на предмет присутствия файлов инструктажа!");
+                            PassInstruction.Enabled = false;
+                            HyperLinkForInstructionsFolder.Enabled = false;
+                            return;
+                        }
+
+                    }
+                    FilesOfInstructionCheckedListBox.Items.Add(listOfPaths[db_filePath].ToString());
+                }
+            }
+            HyperLinkForInstructionsFolder.Enabled = true;
+        }
+
+        private void HyperLinkForInstructionsFolder_Click(object sender, EventArgs e)
+        {
+            HyperLinkForInstructionsFolder.Enabled = false;
+            if (ListOfInstructionsForUser.SelectedItem == null)
+            {
+                MessageBox.Show("Вы не выбрали инструктаж.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+            Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString()); //most likely suppress it, cause its not null.
+            string? pathStr = selectedDict[DataBaseNames.tableName_sql_pathToInstruction].ToString();
+
+            if (pathStr is null || pathStr.Length == 0)
+            {
+                MessageBox.Show("Путь пуст или отсутствует.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+            string path = Path.GetFullPath(pathStr);
+            OpenFolderInExplorer(path);
+
+        }
+
+        private void OpenFolderInExplorer(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                MessageBox.Show("Указанный путь пуст или отсутствует.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+
+            // Get the full path and check if it exists
+            string fullPath = Path.GetFullPath(path);
+            if (!Directory.Exists(fullPath))
+            {
+                MessageBox.Show($"Путь '{fullPath}' не существует.");
+                PassInstruction.Enabled = false;
+                return;
+            }
+
+            // Open the folder in Windows Explorer
+            try
+            {
+                Process.Start("explorer.exe", fullPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не получилось открыть папку: {ex.Message}");
+                PassInstruction.Enabled = false;
+            }
+        }
+
+        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedItemStr)
+        {
+
+            foreach (Dictionary<string, object> tempD in listOfInstructions_global)
+            {
+                Dictionary<string, object> selectedDictionary = listOfInstructions_global.FirstOrDefault(tempD => tempD[DataBaseNames.tableName_sql_INSTRUCTIONS_cause].ToString() == selectedItemStr);
+                if (selectedDictionary != null)
+                {
+                    return selectedDictionary; // HERE WE DIDN't CHECK  THAT названия инструктажей не повторяется, а просто вернули первое попавшееся. Проверку бы!
+                }
+            }
+            throw new Exception("Corresponding Dictionary not found!");
+
+        }
+
+        private async void PassInstruction_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!PassInstruction.Checked) { return; }
+            if (ConfirmAction("Вы прошли инструктаж?"))
+            {
+                MessageBox.Show("Вы согласились с прохождением инструктажа.", "Действите подтверждено", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                PassInstruction.Enabled = false;
+                if (ListOfInstructionsForUser.SelectedItem == null)
+                {
+                    MessageBox.Show("Вы не выбрали инструктаж.");
+                    PassInstruction.Enabled = false;
+                    return;
+                }
+                Dictionary<string, object> selectedDict = GetDictFromSelectedInstruction(ListOfInstructionsForUser.SelectedItem.ToString());
+                await SendInstructionIsPassedToDB(selectedDict);
+                FilesOfInstructionCheckedListBox.Items.Clear();
+            }
+            else
+            {
+                MessageBox.Show("Вы не согласились с прохождением инструктажа.", "Действие отменено", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                PassInstruction.Checked = false;
+                return;
+            }
+        }
+
+        
+
+        private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
+        {
+            string url = SendInstructionIsPassedURL;
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    string jsonData = System.Text.Json.JsonSerializer.Serialize(selectedDict);
+
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                    System.Net.Http.HttpResponseMessage response = await client.PostAsync(url, content);
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Все хорошо, обновляем лист инструктажей.");
+                        ListOfInstructionsForUser.Items.Clear();
+                        DownloadInstructionsForUserFromServer(_userName);
+                    }
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+
+                // Handle any exceptions here
+                MessageBox.Show($"Error: {ex.Message}");
+            }
+            finally
+            {
+                PassInstruction.Checked = false;
+            }
+        }
+
+
+        private void FilesOfInstructionCheckedListBox_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            this.BeginInvoke((MethodInvoker)delegate
+            {
+                if (AreAllItemsChecked(FilesOfInstructionCheckedListBox))
+                {
+                    PassInstruction.Enabled = true;
+                }
+                else
+                {
+                    PassInstruction.Enabled = false;
+                }
+
+                if (e.NewValue == CheckState.Checked)
+                {
+                    string selectedPath = FilesOfInstructionCheckedListBox.Items[e.Index].ToString();
+                    OpenFile(selectedPath);
+                }
+            });
+
+        }
+        private bool AreAllItemsChecked(CheckedListBox checkedListBox)
+        {
+            for (int index = 0; index < checkedListBox.Items.Count; index++)
+            {
+                if (!checkedListBox.GetItemChecked(index))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void OpenFile(string filePath)
+        {
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = filePath,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не получилось открыть файл: {ex.Message}");
+            }
+        }
+
+
+        private void UpdateParentNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            TreeNode currentNode = treeNode;
+
+            while (currentNode.Parent != null)
+            {
+                if (nodeChecked)
+                {
+                    // If the current node is checked, ensure the parent is also checked
+                    currentNode.Parent.Checked = true;
+                }
+                else
+                {
+                    // If the current node is unchecked, ensure the parent is unchecked
+                    // only if all its siblings are also unchecked
+                    bool allSiblingsUnchecked = true;
+
+                    foreach (TreeNode sibling in currentNode.Parent.Nodes)
+                    {
+                        if (sibling.Checked)
+                        {
+                            allSiblingsUnchecked = false;
+                            break;
+                        }
+                    }
+
+                    if (allSiblingsUnchecked)
+                    {
+                        currentNode.Parent.Checked = false;
+                    }
+                }
+
+                currentNode = currentNode.Parent;
+            }
+        }
+
+        public static List<string> GetSelectedFilePaths(System.Windows.Forms.TreeView treeView)
+        {
+            HashSet<string> uniqueFilePaths = new HashSet<string>();
+
+            foreach (TreeNode node in treeView.Nodes)
+            {
+                CollectFilePaths(node, uniqueFilePaths);
+            }
+
+            // Sort the paths
+            List<string> sortedFilePaths = uniqueFilePaths.ToList();
+            sortedFilePaths.Sort();
+
+            return sortedFilePaths;
+        }*/
+
+    #endregion
+
+    #endregion
 }

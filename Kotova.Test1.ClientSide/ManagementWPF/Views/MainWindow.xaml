@@ -1,0 +1,53 @@
+﻿<Window x:Class="Kotova.Test1.ClientSide.ManagementWPF.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Система управления инструктажами - Главный инженер" 
+        Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1976D2" Padding="15">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Система управления инструктажами" 
+                          FontSize="16" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{Binding CurrentUser}" 
+                          FontSize="14" Foreground="White" 
+                          Margin="20,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <TabControl Grid.Row="1" Margin="0">
+            <TabItem Header="Внеплановые инструктажи для начальников">
+                <!-- Using full namespace path directly -->
+                <Kotova.Test1.ClientSide.ManagementWPF.Views.UnplannedInstructionView 
+                    DataContext="{Binding UnplannedInstructionView}"/>
+            </TabItem>
+
+            <TabItem Header="Отчёты" IsEnabled="False">
+                <TextBlock Text="Будет реализовано позже" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center" 
+                          FontSize="16" 
+                          Foreground="Gray"/>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <Button Content="Выйти" Command="{Binding LogoutCommand}" 
+                      Background="Transparent" BorderThickness="0"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

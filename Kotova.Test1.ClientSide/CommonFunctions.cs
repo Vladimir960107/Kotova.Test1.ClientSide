@@ -37,12 +37,13 @@ namespace Kotova.Test1.ClientSide
 
     public static class RoleMappings
     {
-        private static readonly Dictionary<string, string> _roleDbToDisplay = new Dictionary<string, string> // TODO: СДЛЕАТЬ ЭТО В БАЗЕ ДАННЫХ И В КЛАСС CACHE, И СКАЧИВАТЬ СЮДА В ПРОГРАММУ ИЗ БАЗЫ ДАННЫХ!
+        private static readonly Dictionary<string, string> _roleDbToDisplay = new Dictionary<string, string>
         {
-            { "user", "Сотрудник" },
-            { "chief of department", "Руководство ОТДЕЛА" },
-            { "coordinator", "Охрана труда" },
-            { "management", "Руководство ФИЛИАЛА" }
+            { "User", "Сотрудник" },
+            { "ChiefOfDepartment", "Руководство ОТДЕЛА" },
+            { "DeputyChief", "Заместитель руководителя ОТДЕЛА" }, // Add this line
+            { "Coordinator", "Охрана труда" },
+            { "Management", "Руководство ФИЛИАЛА" }
         };
 
         private static readonly Dictionary<string, string> _roleDisplayToDb;

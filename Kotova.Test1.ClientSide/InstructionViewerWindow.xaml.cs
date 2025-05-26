@@ -29,6 +29,8 @@ namespace Kotova.Test1.ClientSide
         public const string db_normativeInstructionName = "name";
         public const string db_normativeInstructionUrl = "url";
 
+        private bool _allowCompletion;
+
         // Private fields
         private InstructionService _instructionService;
         private bool _isInstructionSelected = false;
@@ -46,11 +48,12 @@ namespace Kotova.Test1.ClientSide
         public ObservableCollection<PassedInstructionItem> PassedInstructions { get; set; }
         public ObservableCollection<string> RelatedFiles { get; set; }
 
-        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false)
+        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false)
         {
             _jwtToken = jwtToken;
             _isChief = isChief;
             _userName = userName;
+            _allowCompletion = allowCompletion; // New property
             _instructionService = new InstructionService(jwtToken, new WpfLogger(this));
 
             InitializeComponent();
@@ -60,8 +63,8 @@ namespace Kotova.Test1.ClientSide
             // Set username
             UsernameTextBlock.Text = userName;
 
-            // Disable pass instruction checkbox for chiefs
-            if (_isChief)
+            // Modify this logic: Enable checkbox if allowCompletion is true, even for chiefs
+            if (_isChief && !_allowCompletion)
             {
                 PassInstructionCheckBox.IsEnabled = false;
                 PassInstructionCheckBox.ToolTip = "Руководители не могут отмечать инструктажи как пройденные для себя";
@@ -272,7 +275,15 @@ namespace Kotova.Test1.ClientSide
             if (instructionType == "0")
             {
                 _isInstructionSelected = true;
-                PassInstructionCheckBox.IsEnabled = !_isChief;
+                // Use the new logic to determine if chiefs can complete this instruction
+                if (_isChief)
+                {
+                    PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
+                }
+                else
+                {
+                    PassInstructionCheckBox.IsEnabled = true;
+                }
                 return;
             }
 
@@ -296,6 +307,7 @@ namespace Kotova.Test1.ClientSide
             if (hasNormativeInstructions)
             {
                 _isInstructionSelected = true;
+                // UpdatePassInstructionState will be called when checkboxes are checked/unchecked
             }
             else
             {
@@ -332,16 +344,22 @@ namespace Kotova.Test1.ClientSide
 
         private void UpdatePassInstructionState()
         {
-            if (_isChief)
+            if (!_isInstructionSelected)
             {
                 PassInstructionCheckBox.IsEnabled = false;
                 return;
             }
 
-            if (!_isInstructionSelected)
+            // Check if this is a chief and determine if they can complete this specific instruction type
+            if (_isChief)
             {
-                PassInstructionCheckBox.IsEnabled = false;
-                return;
+                bool canCompleteThisInstruction = CanChiefCompleteInstruction();
+                if (!canCompleteThisInstruction)
+                {
+                    PassInstructionCheckBox.IsEnabled = false;
+                    PassInstructionCheckBox.ToolTip = "Руководители не могут отмечать данный тип инструктажа как пройденный для себя";
+                    return;
+                }
             }
 
             // Check if this is an introductory instruction
@@ -354,6 +372,7 @@ namespace Kotova.Test1.ClientSide
                     if (instructionType == "0")
                     {
                         PassInstructionCheckBox.IsEnabled = true;
+                        PassInstructionCheckBox.ToolTip = "";
                         return;
                     }
                 }
@@ -362,21 +381,56 @@ namespace Kotova.Test1.ClientSide
             // For other instruction types, check if all normative instructions are checked
             bool allChecked = NormativeInstructions.Count > 0 && NormativeInstructions.All(ni => ni.IsChecked);
             PassInstructionCheckBox.IsEnabled = allChecked;
+            PassInstructionCheckBox.ToolTip = "";
+        }
+
+        /// <summary>
+        /// Determines if a chief can complete the currently selected instruction based on instruction type
+        /// </summary>
+        /// <returns>True if the chief can complete this instruction type</returns>
+        private bool CanChiefCompleteInstruction()
+        {
+            if (!_isChief)
+                return true; // Non-chiefs can always complete instructions
+
+            // If _allowCompletion is true (like for Deputy Chiefs), they can complete any instruction
+            if (_allowCompletion)
+                return true;
+
+            // For regular chiefs, check the instruction type
+            if (InstructionsListBox.SelectedItem != null)
+            {
+                var selectedDict = GetDictFromSelectedInstruction(InstructionsListBox.SelectedItem.ToString());
+                if (selectedDict != null)
+                {
+                    string instructionTypeStr = selectedDict[db_typeOfInstruction].ToString();
+                    if (byte.TryParse(instructionTypeStr, out byte instructionType))
+                    {
+                        // Chiefs can complete:
+                        // 0 = Вводный (Introductory)
+                        // 1 = Внеплановый (Unplanned)
+                        return instructionType == 0 || instructionType == 1;
+                    }
+                }
+            }
+
+            return false; // Default to not allowing completion if we can't determine the type
         }
 
         private async void PassInstructionCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (_isChief)
-            {
-                PassInstructionCheckBox.IsChecked = false;
-                MessageBox.Show("Руководители не могут отмечать инструктажи как пройденные для себя.");
-                return;
-            }
-
             if (InstructionsListBox.SelectedItem == null)
             {
                 MessageBox.Show("Вы не выбрали инструктаж.");
                 PassInstructionCheckBox.IsChecked = false;
+                return;
+            }
+
+            // Check if this chief can complete this specific instruction type
+            if (_isChief && !CanChiefCompleteInstruction())
+            {
+                PassInstructionCheckBox.IsChecked = false;
+                MessageBox.Show("Руководители не могут отмечать данный тип инструктажа как пройденный для себя.\nРазрешены только вводные и внеплановые инструктажи.");
                 return;
             }
 
