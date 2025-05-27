@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Kotova.Test1.ClientSide.ManagementWPF.Views"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="1000">
 
@@ -19,6 +20,8 @@
         </Style>
 
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <local:BoolToStatusConverter x:Key="BoolToStatusConverter"/>
+        <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
     </UserControl.Resources>
 
     <Grid>
@@ -79,7 +82,7 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                             <Button Content="Обновить данные" 
                                    Command="{Binding LoadDataCommand}"
-                                   IsEnabled="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}"/>
+                                   IsEnabled="{Binding IsNotLoading}"/>
                             <Button Content="Назначить инструктаж" 
                                    Command="{Binding AssignInstructionCommand}"
                                    Background="#4CAF50" 

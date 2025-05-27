@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Kotova.Test1.ClientSide.ManagementWPF.Models;
+using System.Net;
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.Services
 {
@@ -18,6 +19,7 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
         public ApiService(string baseUrl)
         {
             _httpClient = new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromSeconds(30); // Add timeout
             _baseUrl = baseUrl;
         }
 
@@ -32,14 +34,38 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
             try
             {
                 var response = await _httpClient.GetAsync($"{_baseUrl}/get-departments-with-chiefs");
-                response.EnsureSuccessStatusCode();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"API Error ({response.StatusCode}): {errorContent}");
+                }
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<DepartmentWithChiefsDto>>(jsonResponse);
+
+                if (string.IsNullOrEmpty(jsonResponse))
+                {
+                    throw new InvalidOperationException("Получен пустой ответ от сервера");
+                }
+
+                var result = JsonConvert.DeserializeObject<List<DepartmentWithChiefsDto>>(jsonResponse);
+                return result ?? new List<DepartmentWithChiefsDto>();
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при получении отделов с начальниками: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных от сервера: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error getting departments with chiefs: {ex.Message}", ex);
+                throw new Exception($"Неожиданная ошибка при получении отделов с начальниками: {ex.Message}", ex);
             }
         }
 
@@ -56,17 +82,37 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    return result.Message;
+                    try
+                    {
+                        var result = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                        return result?.Message?.ToString() ?? "Инструктаж успешно назначен";
+                    }
+                    catch (JsonException)
+                    {
+                        // If JSON parsing fails, return the raw response
+                        return responseContent;
+                    }
                 }
                 else
                 {
-                    throw new Exception($"Server error: {responseContent}");
+                    throw new HttpRequestException($"Ошибка сервера ({response.StatusCode}): {responseContent}");
                 }
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при назначении инструктажа: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error assigning instruction: {ex.Message}", ex);
+                throw new Exception($"Неожиданная ошибка при назначении инструктажа: {ex.Message}", ex);
             }
         }
 
@@ -75,14 +121,38 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
             try
             {
                 var response = await _httpClient.GetAsync($"{_baseUrl}/get-unplanned-instructions-for-chiefs-status");
-                response.EnsureSuccessStatusCode();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"API Error ({response.StatusCode}): {errorContent}");
+                }
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<UnplannedInstructionStatusDto>>(jsonResponse);
+
+                if (string.IsNullOrEmpty(jsonResponse))
+                {
+                    return new List<UnplannedInstructionStatusDto>();
+                }
+
+                var result = JsonConvert.DeserializeObject<List<UnplannedInstructionStatusDto>>(jsonResponse);
+                return result ?? new List<UnplannedInstructionStatusDto>();
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при получении статусов инструктажей: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных от сервера: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error getting instructions status: {ex.Message}", ex);
+                throw new Exception($"Неожиданная ошибка при получении статусов инструктажей: {ex.Message}", ex);
             }
         }
 
@@ -91,14 +161,38 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
             try
             {
                 var response = await _httpClient.GetAsync($"{_baseUrl}/normative-instructions");
-                response.EnsureSuccessStatusCode();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"API Error ({response.StatusCode}): {errorContent}");
+                }
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<List<NormativeInstructionDto>>(jsonResponse);
+
+                if (string.IsNullOrEmpty(jsonResponse))
+                {
+                    return new List<NormativeInstructionDto>();
+                }
+
+                var result = JsonConvert.DeserializeObject<List<NormativeInstructionDto>>(jsonResponse);
+                return result ?? new List<NormativeInstructionDto>();
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при получении нормативных инструкций: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных от сервера: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Error getting normative instructions: {ex.Message}", ex);
+                throw new Exception($"Неожиданная ошибка при получении нормативных инструкций: {ex.Message}", ex);
             }
         }
 

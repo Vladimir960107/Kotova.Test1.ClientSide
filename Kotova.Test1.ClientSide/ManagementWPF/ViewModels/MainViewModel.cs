@@ -17,12 +17,14 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
             _apiService = apiService;
             _currentUser = currentUser;
 
+            // Create the UnplannedInstructionViewModel
             UnplannedInstructionViewModel = new UnplannedInstructionViewModel(_apiService);
             LogoutCommand = new RelayCommand(Logout);
 
             StatusMessage = "Готово к работе";
         }
 
+        // Fix: Make sure this property has the correct name that matches the XAML binding
         public UnplannedInstructionViewModel UnplannedInstructionViewModel { get; }
 
         public string CurrentUser

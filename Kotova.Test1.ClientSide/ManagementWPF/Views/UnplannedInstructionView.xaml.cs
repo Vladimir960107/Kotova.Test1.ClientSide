@@ -15,10 +15,7 @@ using System.Windows.Shapes;
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.Views
 {
-    /// <summary>
-    /// Interaction logic for UnplannedInstructionView.xaml
-    /// </summary>
-    public partial class UnplannedInstructionView : UserControl
+    public partial class UnplannedInstructionView : System.Windows.Controls.UserControl
     {
         public UnplannedInstructionView()
         {
@@ -26,3 +23,4 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Views
         }
     }
 }
+

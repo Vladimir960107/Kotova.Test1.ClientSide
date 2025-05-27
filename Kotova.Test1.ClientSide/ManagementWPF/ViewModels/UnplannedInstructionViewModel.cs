@@ -7,12 +7,15 @@ using Kotova.Test1.ClientSide.ManagementWPF.Helpers;
 using Kotova.Test1.ClientSide.ManagementWPF.Models;
 using Kotova.Test1.ClientSide.ManagementWPF.Services;
 using Kotova.Test1.ClientSide.ManagementWPF.ViewModels;
+using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
 namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
 {
     public class UnplannedInstructionViewModel : BaseViewModel
     {
+        public bool IsNotLoading => !IsLoading;
+
         private readonly IApiService _apiService;
 
         private string _instructionCause = "Работа в зоне железнодорожных путей СТО-357";
@@ -32,8 +35,8 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             AssignInstructionCommand = new RelayCommand(async () => await AssignInstructionAsync(), CanAssignInstruction);
             RefreshStatusCommand = new RelayCommand(async () => await LoadInstructionStatusesAsync());
 
-            // Load data on initialization
-            _ = LoadDataAsync();
+            // Load data on initialization with proper error handling
+            _ = InitializeAsync();
         }
 
         public ObservableCollection<ChiefSelectionItem> ChiefsSelection { get; }
@@ -55,7 +58,11 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
         public bool IsLoading
         {
             get => _isLoading;
-            set => SetProperty(ref _isLoading, value);
+            set
+            {
+                SetProperty(ref _isLoading, value);
+                OnPropertyChanged(nameof(IsNotLoading));
+            }
         }
 
         public string StatusMessage
@@ -67,6 +74,28 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
         public RelayCommand LoadDataCommand { get; }
         public RelayCommand AssignInstructionCommand { get; }
         public RelayCommand RefreshStatusCommand { get; }
+
+        // Separate initialization method with better error handling
+        private async Task InitializeAsync()
+        {
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                // Make sure loading is turned off even if initialization fails
+                IsLoading = false;
+                StatusMessage = $"Ошибка инициализации: {ex.Message}";
+
+                // Show error to user but don't crash the application
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    MessageBox.Show($"Ошибка загрузки данных: {ex.Message}\n\nПриложение будет работать в ограниченном режиме.",
+                        "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }));
+            }
+        }
 
         private async Task LoadDataAsync()
         {
@@ -86,7 +115,12 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"Ошибка загрузки: {ex.Message}";
-                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // Show error on UI thread
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }));
             }
             finally
             {
@@ -169,10 +203,25 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
 
             try
             {
+                // Add null checks and validation
+                if (ChiefsSelection == null)
+                {
+                    throw new InvalidOperationException("Список начальников не инициализирован");
+                }
+
                 var selectedChiefIds = ChiefsSelection
-                    .Where(c => c.IsSelected)
+                    .Where(c => c != null && c.IsSelected && c.ChiefId > 0)
                     .Select(c => c.ChiefId)
                     .ToList();
+
+                if (!selectedChiefIds.Any())
+                {
+                    StatusMessage = "Не выбраны начальники для назначения инструктажа";
+                    // Remove Dispatcher call and show message directly
+                    MessageBox.Show("Пожалуйста, выберите хотя бы одного начальника для назначения инструктажа.",
+                        "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 var package = new UnplannedInstructionForChiefsPackage
                 {
@@ -183,29 +232,34 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
                         TypeOfInstruction = 1 // Unplanned
                     },
                     SelectedChiefIds = selectedChiefIds,
-                    FilePaths = new List<string>(), // TODO: Add file selection
-                    NormativeInstructionIds = new List<int>() // TODO: Add normative selection
+                    FilePaths = new List<string>(),
+                    NormativeInstructionIds = new List<int>()
                 };
 
-                var result = await _apiService.AssignUnplannedInstructionToChiefsAsync(package);
+                var result = await _apiService.AssignUnplannedInstructionToChiefsAsync(package).ConfigureAwait(true);
 
-                StatusMessage = result;
-                MessageBox.Show(result, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                StatusMessage = result ?? "Инструктаж успешно назначен";
+
+                // Remove Dispatcher call
+                MessageBox.Show(result ?? "Инструктаж успешно назначен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 // Clear form
                 InstructionCause = "";
                 EndDate = DateTime.Now.AddDays(7);
-                foreach (var chief in ChiefsSelection)
+
+                foreach (var chief in ChiefsSelection.Where(c => c != null))
                 {
                     chief.IsSelected = false;
                 }
 
                 // Refresh statuses
-                await LoadInstructionStatusesAsync();
+                await LoadInstructionStatusesAsync().ConfigureAwait(true);
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Ошибка: {ex.Message}";
+
+                // Remove Dispatcher call
                 MessageBox.Show($"Ошибка назначения инструктажа: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

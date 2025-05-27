@@ -236,7 +236,7 @@ namespace Kotova.Test1.ClientSide
         }
 
 
-        private System.Windows.Window CreateWPFManagementWindow(Login_Russian loginForm, string username, string fullName, string departmentName)
+        private System.Windows.Window CreateWPFManagementWindow(string username, string fullName, string departmentName)
         {
             try
             {
@@ -300,7 +300,7 @@ namespace Kotova.Test1.ClientSide
                     break;
                 case "Management":
                     //formToOpen = new ManagementForm(this, username, fullName, departmentName);
-                    wpfWindow = CreateWPFManagementWindow(this, username, fullName, departmentName);
+                    wpfWindow = CreateWPFManagementWindow(username, fullName, departmentName);
                     break;
                 case "Admin":
                     formToOpen = new AdminForm(this, username, fullName);
