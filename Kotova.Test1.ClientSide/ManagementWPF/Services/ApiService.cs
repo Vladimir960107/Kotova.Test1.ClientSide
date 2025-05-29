@@ -200,5 +200,55 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
         {
             _httpClient?.Dispose();
         }
+
+        // Add this method to your ApiService.cs class
+
+        public async Task<string> AssignUnplannedInstructionToDepartmentsAsync(UnplannedInstructionForDepartmentsPackage package)
+        {
+            try
+            {
+                var jsonData = JsonConvert.SerializeObject(package);
+                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync($"{_baseUrl}/assign-unplanned-instruction-to-departments", content);
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    try
+                    {
+                        var result = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                        return result?.Message?.ToString() ?? "Инструктаж успешно назначен";
+                    }
+                    catch (JsonException)
+                    {
+                        // If JSON parsing fails, return the raw response
+                        return responseContent;
+                    }
+                }
+                else
+                {
+                    throw new HttpRequestException($"Ошибка сервера ({response.StatusCode}): {responseContent}");
+                }
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при назначении инструктажа: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Неожиданная ошибка при назначении инструктажа: {ex.Message}", ex);
+            }
+        }
     }
+
 }

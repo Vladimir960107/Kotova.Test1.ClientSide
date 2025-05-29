@@ -1,6 +1,8 @@
 ﻿using Kotova.CommonClasses;
+using Kotova.Test1.ClientSide.ManagementWPF;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.CodeDom;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Net.Http;
@@ -13,15 +15,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Windows; 
+using System.Windows.Forms.Integration;
+using System.Windows.Input;
 using Windows.UI.WindowManagement;
 using static Kotova.Test1.ClientSide.Program;
 using static System.Net.Mime.MediaTypeNames;
-using System.Windows; 
-using System.Collections.Generic;
 using MessageBox = System.Windows.Forms.MessageBox;
-using Kotova.Test1.ClientSide.ManagementWPF;
 using SystemColors = System.Drawing.SystemColors;
-
 
 namespace Kotova.Test1.ClientSide
 {
@@ -236,10 +237,13 @@ namespace Kotova.Test1.ClientSide
         }
 
 
-        private System.Windows.Window CreateWPFManagementWindow(string username, string fullName, string departmentName)
+        /*private System.Windows.Window CreateWPFManagementWindow(string username, string fullName, string departmentName)
         {
             try
             {
+                // For standalone WPF windows, only need basic interop
+                WindowsFormsHost.EnableWindowsFormsInterop();
+
                 // Create API service with your existing authentication
                 var apiService = new ManagementWPF.Services.ApiService(
                     ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/instructions");
@@ -247,7 +251,6 @@ namespace Kotova.Test1.ClientSide
 
                 // Create ViewModel with user info
                 var mainViewModel = new ManagementWPF.ViewModels.MainViewModel(apiService, fullName);
-                
 
                 // Create and configure WPF window
                 var mainWindow = new ManagementWPF.Views.MainWindow(mainViewModel);
@@ -255,6 +258,35 @@ namespace Kotova.Test1.ClientSide
                 // Set window properties
                 mainWindow.Title = $"Система управления инструктажами - {fullName}";
                 mainWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+
+                // IMPORTANT: Ensure the window can receive keyboard input
+                mainWindow.Focusable = true;
+                System.Windows.Input.KeyboardNavigation.SetTabNavigation(mainWindow, System.Windows.Input.KeyboardNavigationMode.Local);
+
+                // Enable Input Method Editor for international characters (Russian)
+                System.Windows.Input.InputMethod.SetIsInputMethodEnabled(mainWindow, true);
+
+                // Handle the Loaded event to set initial focus
+                mainWindow.Loaded += (s, e) => {
+                    // Set focus with delay to ensure window is fully rendered
+                    mainWindow.Dispatcher.BeginInvoke(new Action(() => {
+                        mainWindow.Focus();
+                        System.Windows.Input.Keyboard.Focus(mainWindow);
+
+                        // Try to focus the first text input control
+                        var firstTextBox = FindFirstTextBox(mainWindow);
+                        if (firstTextBox != null)
+                        {
+                            firstTextBox.Focus();
+                            System.Windows.Input.Keyboard.Focus(firstTextBox);
+                        }
+                    }), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                };
+
+                // Handle window activation to restore focus
+                mainWindow.Activated += (s, e) => {
+                    mainWindow.Focus();
+                };
 
                 // Handle window closing to return to login
                 mainWindow.Closed += (s, e) => {
@@ -268,6 +300,55 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Ошибка запуска системы управления: {ex.Message}", "Ошибка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return null;
+            }
+        }*/
+
+
+
+        private void LaunchWPFManagementApplication(string username, string fullName, string departmentName)
+        {
+            try
+            {
+                // Hide the current form
+                this.Hide();
+
+                // Create a new WPF Application instance
+                var wpfApp = new System.Windows.Application();
+                wpfApp.ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;
+
+                // Create API service
+                var apiService = new ManagementWPF.Services.ApiService(
+                    ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/instructions");
+                apiService.SetAuthToken(_jwtToken);
+
+                // Create ViewModel
+                var mainViewModel = new ManagementWPF.ViewModels.MainViewModel(apiService, fullName);
+
+                // Create main window
+                var mainWindow = new ManagementWPF.Views.MainWindow(mainViewModel);
+                mainWindow.Title = $"Система управления инструктажами - {fullName}";
+
+                // Handle window closing
+                mainWindow.Closed += (s, e) => {
+                    wpfApp.Shutdown();
+                    // Show login form again
+                    this.Invoke(new Action(() => {
+                        this.ShowForm();
+                    }));
+                };
+
+                // Set as main window and run
+                wpfApp.MainWindow = mainWindow;
+                mainWindow.Show();
+
+                // This will block until WPF app closes
+                wpfApp.Run();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска системы управления: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.ShowForm();
             }
         }
 
@@ -300,7 +381,12 @@ namespace Kotova.Test1.ClientSide
                     break;
                 case "Management":
                     //formToOpen = new ManagementForm(this, username, fullName, departmentName);
-                    wpfWindow = CreateWPFManagementWindow(username, fullName, departmentName);
+                    LaunchWPFManagementApplication(username, fullName, departmentName);
+                    break;
+
+
+                    //wpfWindow = CreateSimpleTestWindow();
+                    //CreateWPFManagementWindow(username, fullName, departmentName);
                     break;
                 case "Admin":
                     formToOpen = new AdminForm(this, username, fullName);
@@ -522,18 +608,18 @@ namespace Kotova.Test1.ClientSide
             LoginTextBox.BackColor = SystemColors.Control;
         }
 
-        private void changeColorsOfTextBoxesToControl(object sender, MouseEventArgs e)
+        private void changeColorsOfTextBoxesToControl(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             LoginTextBox.BackColor = SystemColors.Control;
             PasswordTextBox.BackColor = SystemColors.Control;
         }
 
-        private void lookPassword_MouseDown(object sender, MouseEventArgs e)
+        private void lookPassword_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             PasswordTextBox.UseSystemPasswordChar = false;
         }
 
-        private void lookPassword_MouseUp(object sender, MouseEventArgs e)
+        private void lookPassword_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             PasswordTextBox.UseSystemPasswordChar = true;
         }

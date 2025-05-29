@@ -4,7 +4,9 @@
         xmlns:views="clr-namespace:Kotova.Test1.ClientSide.ManagementWPF.Views"
         Title="Система управления инструктажами - Главный инженер" 
         Height="700" Width="1200"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Focusable="True"
+        KeyboardNavigation.TabNavigation="Local">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

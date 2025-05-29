@@ -8,8 +8,11 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
     {
         Task<List<DepartmentWithChiefsDto>> GetDepartmentsWithChiefsAsync();
         Task<string> AssignUnplannedInstructionToChiefsAsync(UnplannedInstructionForChiefsPackage package);
+        // ADD THIS METHOD:
+        Task<string> AssignUnplannedInstructionToDepartmentsAsync(UnplannedInstructionForDepartmentsPackage package);
         Task<List<UnplannedInstructionStatusDto>> GetUnplannedInstructionsStatusAsync();
         Task<List<NormativeInstructionDto>> GetNormativeInstructionsAsync();
+        void SetAuthToken(string jwtToken);
     }
 
     public class NormativeInstructionDto

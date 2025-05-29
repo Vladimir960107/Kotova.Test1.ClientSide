@@ -1,8 +1,13 @@
-﻿using System;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using Kotova.CommonClasses;
+using Microsoft.Extensions.Configuration;
+using ShellLink;
+using System;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -10,12 +15,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Kotova.CommonClasses;
-using Microsoft.Extensions.Configuration;
-using ShellLink;
-using System.Linq;
-
+using System.Windows.Forms.Integration;
 using File = System.IO.File;
 
 namespace Kotova.Test1.ClientSide
@@ -30,6 +30,7 @@ namespace Kotova.Test1.ClientSide
             [DllImport("kernel32.dll")]
             static extern bool AllocConsole();
 
+            WindowsFormsHost.EnableWindowsFormsInterop();
 
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
 

@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Collections.Generic; // Add this
 using Kotova.Test1.ClientSide.ManagementWPF.Helpers;
 using Kotova.Test1.ClientSide.ManagementWPF.Models;
 using Kotova.Test1.ClientSide.ManagementWPF.Services;
@@ -217,12 +218,12 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
                 if (!selectedChiefIds.Any())
                 {
                     StatusMessage = "Не выбраны начальники для назначения инструктажа";
-                    // Remove Dispatcher call and show message directly
                     MessageBox.Show("Пожалуйста, выберите хотя бы одного начальника для назначения инструктажа.",
                         "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
+                // FIXED: Use the correct package type for chiefs
                 var package = new UnplannedInstructionForChiefsPackage
                 {
                     Instruction = new InstructionCreateDto
@@ -240,7 +241,6 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
 
                 StatusMessage = result ?? "Инструктаж успешно назначен";
 
-                // Remove Dispatcher call
                 MessageBox.Show(result ?? "Инструктаж успешно назначен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 // Clear form
@@ -258,8 +258,6 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             catch (Exception ex)
             {
                 StatusMessage = $"Ошибка: {ex.Message}";
-
-                // Remove Dispatcher call
                 MessageBox.Show($"Ошибка назначения инструктажа: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
