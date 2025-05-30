@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Kotova.Test1.ClientSide.ManagementWPF.Models;
+using Kotova.CommonClasses; // Add this using for the common DTOs
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.Services
 {
@@ -8,17 +9,15 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
     {
         Task<List<DepartmentWithChiefsDto>> GetDepartmentsWithChiefsAsync();
         Task<string> AssignUnplannedInstructionToChiefsAsync(UnplannedInstructionForChiefsPackage package);
-        // ADD THIS METHOD:
         Task<string> AssignUnplannedInstructionToDepartmentsAsync(UnplannedInstructionForDepartmentsPackage package);
         Task<List<UnplannedInstructionStatusDto>> GetUnplannedInstructionsStatusAsync();
-        Task<List<NormativeInstructionDto>> GetNormativeInstructionsAsync();
-        void SetAuthToken(string jwtToken);
-    }
 
-    public class NormativeInstructionDto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Url { get; set; }
+        // Update these methods to use the new DTOs from CommonClasses:
+        Task<List<NormativeInstructionDto>> GetNormativeInstructionsAsync(bool? isUnplannedInstruction = null);
+        Task<NormativeInstructionDto> CreateNormativeInstructionAsync(NormativeInstructionCreateDto model);
+        Task<NormativeInstructionDto> UpdateNormativeInstructionAsync(int id, NormativeInstructionUpdateDto model);
+        Task<bool> DeleteNormativeInstructionAsync(int id);
+
+        void SetAuthToken(string jwtToken);
     }
 }

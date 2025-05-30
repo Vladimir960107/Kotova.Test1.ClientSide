@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Kotova.CommonClasses;
+using Kotova.Test1.ClientSide.ManagementWPF.Models;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Kotova.Test1.ClientSide.ManagementWPF.Models;
-using System.Net;
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.Services
 {
@@ -156,11 +157,17 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
             }
         }
 
-        public async Task<List<NormativeInstructionDto>> GetNormativeInstructionsAsync()
+        public async Task<List<NormativeInstructionDto>> GetNormativeInstructionsAsync(bool? isUnplannedInstruction = null)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_baseUrl}/normative-instructions");
+                var url = $"{_baseUrl}/normative-instructions";
+                if (isUnplannedInstruction.HasValue)
+                {
+                    url += $"?isUnplannedInstruction={isUnplannedInstruction.Value}";
+                }
+
+                var response = await _httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -195,6 +202,7 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
                 throw new Exception($"Неожиданная ошибка при получении нормативных инструкций: {ex.Message}", ex);
             }
         }
+
 
         public void Dispose()
         {
@@ -247,6 +255,116 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Services
             catch (Exception ex)
             {
                 throw new Exception($"Неожиданная ошибка при назначении инструктажа: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<NormativeInstructionDto> CreateNormativeInstructionAsync(NormativeInstructionCreateDto model)
+        {
+            try
+            {
+                var jsonData = JsonConvert.SerializeObject(model);
+                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync($"{_baseUrl}/normative-instructions", content);
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonConvert.DeserializeObject<NormativeInstructionDto>(responseContent);
+                    return result;
+                }
+                else
+                {
+                    throw new HttpRequestException($"Ошибка сервера ({response.StatusCode}): {responseContent}");
+                }
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при создании нормативной инструкции: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Неожиданная ошибка при создании нормативной инструкции: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<NormativeInstructionDto> UpdateNormativeInstructionAsync(int id, NormativeInstructionUpdateDto model)
+        {
+            try
+            {
+                var jsonData = JsonConvert.SerializeObject(model);
+                var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PutAsync($"{_baseUrl}/normative-instructions/{id}", content);
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonConvert.DeserializeObject<NormativeInstructionDto>(responseContent);
+                    return result;
+                }
+                else
+                {
+                    throw new HttpRequestException($"Ошибка сервера ({response.StatusCode}): {responseContent}");
+                }
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при обновлении нормативной инструкции: {ex.Message}", ex);
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Ошибка обработки данных: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Неожиданная ошибка при обновлении нормативной инструкции: {ex.Message}", ex);
+            }
+        }
+
+        // Add this method to ApiService.cs:
+
+        public async Task<bool> DeleteNormativeInstructionAsync(int id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"{_baseUrl}/normative-instructions/{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new HttpRequestException($"Ошибка сервера ({response.StatusCode}): {errorContent}");
+                }
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                throw new Exception("Время ожидания ответа от сервера истекло", ex);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new Exception($"Ошибка сети при удалении нормативной инструкции: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Неожиданная ошибка при удалении нормативной инструкции: {ex.Message}", ex);
             }
         }
     }

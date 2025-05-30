@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Kotova.Test1.ClientSide.ManagementWPF.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="1000">
+             d:DesignHeight="700" d:DesignWidth="1200">
 
     <UserControl.Resources>
         <Style TargetType="GroupBox">
@@ -32,10 +32,12 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#2196F3" Padding="15">
+        <Border Grid.Row="0" Background="#FF5722" Padding="15">
             <StackPanel>
-                <TextBlock Text="Управление внеплановыми инструктажами для начальников" 
-                          FontSize="18" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                <TextBlock Text="🚨 СОЗДАНИЕ ВНЕПЛАНОВОГО ИНСТРУКТАЖА" 
+                          FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center"/>
+                <TextBlock Text="Назначение внеплановых инструктажей начальникам и заместителям отделов" 
+                          FontSize="14" Foreground="White" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                 <TextBlock Text="{Binding StatusMessage}" 
                           FontSize="12" Foreground="White" HorizontalAlignment="Center" Margin="0,5,0,0"/>
             </StackPanel>
@@ -52,10 +54,10 @@
                 <!-- Left Panel - Create Instruction -->
                 <GroupBox Grid.Column="0" Header="Создание нового инструктажа">
                     <StackPanel>
-                        <!-- Chiefs Selection -->
-                        <Label Content="Выберите начальников и заместителей:" FontWeight="Bold"/>
-                        <ListBox ItemsSource="{Binding ChiefsSelection}" 
-                                Height="200" 
+                        <!-- Departments Selection -->
+                        <Label Content="Выберите отделы:" FontWeight="Bold"/>
+                        <ListBox ItemsSource="{Binding DepartmentsSelection}" 
+                                Height="150" 
                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -77,6 +79,29 @@
                         <Label Content="Дата окончания:" FontWeight="Bold" Margin="0,10,0,5"/>
                         <DatePicker SelectedDate="{Binding EndDate}" 
                                    HorizontalAlignment="Left"/>
+
+                        <!-- Normative Base Section -->
+                        <Label Content="Данные для нормативной базы:" FontWeight="Bold" Margin="0,15,0,5"/>
+
+                        <Label Content="Название нормативной базы (каждое название с новой строки):" 
+                               FontWeight="SemiBold" Margin="0,5,0,2"/>
+                        <TextBox Text="{Binding NormativeBaseNames, UpdateSourceTrigger=PropertyChanged}" 
+                                Height="80" 
+                                TextWrapping="Wrap" 
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                Background="#F5F5F5"
+                                ToolTip="Введите названия нормативных документов, каждое с новой строки"/>
+
+                        <Label Content="Ссылки (каждая ссылка с новой строки, в том же порядке):" 
+                               FontWeight="SemiBold" Margin="0,10,0,2"/>
+                        <TextBox Text="{Binding NormativeBaseLinks, UpdateSourceTrigger=PropertyChanged}" 
+                                Height="80" 
+                                TextWrapping="Wrap" 
+                                AcceptsReturn="True"
+                                VerticalScrollBarVisibility="Auto"
+                                Background="#F5F5F5"
+                                ToolTip="Введите ссылки на нормативные документы, каждую с новой строки"/>
 
                         <!-- Action Buttons -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">

@@ -27,12 +27,12 @@
 
         <!-- Main Content -->
         <TabControl Grid.Row="1" Margin="0">
-            <TabItem Header="Внеплановые инструктажи для начальников">
+            <TabItem Header="🚨 Внеплановые инструктажи для начальников отделов">
                 <!-- Fixed the DataContext binding -->
                 <views:UnplannedInstructionView DataContext="{Binding UnplannedInstructionViewModel}" />
             </TabItem>
 
-            <TabItem Header="Отчёты" IsEnabled="False">
+            <TabItem Header="📊 Отчёты" IsEnabled="False">
                 <TextBlock Text="Будет реализовано позже" 
                           HorizontalAlignment="Center" 
                           VerticalAlignment="Center" 

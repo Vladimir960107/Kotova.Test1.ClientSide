@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.Models
 {
-    public class DepartmentWithChiefsDto
-    {
-        public int DepartmentId { get; set; }
-        public string DepartmentName { get; set; }
-        public List<ChiefDto> Chiefs { get; set; } = new List<ChiefDto>();
-    }
 
     public class ChiefDto
     {

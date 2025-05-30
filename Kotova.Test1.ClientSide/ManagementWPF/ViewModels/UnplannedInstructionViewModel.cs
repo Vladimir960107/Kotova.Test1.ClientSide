@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Collections.Generic; // Add this
+﻿using Kotova.CommonClasses;
 using Kotova.Test1.ClientSide.ManagementWPF.Helpers;
 using Kotova.Test1.ClientSide.ManagementWPF.Models;
 using Kotova.Test1.ClientSide.ManagementWPF.Services;
 using Kotova.Test1.ClientSide.ManagementWPF.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
@@ -19,18 +20,22 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
 
         private readonly IApiService _apiService;
 
+        private bool _markNormativeAsUnplanned = true;
+
         private string _instructionCause = "Работа в зоне железнодорожных путей СТО-357";
         private DateTime _endDate = DateTime.Now.AddDays(7);
         private bool _isLoading;
         private string _statusMessage;
+        private string _normativeBaseNames = "";
+        private string _normativeBaseLinks = "";
 
         public UnplannedInstructionViewModel(IApiService apiService)
         {
             _apiService = apiService;
 
-            ChiefsSelection = new ObservableCollection<ChiefSelectionItem>();
+            // Change from ChiefsSelection to DepartmentsSelection
+            DepartmentsSelection = new ObservableCollection<DepartmentSelectionItem>();
             InstructionStatuses = new ObservableCollection<UnplannedInstructionStatusDto>();
-            NormativeInstructions = new ObservableCollection<NormativeInstructionDto>();
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             AssignInstructionCommand = new RelayCommand(async () => await AssignInstructionAsync(), CanAssignInstruction);
@@ -40,9 +45,9 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             _ = InitializeAsync();
         }
 
-        public ObservableCollection<ChiefSelectionItem> ChiefsSelection { get; }
+        // Change from ChiefsSelection to DepartmentsSelection
+        public ObservableCollection<DepartmentSelectionItem> DepartmentsSelection { get; }
         public ObservableCollection<UnplannedInstructionStatusDto> InstructionStatuses { get; }
-        public ObservableCollection<NormativeInstructionDto> NormativeInstructions { get; }
 
         public string InstructionCause
         {
@@ -54,6 +59,25 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
         {
             get => _endDate;
             set => SetProperty(ref _endDate, value);
+        }
+
+        // Add new properties for normative base
+        public string NormativeBaseNames
+        {
+            get => _normativeBaseNames;
+            set => SetProperty(ref _normativeBaseNames, value);
+        }
+
+        public bool MarkNormativeAsUnplanned
+        {
+            get => _markNormativeAsUnplanned;
+            set => SetProperty(ref _markNormativeAsUnplanned, value);
+        }
+
+        public string NormativeBaseLinks
+        {
+            get => _normativeBaseLinks;
+            set => SetProperty(ref _normativeBaseLinks, value);
         }
 
         public bool IsLoading
@@ -106,9 +130,8 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             try
             {
                 await Task.WhenAll(
-                    LoadDepartmentsWithChiefsAsync(),
-                    LoadInstructionStatusesAsync(),
-                    LoadNormativeInstructionsAsync()
+                    LoadDepartmentsAsync(),
+                    LoadInstructionStatusesAsync()
                 );
 
                 StatusMessage = "Данные загружены успешно";
@@ -129,32 +152,40 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             }
         }
 
-        private async Task LoadDepartmentsWithChiefsAsync()
+        // Updated method to load departments instead of individual chiefs
+        private async Task LoadDepartmentsAsync()
         {
             try
             {
                 var departments = await _apiService.GetDepartmentsWithChiefsAsync();
 
-                ChiefsSelection.Clear();
+                DepartmentsSelection.Clear();
                 foreach (var dept in departments)
                 {
-                    foreach (var chief in dept.Chiefs)
+                    // Only include departments that have chiefs
+                    if (dept.Chiefs != null && dept.Chiefs.Any())
                     {
-                        ChiefsSelection.Add(new ChiefSelectionItem
+                        var chiefInfo = dept.Chiefs.Select(c => new ChiefInfo
                         {
-                            ChiefId = chief.UserId,
+                            UserId = c.UserId,
+                            FullName = c.FullName,
+                            Role = c.Role,
+                            JobPosition = c.JobPosition
+                        }).ToList();
+
+                        DepartmentsSelection.Add(new DepartmentSelectionItem
+                        {
                             DepartmentId = dept.DepartmentId,
-                            ChiefName = chief.FullName,
                             DepartmentName = dept.DepartmentName,
-                            Role = chief.Role,
-                            JobPosition = chief.JobPosition
+                            ChiefsCount = dept.Chiefs.Count,
+                            Chiefs = chiefInfo
                         });
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw new Exception($"Ошибка загрузки отделов с начальниками: {ex.Message}", ex);
+                throw new Exception($"Ошибка загрузки отделов: {ex.Message}", ex);
             }
         }
 
@@ -176,80 +207,210 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             }
         }
 
-        private async Task LoadNormativeInstructionsAsync()
+        // Helper method to process multiline text
+        private string ProcessMultilineText(string multilineText)
         {
-            try
-            {
-                var normative = await _apiService.GetNormativeInstructionsAsync();
+            if (string.IsNullOrWhiteSpace(multilineText))
+                return "";
 
-                NormativeInstructions.Clear();
-                foreach (var item in normative)
-                {
-                    NormativeInstructions.Add(item);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Ошибка загрузки нормативных документов: {ex.Message}", ex);
-            }
+            // Split by newlines, trim each line, remove empty lines, and join with "|"
+            return string.Join(" | ",
+                multilineText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrEmpty(line)));
         }
 
+        private bool CanAssignInstruction()
+        {
+            // Basic validation
+            if (IsLoading)
+                return false;
+
+            // Check if instruction cause is not empty
+            if (string.IsNullOrWhiteSpace(InstructionCause))
+            {
+                StatusMessage = "❗ Причина внепланового инструктажа обязательна для заполнения";
+                return false;
+            }
+
+            // Check if end date is in the future
+            if (EndDate <= DateTime.Now)
+            {
+                StatusMessage = "❗ Дата окончания должна быть больше текущей даты";
+                return false;
+            }
+
+            // Check if at least one department is selected
+            if (!DepartmentsSelection.Any(d => d.IsSelected))
+            {
+                StatusMessage = "❗ Необходимо выбрать хотя бы один отдел";
+                return false;
+            }
+
+            // Enhanced validation for normative base
+            bool hasNormativeNames = !string.IsNullOrWhiteSpace(NormativeBaseNames);
+            bool hasNormativeLinks = !string.IsNullOrWhiteSpace(NormativeBaseLinks);
+
+            // If user provided normative names, links become mandatory and must not be empty
+            if (hasNormativeNames && !hasNormativeLinks)
+            {
+                StatusMessage = "❗ При указании нормативной базы, ссылки являются обязательными и не должны быть пустыми";
+                return false;
+            }
+
+            // If user provided links, names become mandatory and must not be empty
+            if (hasNormativeLinks && !hasNormativeNames)
+            {
+                StatusMessage = "❗ При указании ссылок, названия нормативных документов являются обязательными и не должны быть пустыми";
+                return false;
+            }
+
+            // If validation passes, clear any previous error messages
+            if (StatusMessage.StartsWith("❗") || StatusMessage.StartsWith("⚠️"))
+            {
+                StatusMessage = "Готово к назначению внепланового инструктажа";
+            }
+
+            return true;
+        }
+
+        // Add this method to validate normative base consistency
+        private bool ValidateNormativeBase(out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            bool hasNormativeNames = !string.IsNullOrWhiteSpace(NormativeBaseNames);
+            bool hasNormativeLinks = !string.IsNullOrWhiteSpace(NormativeBaseLinks);
+
+            if (!hasNormativeNames && !hasNormativeLinks)
+            {
+                // No normative base provided - this is OK
+                return true;
+            }
+
+            if (hasNormativeNames && !hasNormativeLinks)
+            {
+                errorMessage = "При указании названий нормативных документов, ссылки являются обязательными и не должны быть пустыми.";
+                return false;
+            }
+
+            if (!hasNormativeNames && hasNormativeLinks)
+            {
+                errorMessage = "При указании ссылок, названия нормативных документов являются обязательными и не должны быть пустыми.";
+                return false;
+            }
+
+            // Additional validation: check that after trimming and removing empty lines, both still have content
+            var nameLines = NormativeBaseNames?.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList() ?? new List<string>();
+
+            var linkLines = NormativeBaseLinks?.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList() ?? new List<string>();
+
+            if (!nameLines.Any())
+            {
+                errorMessage = "Названия нормативных документов не должны быть пустыми или содержать только пробелы.";
+                return false;
+            }
+
+            if (!linkLines.Any())
+            {
+                errorMessage = "Ссылки на нормативные документы не должны быть пустыми или содержать только пробелы.";
+                return false;
+            }
+
+            return true;
+        }
+
+        // Update the AssignInstructionAsync method with better validation:
         private async Task AssignInstructionAsync()
         {
+            // Enhanced validation before proceeding
             if (!CanAssignInstruction())
                 return;
 
+            // Additional validation for normative base
+            if (!ValidateNormativeBase(out string normativeError))
+            {
+                StatusMessage = $"❗ {normativeError}";
+                MessageBox.Show(normativeError, "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             IsLoading = true;
-            StatusMessage = "Назначение инструктажа...";
+            StatusMessage = "Назначение внепланового инструктажа...";
 
             try
             {
                 // Add null checks and validation
-                if (ChiefsSelection == null)
+                if (DepartmentsSelection == null)
                 {
-                    throw new InvalidOperationException("Список начальников не инициализирован");
+                    throw new InvalidOperationException("Список отделов не инициализирован");
                 }
 
-                var selectedChiefIds = ChiefsSelection
-                    .Where(c => c != null && c.IsSelected && c.ChiefId > 0)
-                    .Select(c => c.ChiefId)
+                var selectedDepartmentIds = DepartmentsSelection
+                    .Where(d => d != null && d.IsSelected && d.DepartmentId > 0)
+                    .Select(d => d.DepartmentId)
                     .ToList();
 
-                if (!selectedChiefIds.Any())
+                if (!selectedDepartmentIds.Any())
                 {
-                    StatusMessage = "Не выбраны начальники для назначения инструктажа";
-                    MessageBox.Show("Пожалуйста, выберите хотя бы одного начальника для назначения инструктажа.",
+                    StatusMessage = "❗ Не выбраны отделы для назначения инструктажа";
+                    MessageBox.Show("Пожалуйста, выберите хотя бы один отдел для назначения внепланового инструктажа.",
                         "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // FIXED: Use the correct package type for chiefs
-                var package = new UnplannedInstructionForChiefsPackage
+                // Process normative instructions if provided
+                string normativeBaseText = null;
+
+                if (!string.IsNullOrWhiteSpace(NormativeBaseNames) || !string.IsNullOrWhiteSpace(NormativeBaseLinks))
+                {
+                    // Transform multiline text to single string with "|" separators
+                    string processedNames = ProcessMultilineText(NormativeBaseNames);
+                    string processedLinks = ProcessMultilineText(NormativeBaseLinks);
+
+                    // Create combined normative instruction text
+                    normativeBaseText = $"NAMES: {processedNames} | LINKS: {processedLinks}";
+
+                    StatusMessage += " (включая нормативную базу)";
+                }
+
+                // Use the new package for departments
+                var package = new UnplannedInstructionForDepartmentsPackage
                 {
                     Instruction = new InstructionCreateDto
                     {
                         CauseOfInstruction = InstructionCause,
                         EndDate = EndDate,
-                        TypeOfInstruction = 1 // Unplanned
+                        TypeOfInstruction = 1 // Unplanned - Fixed value, no user input needed
                     },
-                    SelectedChiefIds = selectedChiefIds,
+                    SelectedDepartmentIds = selectedDepartmentIds,
                     FilePaths = new List<string>(),
-                    NormativeInstructionIds = new List<int>()
+                    NormativeInstructionIds = new List<int>(),
+                    NormativeBaseText = normativeBaseText,
+                    MarkNormativeAsUnplanned = MarkNormativeAsUnplanned
                 };
 
-                var result = await _apiService.AssignUnplannedInstructionToChiefsAsync(package).ConfigureAwait(true);
+                var result = await _apiService.AssignUnplannedInstructionToDepartmentsAsync(package).ConfigureAwait(true);
 
-                StatusMessage = result ?? "Инструктаж успешно назначен";
+                StatusMessage = result ?? "✅ Внеплановый инструктаж успешно назначен";
 
-                MessageBox.Show(result ?? "Инструктаж успешно назначен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(result ?? "Внеплановый инструктаж успешно назначен", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // Clear form
+                // Clear form after successful assignment
                 InstructionCause = "";
                 EndDate = DateTime.Now.AddDays(7);
+                NormativeBaseNames = "";
+                NormativeBaseLinks = "";
 
-                foreach (var chief in ChiefsSelection.Where(c => c != null))
+                foreach (var dept in DepartmentsSelection.Where(d => d != null))
                 {
-                    chief.IsSelected = false;
+                    dept.IsSelected = false;
                 }
 
                 // Refresh statuses
@@ -257,8 +418,8 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Ошибка: {ex.Message}";
-                MessageBox.Show($"Ошибка назначения инструктажа: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusMessage = $"❗ Ошибка: {ex.Message}";
+                MessageBox.Show($"Ошибка назначения внепланового инструктажа: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -266,12 +427,7 @@ namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
             }
         }
 
-        private bool CanAssignInstruction()
-        {
-            return !IsLoading &&
-                   !string.IsNullOrWhiteSpace(InstructionCause) &&
-                   EndDate > DateTime.Now &&
-                   ChiefsSelection.Any(c => c.IsSelected);
-        }
+
+
     }
 }
