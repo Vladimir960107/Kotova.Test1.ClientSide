@@ -17,7 +17,7 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class InstructionViewerWindow : Window
     {
-        // Constants (same as UserForm)
+        #region Constants
         public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
         public const string dB_pos_users_pathToInstruction = "path_to_instruction";
@@ -28,10 +28,10 @@ namespace Kotova.Test1.ClientSide
         public const string db_normativeInstructionId = "id";
         public const string db_normativeInstructionName = "name";
         public const string db_normativeInstructionUrl = "url";
+        #endregion
 
+        #region Private Fields
         private bool _allowCompletion;
-
-        // Private fields
         private InstructionService _instructionService;
         private bool _isInstructionSelected = false;
         private List<Dictionary<string, object>> _normativeInstructionsOfNewInstr;
@@ -42,35 +42,66 @@ namespace Kotova.Test1.ClientSide
         private bool _isChief;
         private string _userName;
 
-        // Observable collections for data binding
+        // References to main application forms (for context menu functionality)
+        private Login_Russian _loginForm;
+        private SignUpForm _signUpForm;
+        #endregion
+
+        #region Observable Collections
         public ObservableCollection<string> Instructions { get; set; }
         public ObservableCollection<NormativeInstructionItem> NormativeInstructions { get; set; }
         public ObservableCollection<PassedInstructionItem> PassedInstructions { get; set; }
         public ObservableCollection<string> RelatedFiles { get; set; }
+        #endregion
 
-        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false)
+        #region Constructor
+        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false, Login_Russian loginForm = null, SignUpForm signUpForm = null)
         {
             _jwtToken = jwtToken;
             _isChief = isChief;
             _userName = userName;
-            _allowCompletion = allowCompletion; // New property
+            _allowCompletion = allowCompletion;
             _instructionService = new InstructionService(jwtToken, new WpfLogger(this));
+            _loginForm = loginForm;
+            _signUpForm = signUpForm;
 
             InitializeComponent();
             InitializeCollections();
+            InitializeInterface();
             LoadInstructionsAsync();
 
-            // Set username
-            UsernameTextBlock.Text = userName;
-
-            // Modify this logic: Enable checkbox if allowCompletion is true, even for chiefs
-            if (_isChief && !_allowCompletion)
+            // Create SignUpForm if not provided and loginForm is available
+            if (_signUpForm == null && _loginForm != null)
             {
-                PassInstructionCheckBox.IsEnabled = false;
-                PassInstructionCheckBox.ToolTip = "Руководители не могут отмечать инструктажи как пройденные для себя";
+                // Note: SignUpForm expects a Form as second parameter, but we're passing a WPF Window
+                // This might need adaptation or we could create a WPF-based credential change dialog
+                try
+                {
+                    // For now, we'll create it with loginForm and this window
+                    // This may require SignUpForm constructor modification
+                    _signUpForm = new SignUpForm(_loginForm, this);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not create SignUpForm: {ex.Message}");
+                    // SignUpForm will remain null, so we'll handle it in the settings menu
+                }
             }
         }
+        #endregion
 
+        #region Public Methods
+        /// <summary>
+        /// Sets the SignUpForm reference for the settings menu
+        /// </summary>
+        /// <param name="signUpForm">The SignUpForm instance</param>
+        public void SetSignUpForm(SignUpForm signUpForm)
+        {
+            _signUpForm = signUpForm;
+        }
+        #endregion
+
+        #region Initialization Methods
         private void InitializeCollections()
         {
             Instructions = new ObservableCollection<string>();
@@ -84,74 +115,58 @@ namespace Kotova.Test1.ClientSide
             RelatedFilesListBox.ItemsSource = RelatedFiles;
         }
 
+        private void InitializeInterface()
+        {
+            // Set username
+            UsernameTextBlock.Text = _userName;
+
+            // Set version information
+            try
+            {
+                VersionTextBlock.Text = ConfigurationClass.BASE_VERSION ?? "v1.0.0";
+            }
+            catch
+            {
+                VersionTextBlock.Text = "v1.0.0";
+            }
+
+            // Show management tab for chiefs
+            if (_isChief)
+            {
+                ManagementTab.Visibility = Visibility.Visible;
+            }
+
+            // Handle checkbox enabling logic
+            if (_isChief && !_allowCompletion)
+            {
+                PassInstructionCheckBox.IsEnabled = false;
+                PassInstructionCheckBox.ToolTip = "Руководители не могут отмечать инструктажи как пройденные для себя";
+            }
+
+            // Set initial status
+            UpdateStatus("Готов к работе");
+        }
+
         private async void LoadInstructionsAsync()
         {
+            UpdateStatus("Загрузка инструктажей...");
             await RefreshNewInstructionsAsync();
             await RefreshOldInstructionsAsync();
+            UpdateStatus("Готов к работе");
         }
-
-        // Logger implementation for WPF
-        private class WpfLogger : InstructionService.ILogger
-        {
-            private readonly InstructionViewerWindow _window;
-
-            public WpfLogger(InstructionViewerWindow window)
-            {
-                _window = window;
-            }
-
-            public void LogInfo(string message)
-            {
-                Console.WriteLine($"INFO: {message}");
-            }
-
-            public void LogError(string message, Exception ex = null)
-            {
-                string errorMessage = ex != null ? $"{message}: {ex.Message}" : message;
-                Console.WriteLine($"ERROR: {errorMessage}");
-            }
-        }
-
-        #region Data Models
-
-        public class NormativeInstructionItem : INotifyPropertyChanged
-        {
-            private bool _isChecked;
-
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public string Url { get; set; }
-            public string DisplayText => $"{Name} ({Url})";
-
-            public bool IsChecked
-            {
-                get => _isChecked;
-                set
-                {
-                    _isChecked = value;
-                    OnPropertyChanged();
-                }
-            }
-
-            public event PropertyChangedEventHandler PropertyChanged;
-            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
-
-        public class PassedInstructionItem
-        {
-            public string DatePassed { get; set; }
-            public string Type { get; set; }
-            public string Cause { get; set; }
-            public int InstructionId { get; set; }
-        }
-
         #endregion
 
-        #region Refresh Instructions Methods
+        #region Status Management
+        private void UpdateStatus(string message)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                StatusTextBlock.Text = message;
+            });
+        }
+        #endregion
 
+        #region Data Refresh Methods
         private async Task RefreshNewInstructionsAsync()
         {
             try
@@ -163,7 +178,7 @@ namespace Kotova.Test1.ClientSide
 
                 if (result == null)
                 {
-                    MessageBox.Show("Все инструктажи пройдены!");
+                    MessageBox.Show("Все инструктажи пройдены!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
@@ -183,7 +198,7 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception in RefreshNewInstructionsAsync: {ex}");
-                MessageBox.Show($"Error refreshing instructions: {ex.Message}");
+                MessageBox.Show($"Ошибка при обновлении инструктажей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -245,14 +260,144 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception in RefreshOldInstructionsAsync: {ex}");
-                MessageBox.Show($"Error refreshing passed instructions: {ex.Message}");
+                MessageBox.Show($"Ошибка при обновлении пройденных инструктажей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        #endregion
+
+        #region Header Event Handlers
+        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateStatus("Обновление...");
+            await RefreshNewInstructionsAsync();
+            await RefreshOldInstructionsAsync();
+            UpdateStatus("Обновление завершено");
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Create enhanced context menu matching UserForm functionality
+            var contextMenu = new ContextMenu();
+
+            // Refresh Instructions
+            var refreshItem = new MenuItem { Header = "🔄 Обновить инструктажи" };
+            refreshItem.Click += async (s, args) =>
+            {
+                await RefreshNewInstructionsAsync();
+                await RefreshOldInstructionsAsync();
+            };
+            contextMenu.Items.Add(refreshItem);
+
+            contextMenu.Items.Add(new Separator());
+
+            // Change Credentials (equivalent to changeCredentialsToolStripMenuItem_Click)
+            var credentialsItem = new MenuItem { Header = "🔐 Сменить регистрационные данные" };
+            credentialsItem.Click += (s, args) =>
+            {
+                if (_signUpForm != null)
+                {
+                    _signUpForm.Show();
+                }
+                else
+                {
+                    // Fallback: Create a simple WPF input dialog or show message
+                    System.Windows.MessageBox.Show(
+                        "Функция смены учётных данных временно недоступна.\nОбратитесь к администратору для смены пароля.",
+                        "Смена учётных данных",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            };
+            contextMenu.Items.Add(credentialsItem);
+
+            // Sign Out (equivalent to signOutToolStripMenuItem_Click)
+            if (_loginForm != null)
+            {
+                var signOutItem = new MenuItem { Header = "🚪 Выйти из учётной записи" };
+                signOutItem.Click += (s, args) => SignOut();
+                contextMenu.Items.Add(signOutItem);
+            }
+
+            contextMenu.Items.Add(new Separator());
+
+            // Exit Application (equivalent to exitApplicationToolStripMenuItem_Click)
+            if (_loginForm != null)
+            {
+                var exitItem = new MenuItem { Header = "❌ Выйти из программы" };
+                exitItem.Click += (s, args) => ExitApplication();
+                contextMenu.Items.Add(exitItem);
+            }
+
+            contextMenu.Items.Add(new Separator());
+
+            // Close Window
+            var closeItem = new MenuItem { Header = "🗙 Закрыть окно" };
+            closeItem.Click += (s, args) => this.Close();
+            contextMenu.Items.Add(closeItem);
+
+            contextMenu.IsOpen = true;
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Вы уверены, что хотите закрыть приложение?",
+                "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ExitApplication();
+            }
+        }
+        #endregion
+
+        #region Context Menu Actions (from UserForm)
+        private void SignOut()
+        {
+            try
+            {
+                if (_signUpForm != null)
+                {
+                    _signUpForm.Dispose();
+                }
+
+                Decryption_stuff.DeleteJWTToken();
+
+                if (_loginForm != null)
+                {
+                    _loginForm.activeForm = _loginForm;
+                    _loginForm.Show();
+                }
+
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при выходе: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private void ExitApplication()
+        {
+            try
+            {
+                if (_loginForm != null)
+                {
+                    _loginForm.ExitApplication();
+                }
+                else
+                {
+                    System.Windows.Application.Current.Shutdown();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при закрытии приложения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.Application.Current.Shutdown();
+            }
+        }
         #endregion
 
-        #region Event Handlers
-
+        #region Main Event Handlers
         private void InstructionsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             NormativeInstructions.Clear();
@@ -275,7 +420,7 @@ namespace Kotova.Test1.ClientSide
             if (instructionType == "0")
             {
                 _isInstructionSelected = true;
-                // Use the new logic to determine if chiefs can complete this instruction
+                // Use the logic to determine if chiefs can complete this instruction
                 if (_isChief)
                 {
                     PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
@@ -297,8 +442,7 @@ namespace Kotova.Test1.ClientSide
                     {
                         Id = Convert.ToInt32(normativeInstruction[db_normativeInstructionId]),
                         Name = normativeInstruction[db_normativeInstructionName]?.ToString() ?? "",
-                        Url = normativeInstruction[db_normativeInstructionUrl]?.ToString() ?? "",
-                        IsChecked = false
+                        Url = normativeInstruction[db_normativeInstructionUrl]?.ToString() ?? ""
                     });
                     hasNormativeInstructions = true;
                 }
@@ -307,194 +451,61 @@ namespace Kotova.Test1.ClientSide
             if (hasNormativeInstructions)
             {
                 _isInstructionSelected = true;
-                // UpdatePassInstructionState will be called when checkboxes are checked/unchecked
-            }
-            else
-            {
-                MessageBox.Show("Для данного инструктажа не найдены нормативные документы.");
-                _isInstructionSelected = false;
-            }
-        }
-
-        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedItemStr)
-        {
-            if (_listOfNewInstructions == null)
-                return null;
-
-            return _listOfNewInstructions.FirstOrDefault(instr =>
-                instr.ContainsKey(dB_pos_users_causeOfInstruction) &&
-                instr[dB_pos_users_causeOfInstruction]?.ToString() == selectedItemStr);
-        }
-
-        private void NormativeInstruction_Checked(object sender, RoutedEventArgs e)
-        {
-            UpdatePassInstructionState();
-
-            // Open URL when checked
-            if (sender is System.Windows.Controls.CheckBox checkBox && checkBox.Tag is NormativeInstructionItem item)
-            {
-                OpenUrl(item.Url);
-            }
-        }
-
-        private void NormativeInstruction_Unchecked(object sender, RoutedEventArgs e)
-        {
-            UpdatePassInstructionState();
-        }
-
-        private void UpdatePassInstructionState()
-        {
-            if (!_isInstructionSelected)
-            {
-                PassInstructionCheckBox.IsEnabled = false;
-                return;
-            }
-
-            // Check if this is a chief and determine if they can complete this specific instruction type
-            if (_isChief)
-            {
-                bool canCompleteThisInstruction = CanChiefCompleteInstruction();
-                if (!canCompleteThisInstruction)
+                if (_isChief)
                 {
-                    PassInstructionCheckBox.IsEnabled = false;
-                    PassInstructionCheckBox.ToolTip = "Руководители не могут отмечать данный тип инструктажа как пройденный для себя";
-                    return;
+                    PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
+                }
+                else
+                {
+                    PassInstructionCheckBox.IsEnabled = true;
                 }
             }
-
-            // Check if this is an introductory instruction
-            if (InstructionsListBox.SelectedItem != null)
-            {
-                var selectedDict = GetDictFromSelectedInstruction(InstructionsListBox.SelectedItem.ToString());
-                if (selectedDict != null)
-                {
-                    string instructionType = selectedDict[db_typeOfInstruction].ToString();
-                    if (instructionType == "0")
-                    {
-                        PassInstructionCheckBox.IsEnabled = true;
-                        PassInstructionCheckBox.ToolTip = "";
-                        return;
-                    }
-                }
-            }
-
-            // For other instruction types, check if all normative instructions are checked
-            bool allChecked = NormativeInstructions.Count > 0 && NormativeInstructions.All(ni => ni.IsChecked);
-            PassInstructionCheckBox.IsEnabled = allChecked;
-            PassInstructionCheckBox.ToolTip = "";
         }
 
-        /// <summary>
-        /// Determines if a chief can complete the currently selected instruction based on instruction type
-        /// </summary>
-        /// <returns>True if the chief can complete this instruction type</returns>
-        private bool CanChiefCompleteInstruction()
+        private void NormativeInstructionsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (!_isChief)
-                return true; // Non-chiefs can always complete instructions
-
-            // If _allowCompletion is true (like for Deputy Chiefs), they can complete any instruction
-            if (_allowCompletion)
-                return true;
-
-            // For regular chiefs, check the instruction type
-            if (InstructionsListBox.SelectedItem != null)
+            if (NormativeInstructionsListBox.SelectedItem is NormativeInstructionItem selectedItem)
             {
-                var selectedDict = GetDictFromSelectedInstruction(InstructionsListBox.SelectedItem.ToString());
-                if (selectedDict != null)
-                {
-                    string instructionTypeStr = selectedDict[db_typeOfInstruction].ToString();
-                    if (byte.TryParse(instructionTypeStr, out byte instructionType))
-                    {
-                        // Chiefs can complete:
-                        // 0 = Вводный (Introductory)
-                        // 1 = Внеплановый (Unplanned)
-                        return instructionType == 0 || instructionType == 1;
-                    }
-                }
+                OpenUrl(selectedItem.Url);
             }
-
-            return false; // Default to not allowing completion if we can't determine the type
         }
 
         private async void PassInstructionCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (InstructionsListBox.SelectedItem == null)
-            {
-                MessageBox.Show("Вы не выбрали инструктаж.");
-                PassInstructionCheckBox.IsChecked = false;
+            if (!_isInstructionSelected || InstructionsListBox.SelectedItem == null)
                 return;
-            }
 
-            // Check if this chief can complete this specific instruction type
-            if (_isChief && !CanChiefCompleteInstruction())
-            {
-                PassInstructionCheckBox.IsChecked = false;
-                MessageBox.Show("Руководители не могут отмечать данный тип инструктажа как пройденный для себя.\nРазрешены только вводные и внеплановые инструктажи.");
-                return;
-            }
-
-            var result = MessageBox.Show("Вы подтверждаете прохождение инструктажа?",
-                "Подтвердите действие", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                MessageBox.Show("Вы согласились, что прошли инструктаж.",
-                    "Действие подтверждено", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                PassInstructionCheckBox.IsEnabled = false;
-                var selectedDict = GetDictFromSelectedInstruction(InstructionsListBox.SelectedItem.ToString());
-                await SendInstructionIsPassedToDB(selectedDict);
-
-                NormativeInstructions.Clear();
-                _isInstructionSelected = false;
-            }
-            else
-            {
-                MessageBox.Show("Вы не подтвердили, что прошли инструктаж.",
-                    "Действие отменено", MessageBoxButton.OK, MessageBoxImage.Warning);
-                PassInstructionCheckBox.IsChecked = false;
-            }
-        }
-
-        private async Task SendInstructionIsPassedToDB(Dictionary<string, object> selectedDict)
-        {
             try
             {
-                // Extract the instruction ID from the selected dictionary
-                int instructionId;
+                string selectedInstruction = InstructionsListBox.SelectedItem.ToString();
+                var selectedDict = GetDictFromSelectedInstruction(selectedInstruction);
 
-                object idValue = selectedDict["instruction_id"];
-                if (idValue is JsonElement jsonElement)
-                {
-                    instructionId = jsonElement.GetInt32();
-                }
-                else
-                {
-                    instructionId = Convert.ToInt32(idValue);
-                }
+                if (selectedDict == null)
+                    return;
 
-                // Use the service to mark the instruction as passed
+                int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
+
+                UpdateStatus("Отправка данных...");
+
                 bool success = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
 
                 if (success)
                 {
-                    // Refresh both instruction lists
+                    MessageBox.Show("Инструктаж успешно отмечен как пройденный!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                     await RefreshNewInstructionsAsync();
                     await RefreshOldInstructionsAsync();
-
-                    MessageBox.Show("Инструктаж успешно отмечен как пройденный.",
-                        "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    UpdateStatus("Инструктаж отмечен как пройденный");
                 }
                 else
                 {
-                    MessageBox.Show("Не удалось отметить инструктаж как пройденный.",
-                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Ошибка при отправке данных", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    UpdateStatus("Ошибка при отправке");
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                UpdateStatus("Ошибка");
             }
             finally
             {
@@ -509,83 +520,9 @@ namespace Kotova.Test1.ClientSide
             if (PassedInstructionsDataGrid.SelectedItem is not PassedInstructionItem selectedItem)
                 return;
 
-            var normativeInstructions = GetNormativeInstructionsForPassedInstruction(selectedItem.Cause);
-
-            if (normativeInstructions == null || normativeInstructions.Count == 0)
-            {
-                RelatedFiles.Add("Нормативные инструкции для данного инструктажа не найдены");
-                return;
-            }
-
-            foreach (var instruction in normativeInstructions)
-            {
-                RelatedFiles.Add(instruction);
-            }
-        }
-
-        private List<string> GetNormativeInstructionsForPassedInstruction(string cause)
-        {
-            if (string.IsNullOrEmpty(cause) || _normativeInstructionsOfOldInstr == null)
-                return new List<string>();
-
-            var instructionIds = GetInstructionIdsOfGivenCause(_listOfOldInstructions, cause);
-
-            if (instructionIds == null || instructionIds.Count != 1)
-                return new List<string>();
-
-            var firstId = instructionIds[0];
-            if (firstId == null)
-                return new List<string>();
-
-            int id;
-            if (firstId is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Number)
-            {
-                id = jsonElement.GetInt32();
-            }
-            else
-            {
-                id = Convert.ToInt32(firstId);
-            }
-
-            return GetNormativeInstructionsOfGivenId(_normativeInstructionsOfOldInstr, id);
-        }
-
-        private List<string> GetNormativeInstructionsOfGivenId(List<Dictionary<string, object>> list, int id)
-        {
-            return list
-                .Where(dict => dict.ContainsKey(dB_instructionId) && GetIntValue(dict[dB_instructionId]) == id)
-                .Select(dict =>
-                {
-                    string name = dict.ContainsKey(db_normativeInstructionName) ?
-                        dict[db_normativeInstructionName]?.ToString() ?? "Unknown" : "Unknown";
-                    string url = dict.ContainsKey(db_normativeInstructionUrl) ?
-                        dict[db_normativeInstructionUrl]?.ToString() ?? "" : "";
-                    return $"{name} ({url})";
-                })
-                .ToList();
-        }
-
-        private static int GetIntValue(object obj)
-        {
-            if (obj is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Number)
-            {
-                return jsonElement.GetInt32();
-            }
-            return Convert.ToInt32(obj);
-        }
-
-        private List<object> GetInstructionIdsOfGivenCause(List<Dictionary<string, object>> list, string cause)
-        {
-            if (list == null)
-                return new List<object>();
-
-            return list
-                .Where(dict => dict != null &&
-                       dict.ContainsKey(dB_pos_users_causeOfInstruction) &&
-                       dict[dB_pos_users_causeOfInstruction]?.ToString() == cause)
-                .Select(dict => dict.ContainsKey(dB_instructionId) ? dict[dB_instructionId] : null)
-                .Where(id => id != null)
-                .ToList();
+            // Load related files for the selected passed instruction
+            int instructionId = selectedItem.InstructionId;
+            LoadRelatedFilesForInstruction(instructionId);
         }
 
         private void RelatedFilesListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -606,66 +543,164 @@ namespace Kotova.Test1.ClientSide
                 }
             }
         }
+        #endregion
+
+        #region Management Event Handlers (For Chiefs)
+        private void AssignInstructionButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Функция назначения инструктажей будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ViewEmployeesButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Функция просмотра сотрудников будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ReportsButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Функция отчетов будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void SyncDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Функция синхронизации данных будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void SystemSettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Функция настроек системы будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void DocumentManagementButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Функция управления документами будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        #endregion
+
+        #region Helper Methods
+        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedInstruction)
+        {
+            return _listOfNewInstructions?.FirstOrDefault(dict =>
+                dict.ContainsKey("cause_of_instruction") &&
+                dict["cause_of_instruction"]?.ToString() == selectedInstruction);
+        }
+
+        private bool CanChiefCompleteInstruction()
+        {
+            return _allowCompletion;
+        }
+
+        private void LoadRelatedFilesForInstruction(int instructionId)
+        {
+            try
+            {
+                var relatedInstructions = _normativeInstructionsOfOldInstr?
+                    .Where(dict => dict.ContainsKey(dB_instructionId) &&
+                                   Convert.ToInt32(dict[dB_instructionId]) == instructionId)
+                    .Select(dict => $"{dict[db_normativeInstructionName]} ({dict[db_normativeInstructionUrl]})")
+                    .ToList();
+
+                if (relatedInstructions != null)
+                {
+                    foreach (var file in relatedInstructions)
+                    {
+                        RelatedFiles.Add(file);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading related files: {ex.Message}");
+            }
+        }
 
         private void OpenUrl(string url)
         {
             try
             {
-                Process.Start(new ProcessStartInfo
+                if (!string.IsNullOrEmpty(url))
                 {
-                    FileName = url,
-                    UseShellExecute = true
-                });
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось открыть URL: {ex.Message}");
+                MessageBox.Show($"Не удалось открыть URL: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        #endregion
+
+        #region Window Event Handlers
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            // Optional: Add confirmation dialog for critical operations
+            base.OnClosing(e);
+        }
+        #endregion
+
+        #region Data Models
+        public class NormativeInstructionItem : INotifyPropertyChanged
+        {
+            private bool _isChecked;
+
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string Url { get; set; }
+            public string DisplayText => $"{Name} ({Url})";
+
+            public bool IsChecked
+            {
+                get => _isChecked;
+                set
+                {
+                    _isChecked = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
 
-        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
+        public class PassedInstructionItem
         {
-            await RefreshNewInstructionsAsync();
-            await RefreshOldInstructionsAsync();
+            public string DatePassed { get; set; }
+            public string Type { get; set; }
+            public string Cause { get; set; }
+            public int InstructionId { get; set; }
         }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Create context menu for settings
-            var contextMenu = new ContextMenu();
-
-            var refreshItem = new MenuItem { Header = "Обновить инструктажи" };
-            refreshItem.Click += async (s, args) =>
-            {
-                await RefreshNewInstructionsAsync();
-                await RefreshOldInstructionsAsync();
-            };
-
-            contextMenu.Items.Add(refreshItem);
-            contextMenu.Items.Add(new Separator());
-
-            var closeItem = new MenuItem { Header = "Закрыть окно" };
-            closeItem.Click += (s, args) => this.Close();
-            contextMenu.Items.Add(closeItem);
-
-            contextMenu.IsOpen = true;
-        }
-
         #endregion
 
-        protected override void OnClosing(CancelEventArgs e)
+        #region Logger Implementation
+        private class WpfLogger : InstructionService.ILogger
         {
-            // Optional: Add confirmation dialog
-            // var result = MessageBox.Show("Вы уверены, что хотите закрыть окно?", 
-            //     "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            // 
-            // if (result == MessageBoxResult.No)
-            // {
-            //     e.Cancel = true;
-            //     return;
-            // }
+            private readonly InstructionViewerWindow _window;
 
-            base.OnClosing(e);
+            public WpfLogger(InstructionViewerWindow window)
+            {
+                _window = window;
+            }
+
+            public void LogInfo(string message)
+            {
+                Console.WriteLine($"INFO: {message}");
+                _window.UpdateStatus(message);
+            }
+
+            public void LogError(string message, Exception ex = null)
+            {
+                string errorMessage = ex != null ? $"{message}: {ex.Message}" : message;
+                Console.WriteLine($"ERROR: {errorMessage}");
+                _window.UpdateStatus($"Ошибка: {message}");
+            }
         }
+        #endregion
     }
 }

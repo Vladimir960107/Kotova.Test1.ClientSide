@@ -45,6 +45,7 @@ namespace Kotova.Test1.ClientSide
         public static Login_Russian Instance { get; private set; }
 
         public Form activeForm;
+        private Window activeWpfWindow;
         private NotifyIcon notifyIcon;
 
         public Login_Russian()
@@ -82,11 +83,30 @@ namespace Kotova.Test1.ClientSide
             }
             else
             {
-                // Restore the form from tray if minimized or hidden
-                activeForm.Show();
-                activeForm.WindowState = FormWindowState.Normal;
-                activeForm.ShowInTaskbar = true;
-                activeForm.BringToFront();
+                // Show either Windows Form or WPF Window
+                if (activeForm != null)
+                {
+                    // Restore the Windows Forms form from tray if minimized or hidden
+                    activeForm.Show();
+                    activeForm.WindowState = FormWindowState.Normal;
+                    activeForm.ShowInTaskbar = true;
+                    activeForm.BringToFront();
+                }
+                else if (activeWpfWindow != null)
+                {
+                    // Restore the WPF window from tray if minimized or hidden
+                    activeWpfWindow.Show();
+                    activeWpfWindow.WindowState = System.Windows.WindowState.Normal;
+                    activeWpfWindow.Activate();
+                }
+                else
+                {
+                    // Fallback to showing login form
+                    this.Show();
+                    this.WindowState = FormWindowState.Normal;
+                    this.ShowInTaskbar = true;
+                    this.BringToFront();
+                }
             }
         }
 
@@ -191,15 +211,6 @@ namespace Kotova.Test1.ClientSide
         private void NotifyIcon_DoubleClick(object sender, EventArgs e)
         {
             ShowForm();
-        }
-
-
-
-        public void ExitApplication()
-        {
-            this.Dispose(true);
-            notifyIcon.Dispose();
-            System.Windows.Forms.Application.Exit();
         }
 
         private void TimeToLoginItem_Click(object sender, EventArgs e)
@@ -368,37 +379,42 @@ namespace Kotova.Test1.ClientSide
             switch (role)
             {
                 case "User":
-                    formToOpen = new UserForm(this, username, fullName, departmentName);
-                    break;
+                    // STEP 1: Launch WPF InstructionViewerWindow instead of UserForm
+                    LaunchWPFInstructionViewer(username, fullName, departmentName, isChief: false);
+                    return; // Return early since we're handling WPF differently
+
                 case "ChiefOfDepartment":
-                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
-                    break;
+                    // STEP 1: Launch WPF InstructionViewerWindow for chiefs too
+                    LaunchWPFInstructionViewer(username, fullName, departmentName, isChief: true);
+                    return; // Return early since we're handling WPF differently
+
                 case "Coordinator":
                     formToOpen = new CoordinatorForm(this, username, fullName, departmentName);
                     break;
-                case "DeputyChief": // Add this case
-                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
-                    break;
+
+                case "DeputyChief":
+                    // STEP 1: Launch WPF InstructionViewerWindow for deputy chiefs
+                    LaunchWPFInstructionViewer(username, fullName, departmentName, isChief: true);
+                    return; // Return early since we're handling WPF differently
+
                 case "Management":
-                    //formToOpen = new ManagementForm(this, username, fullName, departmentName);
                     LaunchWPFManagementApplication(username, fullName, departmentName);
-                    break;
+                    return; // Return early since this is already WPF
 
-
-                    //wpfWindow = CreateSimpleTestWindow();
-                    //CreateWPFManagementWindow(username, fullName, departmentName);
-                    break;
                 case "Admin":
                     formToOpen = new AdminForm(this, username, fullName);
                     break;
+
                 default:
                     MessageBox.Show($"Упс, роль '{role}' не валидна. Попросите кого-то из тех. поддержки разрешить ситуацию :I");
                     return;
             }
 
+            // Handle remaining Windows Forms (Coordinator, Admin)
             if (formToOpen != null)
             {
-                activeForm = formToOpen;
+                activeForm = formToOpen;          // Set Windows Forms active form
+                activeWpfWindow = null;           // Clear WPF window reference
                 formToOpen.Location = this.Location;
                 this.Hide();
                 formToOpen.Show();
@@ -412,27 +428,203 @@ namespace Kotova.Test1.ClientSide
 
                         this.Invoke(new Action(() =>
                         {
-                            if (formToOpen is UserForm userForm && userForm._signUpForm != null)
-                                userForm._signUpForm.Show();
-                            else if (formToOpen is ChiefForm chiefForm && chiefForm._signUpForm != null)
-                                chiefForm._signUpForm.Show();
-                            else if (formToOpen is CoordinatorForm coordForm && coordForm._signUpForm != null)
-                                coordForm._signUpForm.Show();
-                            /*else if (formToOpen is ManagementForm mgmtForm && mgmtForm._signUpForm != null)
-                                mgmtForm._signUpForm.Show();*/
+                            if (formToOpen is CoordinatorForm coordinatorForm && coordinatorForm._signUpForm != null)
+                                coordinatorForm._signUpForm.Show();
+                            /*else if (formToOpen is AdminForm adminForm && adminForm._signUpForm != null)
+                                adminForm._signUpForm.Show();*/
                         }));
                     });
                 }
             }
-            if (wpfWindow != null)
+        }
+
+        /// <summary>
+        /// Launches the WPF InstructionViewerWindow for Users, Chiefs, and Deputy Chiefs
+        /// </summary>
+        /// <param name="username">The username</param>
+        /// <param name="fullName">The full name</param>
+        /// <param name="departmentName">The department name</param>
+        /// <param name="isChief">Whether the user is a chief/deputy chief</param>
+        private void LaunchWPFInstructionViewer(string username, string fullName, string departmentName, bool isChief = false)
+        {
+            try
             {
-                this.Hide();
+                // Ensure WPF interop is enabled
+                WindowsFormsHost.EnableWindowsFormsInterop();
+
+                // Create the enhanced WPF instruction viewer window
+                var wpfWindow = new InstructionViewerWindow(
+                    jwtToken: _jwtToken,
+                    userName: fullName, // Use full name for display
+                    isChief: isChief,
+                    allowCompletion: true, // Allow chiefs to complete instructions if needed
+                    loginForm: this,
+                    signUpForm: null // Will be created after window is shown
+                );
+
+                // Set window properties
+                wpfWindow.Title = $"Система управления инструктажами - {fullName}";
+                wpfWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                // Center over login form if possible
+                if (this.Visible)
+                {
+                    wpfWindow.Left = this.Location.X + (this.Width - wpfWindow.Width) / 2;
+                    wpfWindow.Top = this.Location.Y + (this.Height - wpfWindow.Height) / 2;
+                }
+
+                // Handle WPF window closed event
+                wpfWindow.Closed += (sender, e) =>
+                {
+                    // When WPF window closes, show login form again
+                    this.Invoke(new Action(() =>
+                    {
+                        activeForm = this;           // Set login form as active
+                        activeWpfWindow = null;      // Clear WPF window reference
+                        this.Show();
+                        this.WindowState = FormWindowState.Normal;
+                        this.BringToFront();
+                    }));
+                };
+
+                // Show the WPF window
                 wpfWindow.Show();
 
-                // Handle window closing to show login form again
-                wpfWindow.Closed += (s, e) => {
-                    this.ShowForm();
-                };
+                // Set WPF window as active and clear Windows Forms reference
+                activeForm = null;              // Clear Windows Forms reference  
+                activeWpfWindow = wpfWindow;    // Set WPF window as active
+                this.Hide();
+
+                // Create SignUpForm after window is shown
+                try
+                {
+                    // Create a wrapper Form to satisfy SignUpForm constructor requirements
+                    var wrapperForm = new Form() { Visible = false, ShowInTaskbar = false };
+                    var signUpForm = new SignUpForm(this, wrapperForm);
+
+                    // Update the WPF window's SignUpForm reference
+                    wpfWindow.SetSignUpForm(signUpForm);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not create SignUpForm: {ex.Message}");
+                }
+
+                // Handle default username scenario
+                if (isDefaultUsername(username))
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+
+                        wpfWindow.Dispatcher.Invoke(() =>
+                        {
+                            // Note: SignUpForm functionality will need to be adapted for WPF
+                            // For now, we can show a WPF message or implement a WPF-based signup
+                            System.Windows.MessageBox.Show("Пожалуйста, обновите свои учётные данные в настройках.",
+                                "Обновление данных", MessageBoxButton.OK, MessageBoxImage.Information);
+                        });
+                    });
+                }
+
+                // Log successful launch
+                Console.WriteLine($"Successfully launched WPF InstructionViewerWindow for {fullName} (Role: {(isChief ? "Chief" : "User")})");
+            }
+            catch (Exception ex)
+            {
+                // Fallback to Windows Forms if WPF fails
+                Console.WriteLine($"Failed to launch WPF InstructionViewerWindow: {ex.Message}");
+                MessageBox.Show($"Ошибка при запуске WPF интерфейса: {ex.Message}\n\nПереход к стандартному интерфейсу...",
+                    "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Fallback to original Windows Forms
+                LaunchWindowsFormsFallback(username, fullName, departmentName, isChief);
+            }
+        }
+
+        /// <summary>
+        /// Fallback method to launch Windows Forms UserForm/ChiefForm if WPF fails
+        /// </summary>
+        /// <param name="username">The username</param>
+        /// <param name="fullName">The full name</param>
+        /// <param name="departmentName">The department name</param>
+        /// <param name="isChief">Whether the user is a chief</param>
+        private void LaunchWindowsFormsFallback(string username, string fullName, string departmentName, bool isChief)
+        {
+            try
+            {
+                Form formToOpen = null;
+
+                if (isChief)
+                {
+                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
+                }
+                else
+                {
+                    formToOpen = new UserForm(this, username, fullName, departmentName);
+                }
+
+                if (formToOpen != null)
+                {
+                    activeForm = formToOpen;        // Set Windows Forms as active
+                    activeWpfWindow = null;         // Clear WPF reference
+                    formToOpen.Location = this.Location;
+                    this.Hide();
+                    formToOpen.Show();
+
+                    // Handle default username scenario
+                    if (isDefaultUsername(username))
+                    {
+                        Task.Run(async () =>
+                        {
+                            await Task.Delay(1000);
+
+                            this.Invoke(new Action(() =>
+                            {
+                                if (formToOpen is UserForm userForm && userForm._signUpForm != null)
+                                    userForm._signUpForm.Show();
+                                else if (formToOpen is ChiefForm chiefForm && chiefForm._signUpForm != null)
+                                    chiefForm._signUpForm.Show();
+                            }));
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Критическая ошибка при запуске интерфейса: {ex.Message}",
+                    "Критическая ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Add ExitApplication method to handle both Forms and WPF Windows
+        public void ExitApplication()
+        {
+            try
+            {
+                // Close any active WPF windows
+                if (activeWpfWindow != null)
+                {
+                    activeWpfWindow.Close();
+                    activeWpfWindow = null;
+                }
+
+                // Close any active Windows Forms
+                if (activeForm != null && activeForm != this)
+                {
+                    activeForm.Dispose();
+                    activeForm = null;
+                }
+
+                // Dispose notify icon and exit
+                this.Dispose(true);
+                notifyIcon?.Dispose();
+                System.Windows.Forms.Application.Exit();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during application exit: {ex.Message}");
+                System.Windows.Forms.Application.Exit();
             }
         }
 

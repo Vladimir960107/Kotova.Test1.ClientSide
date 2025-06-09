@@ -12,6 +12,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows; // For WPF Window
+using WpfWindow = System.Windows.Window;
+using WinFormsForm = System.Windows.Forms.Form;
+using SystemColors = System.Drawing.SystemColors;
+using MessageBox = System.Windows.Forms.MessageBox;
+using Point = System.Drawing.Point;
 
 namespace Kotova.Test1.ClientSide
 {
@@ -19,19 +25,158 @@ namespace Kotova.Test1.ClientSide
     {
         private static readonly string _changeCredUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/change_credentials";
         private static readonly string _checkIfLoginAlreadyTaken = ConfigurationClass.BASE_URL_DEVELOPMENT + "check_login_already_taken";
+
         private Login_Russian? _loginForm;
-        private Form? _userForm;
+        private WinFormsForm? _userForm;           // Original Windows Forms reference
+        private WpfWindow? _userWpfWindow;         // NEW: WPF Window reference
+
         const string defaultLoginText = "Введите новый логин";
         const string defaultPasswordText = "Введите новый пароль";
         const string defaultPasswordRepeatText = "Повторите новый пароль";
         const string defaultEmailText = "Введите почту (Необязательно)";
-        public SignUpForm(Login_Russian form, Form userForm)
+
+        // Original constructor for Windows Forms compatibility
+        public SignUpForm(Login_Russian form, WinFormsForm userForm)
         {
             InitializeComponent();
             _loginForm = form;
             _userForm = userForm;
-
+            _userWpfWindow = null; // Clear WPF reference
         }
+
+        // NEW: Constructor for WPF Window support
+        public SignUpForm(Login_Russian form, WpfWindow userWpfWindow)
+        {
+            InitializeComponent();
+            _loginForm = form;
+            _userForm = null; // Clear Windows Forms reference
+            _userWpfWindow = userWpfWindow;
+        }
+
+
+
+        // NEW: Method to determine which parent window type we have
+        private bool IsWpfParent => _userWpfWindow != null;
+        private bool IsFormsParent => _userForm != null;
+
+
+        // NEW: Method to center SignUpForm over parent window
+        private void CenterOverParent()
+        {
+            try
+            {
+                if (IsWpfParent && _userWpfWindow != null)
+                {
+                    // Ensure the WPF window position is available
+                    if (_userWpfWindow.IsLoaded && _userWpfWindow.WindowState != System.Windows.WindowState.Minimized)
+                    {
+                        // Center over WPF window
+                        this.StartPosition = FormStartPosition.Manual;
+
+                        // Calculate center position
+                        double wpfCenterX = _userWpfWindow.Left + (_userWpfWindow.Width / 2);
+                        double wpfCenterY = _userWpfWindow.Top + (_userWpfWindow.Height / 2);
+
+                        // Position SignUpForm centered over WPF window
+                        this.Left = (int)(wpfCenterX - (this.Width / 2));
+                        this.Top = (int)(wpfCenterY - (this.Height / 2));
+
+                        // Ensure it's within screen bounds
+                        var screen = Screen.FromPoint(new Point(this.Left, this.Top));
+
+                        if (this.Left < screen.WorkingArea.Left)
+                            this.Left = screen.WorkingArea.Left;
+                        if (this.Top < screen.WorkingArea.Top)
+                            this.Top = screen.WorkingArea.Top;
+                        if (this.Left + this.Width > screen.WorkingArea.Right)
+                            this.Left = screen.WorkingArea.Right - this.Width;
+                        if (this.Top + this.Height > screen.WorkingArea.Bottom)
+                            this.Top = screen.WorkingArea.Bottom - this.Height;
+
+                        Console.WriteLine($"SignUpForm positioned at: ({this.Left}, {this.Top}) over WPF window at: ({_userWpfWindow.Left}, {_userWpfWindow.Top})");
+                        return;
+                    }
+                }
+                else if (IsFormsParent && _userForm != null && _userForm.Visible)
+                {
+                    // Center over Windows Forms
+                    this.StartPosition = FormStartPosition.Manual;
+                    this.Left = _userForm.Left + (_userForm.Width - this.Width) / 2;
+                    this.Top = _userForm.Top + (_userForm.Height - this.Height) / 2;
+                    return;
+                }
+
+                // Fallback to center screen
+                this.StartPosition = FormStartPosition.CenterScreen;
+                Console.WriteLine("SignUpForm: Using center screen fallback");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error centering SignUpForm over parent: {ex.Message}");
+                this.StartPosition = FormStartPosition.CenterScreen;
+            }
+        }
+
+        // NEW: Method to show parent window (works for both Forms and WPF)
+        private void ShowParentWindow()
+        {
+            try
+            {
+                if (IsWpfParent && _userWpfWindow != null)
+                {
+                    // Show WPF window
+                    _userWpfWindow.Show();
+                    _userWpfWindow.WindowState = System.Windows.WindowState.Normal;
+                    _userWpfWindow.Activate();
+                }
+                else if (IsFormsParent && _userForm != null)
+                {
+                    // Show Windows Forms window
+                    _userForm.Show();
+                    _userForm.WindowState = FormWindowState.Normal;
+                    _userForm.BringToFront();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing parent window: {ex.Message}");
+            }
+        }
+
+        // NEW: Method to hide parent window (works for both Forms and WPF)
+        private void HideParentWindow()
+        {
+            try
+            {
+                if (IsWpfParent && _userWpfWindow != null)
+                {
+                    _userWpfWindow.Hide();
+                }
+                else if (IsFormsParent && _userForm != null)
+                {
+                    _userForm.Hide();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error hiding parent window: {ex.Message}");
+            }
+        }
+
+        // NEW: Method to center SignUpForm over parent window
+
+        // Override SetVisibleCore to center over parent when shown
+        protected override void SetVisibleCore(bool value)
+        {
+            if (value && this.WindowState != FormWindowState.Minimized)
+            {
+                CenterOverParent();
+            }
+            base.SetVisibleCore(value);
+        }
+
+        // Rest of your existing SignUpForm methods remain exactly the same...
+        // (All the existing event handlers, validation methods, etc.)
 
         private void loginTextBox_Click(object sender, EventArgs e)
         {
@@ -42,7 +187,6 @@ namespace Kotova.Test1.ClientSide
             changeAllToSytemColors();
             CheckForEmptyStringAndTypeReminders(sender);
             loginTextBox.BackColor = Color.White;
-
         }
 
         private void PasswordTextBox_Click(object sender, EventArgs e)

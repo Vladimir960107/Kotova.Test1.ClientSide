@@ -342,7 +342,7 @@
             LabelOfPassedInstr.AutoSize = true;
             LabelOfPassedInstr.Location = new Point(3, 12);
             LabelOfPassedInstr.Name = "LabelOfPassedInstr";
-            LabelOfPassedInstr.Size = new Size(188, 15);
+            LabelOfPassedInstr.Size = new Size(187, 15);
             LabelOfPassedInstr.TabIndex = 32;
             LabelOfPassedInstr.Text = "Лист пройденных инструктажей:";
             // 
