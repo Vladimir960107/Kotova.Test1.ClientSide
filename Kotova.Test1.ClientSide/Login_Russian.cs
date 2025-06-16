@@ -40,6 +40,7 @@ namespace Kotova.Test1.ClientSide
         private TaskCompletionSource<bool> _initTaskCompletionSource;
         private int timeForBeingAuthenticated = 600;
 
+
         private DepartmentCache _departmentCache;
 
         public static Login_Russian Instance { get; private set; }
@@ -323,37 +324,50 @@ namespace Kotova.Test1.ClientSide
                 // Hide the current form
                 this.Hide();
 
-                // Create a new WPF Application instance
-                var wpfApp = new System.Windows.Application();
-                wpfApp.ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;
+                // Check if there's already a WPF Application running
+                if (System.Windows.Application.Current == null)
+                {
+                    // Create a new WPF Application instance
+                    var wpfApp = new System.Windows.Application();
+                    wpfApp.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
+                }
 
                 // Create API service
                 var apiService = new ManagementWPF.Services.ApiService(
                     ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/instructions");
                 apiService.SetAuthToken(_jwtToken);
 
-                // Create ViewModel
-                var mainViewModel = new ManagementWPF.ViewModels.MainViewModel(apiService, fullName);
+                // Create ViewModel with login form reference for sign out
+                var mainViewModel = new ManagementWPF.ViewModels.MainViewModel(apiService, fullName, this);
 
                 // Create main window
                 var mainWindow = new ManagementWPF.Views.MainWindow(mainViewModel);
                 mainWindow.Title = $"Система управления инструктажами - {fullName}";
 
-                // Handle window closing
-                mainWindow.Closed += (s, e) => {
-                    wpfApp.Shutdown();
-                    // Show login form again
-                    this.Invoke(new Action(() => {
+                // Handle window events
+                mainWindow.OnWindowHidden += () =>
+                {
+                    this.Invoke(new Action(() =>
+                    {
                         this.ShowForm();
                     }));
                 };
 
-                // Set as main window and run
-                wpfApp.MainWindow = mainWindow;
+                // Handle when the window is closed normally
+                mainWindow.Closed += (s, e) =>
+                {
+                    // This will be called when window is properly closed
+                    this.Invoke(new Action(() =>
+                    {
+                        this.ShowForm();
+                    }));
+                };
+
+                // Show the window
                 mainWindow.Show();
 
-                // This will block until WPF app closes
-                wpfApp.Run();
+                // Store reference for potential future use
+                activeWpfWindow = mainWindow;
             }
             catch (Exception ex)
             {
@@ -385,8 +399,8 @@ namespace Kotova.Test1.ClientSide
 
                 case "ChiefOfDepartment":
                     // STEP 1: Launch WPF InstructionViewerWindow for chiefs too
-                    LaunchWPFInstructionViewer(username, fullName, departmentName, isChief: true);
-                    return; // Return early since we're handling WPF differently
+                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
+                    break;
 
                 case "Coordinator":
                     formToOpen = new CoordinatorForm(this, username, fullName, departmentName);
@@ -394,8 +408,8 @@ namespace Kotova.Test1.ClientSide
 
                 case "DeputyChief":
                     // STEP 1: Launch WPF InstructionViewerWindow for deputy chiefs
-                    LaunchWPFInstructionViewer(username, fullName, departmentName, isChief: true);
-                    return; // Return early since we're handling WPF differently
+                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
+                    break;
 
                 case "Management":
                     LaunchWPFManagementApplication(username, fullName, departmentName);
@@ -605,7 +619,14 @@ namespace Kotova.Test1.ClientSide
                 // Close any active WPF windows
                 if (activeWpfWindow != null)
                 {
-                    activeWpfWindow.Close();
+                    if (activeWpfWindow is ManagementWPF.Views.MainWindow mainWin)
+                    {
+                        mainWin.ForceClose();
+                    }
+                    else
+                    {
+                        activeWpfWindow.Close();
+                    }
                     activeWpfWindow = null;
                 }
 
@@ -616,14 +637,17 @@ namespace Kotova.Test1.ClientSide
                     activeForm = null;
                 }
 
-                // Dispose notify icon and exit
-                this.Dispose(true);
-                notifyIcon?.Dispose();
+                // Delete JWT token
+                Decryption_stuff.DeleteJWTToken();
+
+                // Close application
+                this.Dispose();
                 System.Windows.Forms.Application.Exit();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error during application exit: {ex.Message}");
+                MessageBox.Show($"Ошибка при закрытии приложения: {ex.Message}", "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 System.Windows.Forms.Application.Exit();
             }
         }
@@ -666,7 +690,7 @@ namespace Kotova.Test1.ClientSide
                         if (EncodeJWTTokenSuccessfully(_jwtToken))
                         {
                             PasswordTextBox.Text = "";
-                            Console.WriteLine($"JWTToken: {_jwtToken}");
+                            //Console.WriteLine($"JWTToken: {_jwtToken}"); //THIS SHOULDN'T BE SHOWING IN FREAKING PRODUCTION FOR SURE!
                             ProcessSuccessfulAuthentication(_jwtToken);
                         }
                         else

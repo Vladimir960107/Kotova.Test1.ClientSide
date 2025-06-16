@@ -1236,9 +1236,9 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                // Allow completion for Chiefs and DeputyChiefs
+                // Allow completion for Chiefs, DeputyChiefs, Management, and Admins
                 var role = GetCurrentUserRole();
-                bool allowCompletion = (role == "DeputyChief");
+                bool allowCompletion = IsRoleAllowedToCompleteInstructions(role);
 
                 // Create new WPF window with appropriate settings
                 var wpfWindow = new InstructionViewerWindow(
@@ -1269,6 +1269,26 @@ namespace Kotova.Test1.ClientSide
                 MessageBox.Show($"Ошибка при открытии окна просмотра инструктажей: {ex.Message}",
                     "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Determines if a role is allowed to complete instructions
+        /// </summary>
+        /// <param name="role">The user's role</param>
+        /// <returns>True if the role can complete instructions, false otherwise</returns>
+        private bool IsRoleAllowedToCompleteInstructions(string role)
+        {
+            if (string.IsNullOrEmpty(role))
+                return false;
+
+            // Roles that are allowed to complete instructions (from highest to lowest authority)
+            var allowedRoles = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "ChiefOfDepartment",
+        "DeputyChief",
+    };
+
+            return allowedRoles.Contains(role);
         }
 
         // Helper method to get current user's role
@@ -2305,17 +2325,39 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                // Check if an instruction is selected
                 if (instructionsListView.SelectedItems.Count == 0)
                 {
-                    WinForms.MessageBox.Show("Пожалуйста, выберите инструктаж для назначения.");
+                    WinForms.MessageBox.Show("Выберите инструктаж для назначения.");
                     return;
                 }
 
                 var selectedItem = instructionsListView.SelectedItems[0];
-                // FIX: Now cause is in column 2 (index 2), not column 1
-                string selectedInstructionName = selectedItem.SubItems[2].Text; // Cause column (now correct)
+                string selectedInstructionName = selectedItem.SubItems[2].Text; // Cause column
                 byte instructionType = GetInstructionTypeFromSelectedItem(selectedItem);
+
+                // **NEW: Check if this is an unplanned instruction and if chief has passed it**
+                if (instructionType == 1) // Внеплановый (unplanned)
+                {
+                    // Get the instruction details to check is_passed_by_chief_unplanned_instr
+                    int instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
+                    var instruction = await GetInstructionById(instructionId);
+
+                    if (instruction == null)
+                    {
+                        WinForms.MessageBox.Show("Не удалось получить данные инструктажа.");
+                        return;
+                    }
+
+                    if (!instruction.is_passed_by_chief_unplanned_instr)
+                    {
+                        WinForms.MessageBox.Show(
+                            "Данный внеплановый инструктаж может быть назначен сотрудникам только после того, как начальник или заместитель отдела пройдет его.",
+                            "Ограничение доступа",
+                            WinForms.MessageBoxButtons.OK,
+                            WinForms.MessageBoxIcon.Warning);
+                        return;
+                    }
+                }
 
                 // Fetch employee data with roles
                 await SyncEmployeesWithRolesAsync();
@@ -2404,11 +2446,11 @@ namespace Kotova.Test1.ClientSide
         {
             var assignmentManager = new InstructionAssignmentManager(
                 instructionName,
-                ConvertItemsToEmployeeListWithRoles(checkedListBoxNamesOfPeople.Items),
+                ConvertItemsToEmployeeList(checkedListBoxNamesOfPeople.Items),
                 ConvertItemsToNormativeInstructionsList(ListOfNormativeInstrNames.Items),
                 _loginForm._jwtToken,
                 urlSubmitInstructionToPeople,
-                instructionType
+                instructionType  // Pass the instruction type
             );
 
             assignmentManager.ShowDialog();
@@ -2649,19 +2691,48 @@ namespace Kotova.Test1.ClientSide
         {
             instructionsListView.Items.Clear();
 
-            // Get all instructions from server (excluding unplanned ones)
+            // Get all instructions from server
             var instructions = await GetAllInstructionsFromServer();
 
             foreach (var instruction in instructions)
             {
                 var item = new WinForms.ListViewItem(instruction.instruction_id.ToString());
-                // FIX: Add items in the correct order to match column headers
+
+                // Add items in the correct order to match column headers
                 item.SubItems.Add(GetInstructionTypeName(instruction.type_of_instruction)); // Column 1: Type
                 item.SubItems.Add(instruction.cause_of_instruction);  // Column 2: Cause
                 item.SubItems.Add(instruction.begin_date.ToString("dd.MM.yyyy")); // Column 3: Start Date
                 item.SubItems.Add(instruction.end_date.ToString("dd.MM.yyyy")); // Column 4: End Date
                 item.SubItems.Add(instruction.is_assigned_to_people ? "Назначен" : "Не назначен"); // Column 5: Assigned
-                item.SubItems.Add(instruction.is_passed_by_everyone ? "Завершен" : "В процессе"); // Column 6: Completed
+
+                // Column 6: Completed - with special handling for unplanned instructions
+                string completedText;
+                if (instruction.type_of_instruction == 1) // Unplanned instruction
+                {
+                    if (!instruction.is_passed_by_chief_unplanned_instr)
+                    {
+                        completedText = "Не пройден начальником";
+                        item.BackColor = Color.LightCoral; // Red background for unpassable instructions
+                        item.ForeColor = Color.DarkRed;
+                    }
+                    else if (!instruction.is_assigned_to_people)
+                    {
+                        completedText = "Готов к назначению";
+                        item.BackColor = Color.LightGreen; // Green background for assignable instructions
+                        item.ForeColor = Color.DarkGreen;
+                    }
+                    else
+                    {
+                        completedText = instruction.is_passed_by_everyone ? "Завершен всеми" : "В процессе";
+                        item.BackColor = instruction.is_passed_by_everyone ? Color.LightBlue : Color.LightYellow;
+                    }
+                }
+                else
+                {
+                    completedText = instruction.is_passed_by_everyone ? "Завершен" : "В процессе";
+                }
+
+                item.SubItems.Add(completedText);
 
                 instructionsListView.Items.Add(item);
             }

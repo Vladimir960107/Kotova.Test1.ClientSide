@@ -41,6 +41,10 @@ namespace Kotova.Test1.ClientSide
         private string _jwtToken;
         private bool _isChief;
         private string _userName;
+        private Form _someActiveFormThatShouldBeClosedWhenExitingApplication;
+
+        private HashSet<int> _clickedNormativeIds = new HashSet<int>();
+        private int _totalNormativeLinksForCurrentInstruction = 0;
 
         // References to main application forms (for context menu functionality)
         private Login_Russian _loginForm;
@@ -55,8 +59,15 @@ namespace Kotova.Test1.ClientSide
         #endregion
 
         #region Constructor
-        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false, Login_Russian loginForm = null, SignUpForm signUpForm = null)
+        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false, Login_Russian loginForm = null, SignUpForm signUpForm = null, Form someActiveFormThatShouldBeClosed = null)
         {
+
+            /*if (System.Windows.Application.Current == null)
+            {
+                // Create a minimal WPF application context
+                new System.Windows.Application();
+            }*/
+
             _jwtToken = jwtToken;
             _isChief = isChief;
             _userName = userName;
@@ -64,6 +75,7 @@ namespace Kotova.Test1.ClientSide
             _instructionService = new InstructionService(jwtToken, new WpfLogger(this));
             _loginForm = loginForm;
             _signUpForm = signUpForm;
+            _someActiveFormThatShouldBeClosedWhenExitingApplication = someActiveFormThatShouldBeClosed;
 
             InitializeComponent();
             InitializeCollections();
@@ -73,12 +85,9 @@ namespace Kotova.Test1.ClientSide
             // Create SignUpForm if not provided and loginForm is available
             if (_signUpForm == null && _loginForm != null)
             {
-                // Note: SignUpForm expects a Form as second parameter, but we're passing a WPF Window
-                // This might need adaptation or we could create a WPF-based credential change dialog
                 try
                 {
-                    // For now, we'll create it with loginForm and this window
-                    // This may require SignUpForm constructor modification
+                    // Use the new WPF-compatible constructor
                     _signUpForm = new SignUpForm(_loginForm, this);
                 }
                 catch (Exception ex)
@@ -98,6 +107,54 @@ namespace Kotova.Test1.ClientSide
         public void SetSignUpForm(SignUpForm signUpForm)
         {
             _signUpForm = signUpForm;
+        }
+
+        /// <summary>
+        /// Manually positions the SignUpForm over this WPF window
+        /// </summary>
+        private void PositionSignUpFormOverWindow()
+        {
+            if (_signUpForm == null) return;
+
+            try
+            {
+                // Get this window's position and size
+                double windowCenterX = this.Left + (this.ActualWidth / 2);
+                double windowCenterY = this.Top + (this.ActualHeight / 2);
+
+                // Set SignUpForm size if needed (approximate default SignUpForm size)
+                var signUpFormWidth = 450;
+                var signUpFormHeight = 550;
+
+                // Calculate position to center SignUpForm over this window
+                int signUpLeft = (int)(windowCenterX - (signUpFormWidth / 2));
+                int signUpTop = (int)(windowCenterY - (signUpFormHeight / 2));
+
+                // Ensure it's within screen bounds
+                var screen = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(signUpLeft, signUpTop));
+
+                if (signUpLeft < screen.WorkingArea.Left)
+                    signUpLeft = screen.WorkingArea.Left;
+                if (signUpTop < screen.WorkingArea.Top)
+                    signUpTop = screen.WorkingArea.Top;
+                if (signUpLeft + signUpFormWidth > screen.WorkingArea.Right)
+                    signUpLeft = screen.WorkingArea.Right - signUpFormWidth;
+                if (signUpTop + signUpFormHeight > screen.WorkingArea.Bottom)
+                    signUpTop = screen.WorkingArea.Bottom - signUpFormHeight;
+
+                // Set the position
+                _signUpForm.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
+                _signUpForm.Left = signUpLeft;
+                _signUpForm.Top = signUpTop;
+
+                Console.WriteLine($"Positioning SignUpForm at ({signUpLeft}, {signUpTop}) over WPF window at ({this.Left}, {this.Top})");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error positioning SignUpForm: {ex.Message}");
+                // Fallback to center screen
+                _signUpForm.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            }
         }
         #endregion
 
@@ -296,6 +353,8 @@ namespace Kotova.Test1.ClientSide
             {
                 if (_signUpForm != null)
                 {
+                    // Position SignUpForm over this WPF window manually for better control
+                    PositionSignUpFormOverWindow();
                     _signUpForm.Show();
                 }
                 else
@@ -318,22 +377,8 @@ namespace Kotova.Test1.ClientSide
                 contextMenu.Items.Add(signOutItem);
             }
 
-            contextMenu.Items.Add(new Separator());
-
-            // Exit Application (equivalent to exitApplicationToolStripMenuItem_Click)
-            if (_loginForm != null)
-            {
-                var exitItem = new MenuItem { Header = "❌ Выйти из программы" };
-                exitItem.Click += (s, args) => ExitApplication();
-                contextMenu.Items.Add(exitItem);
-            }
-
-            contextMenu.Items.Add(new Separator());
-
-            // Close Window
-            var closeItem = new MenuItem { Header = "🗙 Закрыть окно" };
-            closeItem.Click += (s, args) => this.Close();
-            contextMenu.Items.Add(closeItem);
+            // REMOVED: Exit Application button
+            // REMOVED: Close Window button
 
             contextMenu.IsOpen = true;
         }
@@ -367,7 +412,7 @@ namespace Kotova.Test1.ClientSide
                     _loginForm.activeForm = _loginForm;
                     _loginForm.Show();
                 }
-
+                _someActiveFormThatShouldBeClosedWhenExitingApplication.Close();
                 this.Close();
             }
             catch (Exception ex)
@@ -398,11 +443,61 @@ namespace Kotova.Test1.ClientSide
         #endregion
 
         #region Main Event Handlers
+        // Add these helper methods to InstructionViewerWindow.xaml.cs
+
+        // Add these helper methods to InstructionViewerWindow.xaml.cs
+
+        /// <summary>
+        /// Processes unplanned instruction URLs, splitting them by "|" separator and giving them sequential names
+        /// </summary>
+        /// <param name="combinedUrl">Combined URLs separated by "|"</param>
+        /// <param name="normativeId">The normative instruction ID</param>
+        /// <returns>List of NormativeInstructionItem objects</returns>
+        private List<NormativeInstructionItem> ProcessUnplannedNormativeInstructions(string combinedUrl, int normativeId)
+        {
+            var result = new List<NormativeInstructionItem>();
+
+            // Split URLs by "|" separator
+            var urlParts = combinedUrl.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
+                                     .Select(u => u.Trim())
+                                     .Where(u => !string.IsNullOrEmpty(u))
+                                     .ToArray();
+
+            // Create individual normative instruction items with sequential names
+            for (int i = 0; i < urlParts.Length; i++)
+            {
+                result.Add(new NormativeInstructionItem
+                {
+                    Id = normativeId + i, // Give each split item a unique ID for tracking
+                    Name = $"Нормативный документ {i + 1}",
+                    Url = urlParts[i]
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks if the instruction is unplanned and has multiple URLs that need to be split
+        /// </summary>
+        /// <param name="instructionType">The type of instruction</param>
+        /// <param name="url">The URL string to check</param>
+        /// <returns>True if URLs should be split, false otherwise</returns>
+        private bool ShouldSplitUnplannedUrls(string instructionType, string url)
+        {
+            return instructionType == "1" && !string.IsNullOrEmpty(url) && url.Contains(" | ");
+        }
+
+        // Modified InstructionsListBox_SelectionChanged method
         private void InstructionsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             NormativeInstructions.Clear();
             _isInstructionSelected = false;
             PassInstructionCheckBox.IsEnabled = false;
+
+            // Reset tracking for new instruction
+            _clickedNormativeIds.Clear();
+            _totalNormativeLinksForCurrentInstruction = 0;
 
             if (InstructionsListBox.SelectedItem == null)
                 return;
@@ -414,36 +509,49 @@ namespace Kotova.Test1.ClientSide
                 return;
 
             int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
+            string instructionType = selectedDict[db_typeOfInstruction].ToString();
 
             // Check if this is an introductory instruction (type 0)
-            string instructionType = selectedDict[db_typeOfInstruction].ToString();
             if (instructionType == "0")
             {
                 _isInstructionSelected = true;
-                // Use the logic to determine if chiefs can complete this instruction
-                if (_isChief)
-                {
-                    PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
-                }
-                else
-                {
-                    PassInstructionCheckBox.IsEnabled = true;
-                }
+                UpdatePassInstructionCheckboxState();
                 return;
             }
 
-            // Load normative instructions
+            // Load normative instructions and count them
             bool hasNormativeInstructions = false;
             foreach (var normativeInstruction in _normativeInstructionsOfNewInstr)
             {
                 if (Convert.ToInt32(normativeInstruction[dB_instructionId].ToString()) == instructionId)
                 {
-                    NormativeInstructions.Add(new NormativeInstructionItem
+                    string name = normativeInstruction[db_normativeInstructionName]?.ToString() ?? "";
+                    string url = normativeInstruction[db_normativeInstructionUrl]?.ToString() ?? "";
+                    int normativeId = Convert.ToInt32(normativeInstruction[db_normativeInstructionId]);
+
+                    // Check if this is an unplanned instruction with multiple URLs
+                    if (ShouldSplitUnplannedUrls(instructionType, url))
                     {
-                        Id = Convert.ToInt32(normativeInstruction[db_normativeInstructionId]),
-                        Name = normativeInstruction[db_normativeInstructionName]?.ToString() ?? "",
-                        Url = normativeInstruction[db_normativeInstructionUrl]?.ToString() ?? ""
-                    });
+                        // Process unplanned instruction with multiple URLs
+                        var splitItems = ProcessUnplannedNormativeInstructions(url, normativeId);
+                        foreach (var item in splitItems)
+                        {
+                            NormativeInstructions.Add(item);
+                            _totalNormativeLinksForCurrentInstruction++;
+                        }
+                    }
+                    else
+                    {
+                        // For regular instructions or unplanned instructions with single URL
+                        NormativeInstructions.Add(new NormativeInstructionItem
+                        {
+                            Id = normativeId,
+                            Name = name,
+                            Url = url
+                        });
+                        _totalNormativeLinksForCurrentInstruction++;
+                    }
+
                     hasNormativeInstructions = true;
                 }
             }
@@ -451,6 +559,66 @@ namespace Kotova.Test1.ClientSide
             if (hasNormativeInstructions)
             {
                 _isInstructionSelected = true;
+                UpdatePassInstructionCheckboxState(); // This will now require clicking all links
+
+                // Show initial status
+                UpdateStatus($"Необходимо просмотреть все нормативные документы: 0/{_totalNormativeLinksForCurrentInstruction}");
+            }
+        }
+
+        private void NormativeInstructionsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (NormativeInstructionsListBox.SelectedItem is NormativeInstructionItem selectedItem)
+            {
+                // Track that this normative instruction was clicked
+                _clickedNormativeIds.Add(selectedItem.Id);
+
+                // Update checkbox enabled state
+                UpdatePassInstructionCheckboxState();
+
+                // Open the URL
+                OpenUrl(selectedItem.Url);
+            }
+        }
+
+        private void UpdatePassInstructionCheckboxState()
+        {
+            if (!_isInstructionSelected)
+            {
+                PassInstructionCheckBox.IsEnabled = false;
+                return;
+            }
+
+            // For introductory instructions (type 0), enable immediately
+            if (InstructionsListBox.SelectedItem != null)
+            {
+                string selectedInstruction = InstructionsListBox.SelectedItem.ToString();
+                var selectedDict = GetDictFromSelectedInstruction(selectedInstruction);
+
+                if (selectedDict != null)
+                {
+                    string instructionType = selectedDict[db_typeOfInstruction].ToString();
+                    if (instructionType == "0")
+                    {
+                        // Introductory instruction - enable immediately
+                        if (_isChief)
+                        {
+                            PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
+                        }
+                        else
+                        {
+                            PassInstructionCheckBox.IsEnabled = true;
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // For other instructions, check if all normative links have been clicked
+            bool allLinksClicked = _clickedNormativeIds.Count >= _totalNormativeLinksForCurrentInstruction;
+
+            if (allLinksClicked)
+            {
                 if (_isChief)
                 {
                     PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
@@ -459,14 +627,14 @@ namespace Kotova.Test1.ClientSide
                 {
                     PassInstructionCheckBox.IsEnabled = true;
                 }
-            }
-        }
 
-        private void NormativeInstructionsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (NormativeInstructionsListBox.SelectedItem is NormativeInstructionItem selectedItem)
+                // Update UI to show completion status
+                UpdateStatus($"Все нормативные документы просмотрены ({_clickedNormativeIds.Count}/{_totalNormativeLinksForCurrentInstruction})");
+            }
+            else
             {
-                OpenUrl(selectedItem.Url);
+                PassInstructionCheckBox.IsEnabled = false;
+                UpdateStatus($"Просмотрено документов: {_clickedNormativeIds.Count}/{_totalNormativeLinksForCurrentInstruction}. Нажмите на все ссылки для продолжения.");
             }
         }
 
@@ -594,23 +762,87 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
+                RelatedFiles.Clear();
+
                 var relatedInstructions = _normativeInstructionsOfOldInstr?
                     .Where(dict => dict.ContainsKey(dB_instructionId) &&
                                    Convert.ToInt32(dict[dB_instructionId]) == instructionId)
-                    .Select(dict => $"{dict[db_normativeInstructionName]} ({dict[db_normativeInstructionUrl]})")
                     .ToList();
 
                 if (relatedInstructions != null)
                 {
-                    foreach (var file in relatedInstructions)
+                    foreach (var dict in relatedInstructions)
                     {
-                        RelatedFiles.Add(file);
+                        string name = dict[db_normativeInstructionName]?.ToString() ?? "";
+                        string url = dict[db_normativeInstructionUrl]?.ToString() ?? "";
+
+                        // Get the instruction type to check if it's unplanned
+                        var instructionType = GetInstructionTypeForId(instructionId);
+
+                        // Check if this is an unplanned instruction with multiple URLs that need to be split
+                        if (ShouldSplitUnplannedUrls(instructionType, url))
+                        {
+                            // Split URLs by "|" separator for unplanned instructions
+                            var urlParts = url.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
+                                             .Select(u => u.Trim())
+                                             .Where(u => !string.IsNullOrEmpty(u))
+                                             .ToArray();
+
+                            // Create individual entries with sequential names
+                            for (int i = 0; i < urlParts.Length; i++)
+                            {
+                                RelatedFiles.Add($"Нормативный документ {i + 1} ({urlParts[i]})");
+                            }
+                        }
+                        else
+                        {
+                            // For regular instructions or unplanned instructions with single URL
+                            RelatedFiles.Add($"{name} ({url})");
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading related files: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Gets the instruction type for a given instruction ID
+        /// </summary>
+        /// <param name="instructionId">The instruction ID</param>
+        /// <returns>The instruction type as string</returns>
+        private string GetInstructionTypeForId(int instructionId)
+        {
+            try
+            {
+                // Look for the instruction in the passed instructions list
+                var instruction = _listOfOldInstructions?.FirstOrDefault(dict =>
+                    dict.ContainsKey(dB_instructionId) &&
+                    Convert.ToInt32(dict[dB_instructionId]) == instructionId);
+
+                if (instruction != null && instruction.ContainsKey(db_typeOfInstruction))
+                {
+                    return instruction[db_typeOfInstruction]?.ToString() ?? "";
+                }
+
+                // If not found in passed instructions, check in new instructions
+                instruction = _listOfNewInstructions?.FirstOrDefault(dict =>
+                    dict.ContainsKey(dB_instructionId) &&
+                    Convert.ToInt32(dict[dB_instructionId]) == instructionId);
+
+                if (instruction != null && instruction.ContainsKey(db_typeOfInstruction))
+                {
+                    return instruction[db_typeOfInstruction]?.ToString() ?? "";
+                }
+
+                return "";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting instruction type: {ex.Message}");
+                return "";
             }
         }
 

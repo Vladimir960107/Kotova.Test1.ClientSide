@@ -14,21 +14,39 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- Header with User Info and Sign Out -->
         <Border Grid.Row="0" Background="#1976D2" Padding="15">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Система управления инструктажами" 
-                          FontSize="16" FontWeight="Bold" Foreground="White"/>
-                <TextBlock Text="{Binding CurrentUser}" 
-                          FontSize="14" Foreground="White" 
-                          Margin="20,0,0,0"/>
-            </StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left side - Title and User -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Система управления инструктажами" 
+                              FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding CurrentUser}" 
+                              FontSize="14" Foreground="White" 
+                              Margin="20,0,0,0"/>
+                </StackPanel>
+
+                <!-- Right side - Sign Out Button -->
+                <Button Grid.Column="1" 
+                        Content="🚪 Выйти из аккаунта" 
+                        Command="{Binding SignOutCommand}"
+                        Background="#F44336" 
+                        Foreground="White"
+                        BorderThickness="0"
+                        Padding="10,5"
+                        Margin="10,0,0,0"
+                        ToolTip="Выйти из учётной записи"/>
+            </Grid>
         </Border>
 
         <!-- Main Content -->
         <TabControl Grid.Row="1" Margin="0">
             <TabItem Header="🚨 Внеплановые инструктажи для начальников отделов">
-                <!-- Fixed the DataContext binding -->
                 <views:UnplannedInstructionView DataContext="{Binding UnplannedInstructionViewModel}" />
             </TabItem>
 
@@ -47,8 +65,10 @@
                 <TextBlock Text="{Binding StatusMessage}"/>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <Button Content="Выйти" Command="{Binding LogoutCommand}" 
-                      Background="Transparent" BorderThickness="0"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Время последнего обновления: " Foreground="Gray"/>
+                    <TextBlock Text="{Binding LastUpdateTime}" Foreground="Gray"/>
+                </StackPanel>
             </StatusBarItem>
         </StatusBar>
     </Grid>
