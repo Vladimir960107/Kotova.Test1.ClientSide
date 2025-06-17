@@ -325,12 +325,7 @@ namespace Kotova.Test1.ClientSide
                 this.Hide();
 
                 // Check if there's already a WPF Application running
-                if (System.Windows.Application.Current == null)
-                {
-                    // Create a new WPF Application instance
-                    var wpfApp = new System.Windows.Application();
-                    wpfApp.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
-                }
+                var wpfApp = CommonFunctions.GetOrCreateWpfApp();
 
                 // Create API service
                 var apiService = new ManagementWPF.Services.ApiService(
@@ -368,6 +363,7 @@ namespace Kotova.Test1.ClientSide
 
                 // Store reference for potential future use
                 activeWpfWindow = mainWindow;
+                wpfApp.Run();
             }
             catch (Exception ex)
             {

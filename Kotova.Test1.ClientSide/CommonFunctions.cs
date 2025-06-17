@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -23,6 +25,10 @@ namespace Kotova.Test1.ClientSide
             base.WndProc(ref m);
         }
     }
+
+
+
+
     public class CheckedListBoxWithoutDoubleClick: CheckedListBox
     {
         protected override void WndProc(ref Message m)
@@ -212,6 +218,110 @@ namespace Kotova.Test1.ClientSide
             return _departmentIdToName.TryGetValue(departmentId.Value, out string name) ? name : null;
         }
     }
+
+    public static class CommonFunctions
+    {
+        public static System.Windows.Application GetOrCreateWpfApp()
+        {
+            if (System.Windows.Application.Current == null)
+            {
+                var app = new System.Windows.Application();
+                app.ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;
+                return app;
+            }
+            return System.Windows.Application.Current;
+        }
+    }
+
+    public static class AllowedRoles
+    {
+        public static List<string> GetAllowedRolesForAssignment(string currentUserRole)
+        {
+            var allowedRoles = new List<string>();
+
+            //Console.WriteLine($"Determining allowed roles for current user role: '{currentUserRole}'");
+
+            switch (currentUserRole?.ToLower())
+            {
+                case "chiefofdepartment":
+                case "chief":
+                    // Chief can assign to: Users, Coordinators, and Deputies
+                    allowedRoles.AddRange(new[] { "User", "Coordinator", "DeputyChief" });
+                    //Console.WriteLine("User is Chief - can assign to User, Coordinator, DeputyChief");
+                    break;
+
+                case "deputychief":
+                case "deputy":
+                    // Deputy can assign to: Users and Coordinators (NOT Chiefs)
+                    allowedRoles.AddRange(new[] { "User", "Coordinator" });
+                    //Console.WriteLine("User is Deputy - can assign to User, Coordinator");
+                    break;
+
+                case "coordinator":
+                    // Coordinator can assign to: Users only
+                    allowedRoles.Add("User");
+                    //Console.WriteLine("User is Coordinator - can assign to User only");
+                    break;
+
+                default:
+                    // Default case - no assignment permissions
+                    Console.WriteLine($"Unknown or unauthorized role: '{currentUserRole}' - no assignment permissions");
+                    break;
+            }
+
+            //Console.WriteLine($"Final allowed roles: [{string.Join(", ", allowedRoles)}]");
+            return allowedRoles;
+        }
+
+        public static string GetRoleDisplayName(string role)
+        {
+            return role switch
+            {
+                "ChiefOfDepartment" or "Chief" or "Management" => "Руководитель",
+                "DeputyChief" or "Deputy" => "Заместитель",
+                "Coordinator" => "Координатор",
+                "User" => "Сотрудник",
+                "Administrator" or "Admin" => "Администратор",
+                _ => role ?? "Неизвестная роль"
+            };
+        }
+    }
+
+    public static class GetRoleFromJWT
+    {
+        /// <summary>
+        /// Extracts role from JWT token
+        /// </summary>
+        public static string GetRoleFromToken(string jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+                return string.Empty;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return string.Empty;
+
+                var roleClaim = jsonToken.Claims.FirstOrDefault(claim =>
+                     claim.Type == ClaimTypes.Role ||
+                     claim.Type == "role" ||
+                     claim.Type == "roles" ||
+                     claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+
+                return roleClaim?.Value ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+    }
+
+
+
 
 
 }

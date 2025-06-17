@@ -59,9 +59,9 @@ namespace Kotova.Test1.ClientSide
             _jwtToken = jwtToken;
             _assignmentEndpoint = assignmentEndpoint;
             _instructionType = instructionType;
-            _currentUserRole = GetRoleFromToken(jwtToken);
+            _currentUserRole = GetRoleFromJWT.GetRoleFromToken(jwtToken);
 
-            Title = $"Назначение инструктажа: {instructionName} ({GetRoleDisplayName(_currentUserRole)})";
+            Title = $"Назначение инструктажа: {instructionName} ({AllowedRoles.GetRoleDisplayName(_currentUserRole)})";
             Width = 1000;
             Height = 700;
             WindowStartupLocation = WPF.WindowStartupLocation.CenterScreen;
@@ -88,7 +88,7 @@ namespace Kotova.Test1.ClientSide
             employeesListView.Items.Clear();
 
             // Get allowed roles based on current user's role
-            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+            var allowedRoles = AllowedRoles.GetAllowedRolesForAssignment(_currentUserRole);
 
             // Debug output
             //Console.WriteLine($"Current user role: {_currentUserRole}");
@@ -110,7 +110,7 @@ namespace Kotova.Test1.ClientSide
                         {
                             employeesListView.Items.Add(new WPFControls.CheckBox
                             {
-                                Content = $"{employee.FullName} ({employee.BirthDate}) - {GetRoleDisplayName(employee.Role)}",
+                                Content = $"{employee.FullName} ({employee.BirthDate}) - {AllowedRoles.GetRoleDisplayName(employee.Role)}",
                                 Tag = employee,
                                 Margin = new WPF.Thickness(2)
                             });
@@ -299,50 +299,6 @@ namespace Kotova.Test1.ClientSide
              Console.WriteLine($"  Instruction type {instructionType} - no additional restrictions");
              return true;
          }*/
-
-
-
-        /// <summary>
-        /// Gets the list of roles that the current user can assign instructions to
-        /// </summary>
-        private List<string> GetAllowedRolesForAssignment(string currentUserRole)
-        {
-            var allowedRoles = new List<string>();
-
-            //Console.WriteLine($"Determining allowed roles for current user role: '{currentUserRole}'");
-
-            switch (currentUserRole?.ToLower())
-            {
-                case "chiefofdepartment":
-                case "chief": 
-                    // Chief can assign to: Users, Coordinators, and Deputies
-                    allowedRoles.AddRange(new[] { "User", "Coordinator", "DeputyChief" });
-                    //Console.WriteLine("User is Chief - can assign to User, Coordinator, DeputyChief");
-                    break;
-
-                case "deputychief":
-                case "deputy":
-                    // Deputy can assign to: Users and Coordinators (NOT Chiefs)
-                    allowedRoles.AddRange(new[] { "User", "Coordinator" });
-                    //Console.WriteLine("User is Deputy - can assign to User, Coordinator");
-                    break;
-
-                case "coordinator":
-                    // Coordinator can assign to: Users only
-                    allowedRoles.Add("User");
-                    //Console.WriteLine("User is Coordinator - can assign to User only");
-                    break;
-
-                default:
-                    // Default case - no assignment permissions
-                    Console.WriteLine($"Unknown or unauthorized role: '{currentUserRole}' - no assignment permissions");
-                    break;
-            }
-            
-            //Console.WriteLine($"Final allowed roles: [{string.Join(", ", allowedRoles)}]");
-            return allowedRoles;
-        }
-
         
 
         /// <summary>
@@ -350,8 +306,8 @@ namespace Kotova.Test1.ClientSide
         /// </summary>
         private void ShowFilteringInfo()
         {
-            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
-            var roleNames = allowedRoles.Select(GetRoleDisplayName).ToList();
+            var allowedRoles = AllowedRoles.GetAllowedRolesForAssignment(_currentUserRole);
+            var roleNames = allowedRoles.Select(AllowedRoles.GetRoleDisplayName).ToList();
 
             string infoText = $"Доступно для назначения: {string.Join(", ", roleNames)}";
 
@@ -364,51 +320,7 @@ namespace Kotova.Test1.ClientSide
             Console.WriteLine($"Role filtering info: {infoText}");
         }
 
-        /// <summary>
-        /// Extracts role from JWT token
-        /// </summary>
-        private string GetRoleFromToken(string jwtToken)
-        {
-            if (string.IsNullOrEmpty(jwtToken))
-                return string.Empty;
-
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadToken(jwtToken) as JwtSecurityToken;
-
-                if (jsonToken == null)
-                    return string.Empty;
-
-                var roleClaim = jsonToken.Claims.FirstOrDefault(claim =>
-                     claim.Type == ClaimTypes.Role ||
-                     claim.Type == "role" ||
-                     claim.Type == "roles" ||
-                     claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
-
-                return roleClaim?.Value ?? string.Empty;
-            }
-            catch (Exception)
-            {
-                return string.Empty;
-            }
-        }
-
-        /// <summary>
-        /// Converts role code to display name
-        /// </summary>
-        private string GetRoleDisplayName(string role)
-        {
-            return role switch
-            {
-                "ChiefOfDepartment" or "Chief" or "Management" => "Руководитель",
-                "DeputyChief" or "Deputy" => "Заместитель",
-                "Coordinator" => "Координатор",
-                "User" => "Сотрудник",
-                "Administrator" or "Admin" => "Администратор",
-                _ => role ?? "Неизвестная роль"
-            };
-        }
+        
 
         // Rest of your existing code remains the same...
         private void BuildUI()
@@ -578,8 +490,8 @@ namespace Kotova.Test1.ClientSide
         /// </summary>
         private string GetFilteringInfoText()
         {
-            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
-            var roleNames = allowedRoles.Select(GetRoleDisplayName).ToList();
+            var allowedRoles = AllowedRoles.GetAllowedRolesForAssignment(_currentUserRole);
+            var roleNames = allowedRoles.Select(AllowedRoles.GetRoleDisplayName).ToList();
 
             string baseText = $"Вы можете назначать инструктажи: {string.Join(", ", roleNames)}";
 
@@ -594,7 +506,7 @@ namespace Kotova.Test1.ClientSide
         // Validation method to check assignment permissions before saving
         private bool ValidateAssignmentPermissions()
         {
-            var allowedRoles = GetAllowedRolesForAssignment(_currentUserRole);
+            var allowedRoles = AllowedRoles.GetAllowedRolesForAssignment(_currentUserRole);
 
             foreach (var group in _groups)
             {
@@ -603,7 +515,7 @@ namespace Kotova.Test1.ClientSide
                     // Check if this employee's role is allowed
                     if (!allowedRoles.Contains(employee.Role))
                     {
-                        WPF.MessageBox.Show($"У вас нет прав назначать инструктажи сотруднику {employee.FullName} (роль: {GetRoleDisplayName(employee.Role)})",
+                        WPF.MessageBox.Show($"У вас нет прав назначать инструктажи сотруднику {employee.FullName} (роль: {AllowedRoles.GetRoleDisplayName(employee.Role)})",
                             "Недостаточно прав", WPF.MessageBoxButton.OK, WPF.MessageBoxImage.Warning);
                         return false;
                     }
@@ -611,7 +523,7 @@ namespace Kotova.Test1.ClientSide
                     // Check instruction type restrictions
                     if (!ShouldIncludeEmployeeForInstructionType(employee, _instructionType))
                     {
-                        WPF.MessageBox.Show($"Данный тип инструктажа не может быть назначен сотруднику {employee.FullName} (роль: {GetRoleDisplayName(employee.Role)})",
+                        WPF.MessageBox.Show($"Данный тип инструктажа не может быть назначен сотруднику {employee.FullName} (роль: {AllowedRoles.GetRoleDisplayName(employee.Role)})",
                             "Ограничение по типу инструктажа", WPF.MessageBoxButton.OK, WPF.MessageBoxImage.Warning);
                         return false;
                     }

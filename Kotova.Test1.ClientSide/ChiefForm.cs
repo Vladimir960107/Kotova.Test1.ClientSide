@@ -442,17 +442,17 @@ namespace Kotova.Test1.ClientSide
         }
 
         // Method to get instruction type name
-        private string GetInstructionTypeName(byte typeCode)
+        private string GetInstructionTypeName(byte typeId)
         {
-            return typeCode switch
+            return typeId switch
             {
                 0 => "Вводный",
-                1 => "Внеплановый",
+                1 => "Внеплановый", // This is the unplanned instruction type
                 2 => "Первичный",
                 3 => "Повторный",
                 4 => "Повторный (для водителей)",
                 5 => "Целевой",
-                _ => $"Неизвестный тип ({typeCode})"
+                _ => "Неизвестный тип"
             };
         }
 
@@ -2321,56 +2321,165 @@ namespace Kotova.Test1.ClientSide
 
         #region Вкладка "Управление инструктажами"
 
+
+        private async Task<List<NormativeInstructionInfo>> GetPredeterminedNormativeInstructionsForUnplannedInstruction(int instructionId)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/get-normative-instructions-for-unplanned/{instructionId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        var normativeInstructions = JsonConvert.DeserializeObject<List<NormativeInstructionInfo>>(responseBody);
+                        return normativeInstructions ?? new List<NormativeInstructionInfo>();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to get normative instructions for unplanned instruction {instructionId}: {response.StatusCode}");
+                        return new List<NormativeInstructionInfo>();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting normative instructions for unplanned instruction {instructionId}: {ex.Message}");
+                return new List<NormativeInstructionInfo>();
+            }
+        }
+
+
         private async void assignInstructionToGroupsButton_Click(object sender, EventArgs e)
         {
             try
             {
                 if (instructionsListView.SelectedItems.Count == 0)
                 {
-                    WinForms.MessageBox.Show("Выберите инструктаж для назначения.");
+                    WinForms.MessageBox.Show("Выберите инструктаж для назначения.",
+                        "Предупреждение", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Warning);
                     return;
                 }
 
                 var selectedItem = instructionsListView.SelectedItems[0];
                 string selectedInstructionName = selectedItem.SubItems[2].Text; // Cause column
                 byte instructionType = GetInstructionTypeFromSelectedItem(selectedItem);
+                int instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
 
-                // **NEW: Check if this is an unplanned instruction and if chief has passed it**
+                // Enhanced validation for unplanned instructions
                 if (instructionType == 1) // Внеплановый (unplanned)
                 {
-                    // Get the instruction details to check is_passed_by_chief_unplanned_instr
-                    int instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
+                    // Check if this instruction is ready for assignment
+                    if (selectedItem.Tag?.ToString() == "cannot_assign")
+                    {
+                        WinForms.MessageBox.Show(
+                            "Данный внеплановый инструктаж может быть назначен сотрудникам только после того, как начальник или заместитель отдела пройдет его.\n\n" +
+                            "Статус: Ожидает прохождения начальником",
+                            "Инструктаж не готов к назначению",
+                            WinForms.MessageBoxButtons.OK,
+                            WinForms.MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // Get the instruction details to double-check the status
                     var instruction = await GetInstructionById(instructionId);
 
                     if (instruction == null)
                     {
-                        WinForms.MessageBox.Show("Не удалось получить данные инструктажа.");
+                        WinForms.MessageBox.Show("Не удалось получить данные инструктажа.",
+                            "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
                         return;
                     }
 
                     if (!instruction.is_passed_by_chief_unplanned_instr)
                     {
                         WinForms.MessageBox.Show(
-                            "Данный внеплановый инструктаж может быть назначен сотрудникам только после того, как начальник или заместитель отдела пройдет его.",
-                            "Ограничение доступа",
+                            "Внеплановый инструктаж еще не пройден начальником или заместителем отдела.\n\n" +
+                            "Для назначения инструктажа сотрудникам необходимо сначала пройти его самостоятельно.",
+                            "Требуется прохождение начальником",
                             WinForms.MessageBoxButtons.OK,
-                            WinForms.MessageBoxIcon.Warning);
+                            WinForms.MessageBoxIcon.Information);
                         return;
                     }
+
+                    // For unplanned instructions, use the specialized form
+                    await HandleUnplannedInstructionAssignment(selectedInstructionName, instructionId);
+                    return;
                 }
+
+                // For regular instructions, use the existing logic
+                Console.WriteLine($"Assigning instruction: {selectedInstructionName} of type: {instructionType}");
 
                 // Fetch employee data with roles
                 await SyncEmployeesWithRolesAsync();
 
-                // Fetch normative instruction names
+                // Fetch normative instruction names  
                 await SyncNormativeInstructionNamesWithDBInternal();
 
-                // Show the assignment manager with the instruction type
-                ShowInstructionAssignmentManager(selectedInstructionName, instructionType);
+                // Create and show the regular instruction assignment manager
+                var assignmentManager = new InstructionAssignmentManager(
+                    selectedInstructionName,
+                    ConvertItemsToEmployeeListWithRoles(checkedListBoxNamesOfPeople.Items),
+                    ConvertItemsToNormativeInstructionsList(ListOfNormativeInstrNames.Items),
+                    _loginForm._jwtToken,
+                    urlSubmitInstructionToPeople,
+                    instructionType);
+
+                var result = assignmentManager.ShowDialog();
+
+                if (result == true) // WPF DialogResult.True
+                {
+                    // Refresh the list to show updated assignment status
+                    await RefreshInstructionsListView();
+                    WinForms.MessageBox.Show("Инструктаж успешно назначен сотрудникам!",
+                        "Успех", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Information);
+                }
             }
             catch (Exception ex)
             {
-                WinForms.MessageBox.Show($"Ошибка: {ex.Message}", "Error", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+                WinForms.MessageBox.Show($"Ошибка при назначении инструктажа: {ex.Message}",
+                    "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
+            }
+        }
+
+
+        private async Task HandleUnplannedInstructionAssignment(string instructionName, int instructionId)
+        {
+            try
+            {
+                // Fetch employee data with roles
+                await SyncEmployeesWithRolesAsync();
+
+                // Get predetermined normative instructions for this unplanned instruction
+                var predeterminedNormativeInstructions = await GetPredeterminedNormativeInstructionsForUnplannedInstruction(instructionId);
+
+                // Create and show the unplanned instruction assignment manager
+                var unplannedAssignmentManager = new InstructionAssignmentManagerUnplanned(
+                    instructionName,
+                    instructionId,
+                    ConvertItemsToEmployeeListWithRoles(checkedListBoxNamesOfPeople.Items),
+                    predeterminedNormativeInstructions,
+                    _loginForm._jwtToken,
+                    ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/assign-unplanned-instruction-to-employees");
+
+                var result = unplannedAssignmentManager.ShowDialog();
+
+                if (result == true) // WPF DialogResult.True
+                {
+                    // Refresh the list to show updated assignment status
+                    await RefreshInstructionsListView();
+                    WinForms.MessageBox.Show("Внеплановый инструктаж успешно назначен сотрудникам!",
+                        "Успех", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                WinForms.MessageBox.Show($"Ошибка при назначении внепланового инструктажа: {ex.Message}",
+                    "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
             }
         }
 
@@ -2439,21 +2548,6 @@ namespace Kotova.Test1.ClientSide
                 Console.WriteLine($"Exception in SyncEmployeesWithRolesAsync: {ex}");
                 MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        // Update the existing ShowInstructionAssignmentManager method
-        private void ShowInstructionAssignmentManager(string instructionName, byte instructionType)
-        {
-            var assignmentManager = new InstructionAssignmentManager(
-                instructionName,
-                ConvertItemsToEmployeeList(checkedListBoxNamesOfPeople.Items),
-                ConvertItemsToNormativeInstructionsList(ListOfNormativeInstrNames.Items),
-                _loginForm._jwtToken,
-                urlSubmitInstructionToPeople,
-                instructionType  // Pass the instruction type
-            );
-
-            assignmentManager.ShowDialog();
         }
 
 
@@ -2691,52 +2785,89 @@ namespace Kotova.Test1.ClientSide
         {
             instructionsListView.Items.Clear();
 
-            // Get all instructions from server
-            var instructions = await GetAllInstructionsFromServer();
-
-            foreach (var instruction in instructions)
+            try
             {
-                var item = new WinForms.ListViewItem(instruction.instruction_id.ToString());
+                // Get all instructions from server (this should now include unplanned instructions passed by chief)
+                var instructions = await GetAllInstructionsFromServer();
 
-                // Add items in the correct order to match column headers
-                item.SubItems.Add(GetInstructionTypeName(instruction.type_of_instruction)); // Column 1: Type
-                item.SubItems.Add(instruction.cause_of_instruction);  // Column 2: Cause
-                item.SubItems.Add(instruction.begin_date.ToString("dd.MM.yyyy")); // Column 3: Start Date
-                item.SubItems.Add(instruction.end_date.ToString("dd.MM.yyyy")); // Column 4: End Date
-                item.SubItems.Add(instruction.is_assigned_to_people ? "Назначен" : "Не назначен"); // Column 5: Assigned
-
-                // Column 6: Completed - with special handling for unplanned instructions
-                string completedText;
-                if (instruction.type_of_instruction == 1) // Unplanned instruction
+                foreach (var instruction in instructions)
                 {
-                    if (!instruction.is_passed_by_chief_unplanned_instr)
+                    var item = new WinForms.ListViewItem(instruction.instruction_id.ToString());
+
+                    // Add items in the correct order to match column headers
+                    item.SubItems.Add(GetInstructionTypeName(instruction.type_of_instruction)); // Column 1: Type
+                    item.SubItems.Add(instruction.cause_of_instruction);  // Column 2: Cause
+                    item.SubItems.Add(instruction.begin_date.ToString("dd.MM.yyyy")); // Column 3: Start Date
+                    item.SubItems.Add(instruction.end_date.ToString("dd.MM.yyyy")); // Column 4: End Date
+                    item.SubItems.Add(instruction.is_assigned_to_people ? "Назначен" : "Не назначен"); // Column 5: Assigned
+
+                    // Column 6: Completed - with enhanced handling for unplanned instructions
+                    string completedText;
+                    if (instruction.type_of_instruction == 1) // Unplanned instruction
                     {
-                        completedText = "Не пройден начальником";
-                        item.BackColor = Color.LightCoral; // Red background for unpassable instructions
-                        item.ForeColor = Color.DarkRed;
+                        if (!instruction.is_passed_by_chief_unplanned_instr)
+                        {
+                            completedText = "Ожидает прохождения начальником";
+                            item.BackColor = Color.LightCoral; // Red background for unpassable instructions
+                            item.ForeColor = Color.DarkRed;
+                            // Make the item selectable but visually indicate it cannot be assigned yet
+                            item.Tag = "cannot_assign";
+                        }
+                        else if (!instruction.is_assigned_to_people)
+                        {
+                            completedText = "Готов к назначению сотрудникам";
+                            /*item.BackColor = Color.LightGreen; // Green background for assignable instructions
+                            item.ForeColor = Color.DarkGreen;*/
+                            item.Tag = "can_assign";
+                        }
+                        else
+                        {
+                            completedText = instruction.is_passed_by_everyone ? "Завершен всеми" : "В процессе выполнения";
+                            item.BackColor = instruction.is_passed_by_everyone ?
+                                Color.LightBlue : Color.LightYellow;
+                            item.ForeColor = instruction.is_passed_by_everyone ?
+                                Color.DarkBlue : Color.DarkOrange;
+                            item.Tag = "in_progress";
+                        }
                     }
-                    else if (!instruction.is_assigned_to_people)
+                    else // Regular planned instruction
                     {
-                        completedText = "Готов к назначению";
-                        item.BackColor = Color.LightGreen; // Green background for assignable instructions
-                        item.ForeColor = Color.DarkGreen;
+                        if (!instruction.is_assigned_to_people)
+                        {
+                            completedText = "Готов к назначению";
+                            /*item.BackColor = Color.LightGreen;
+                            item.ForeColor = Color.DarkGreen;*/
+                            item.Tag = "can_assign";
+                        }
+                        else
+                        {
+                            completedText = instruction.is_passed_by_everyone ? "Завершен всеми" : "В процессе";
+                            item.BackColor = instruction.is_passed_by_everyone ?
+                                Color.LightBlue : Color.LightYellow;
+                            item.ForeColor = instruction.is_passed_by_everyone ?
+                                Color.DarkBlue : Color.DarkOrange;
+                            item.Tag = "in_progress";
+                        }
                     }
-                    else
-                    {
-                        completedText = instruction.is_passed_by_everyone ? "Завершен всеми" : "В процессе";
-                        item.BackColor = instruction.is_passed_by_everyone ? Color.LightBlue : Color.LightYellow;
-                    }
+
+                    item.SubItems.Add(completedText); // Column 6: Completed status
+
+                    instructionsListView.Items.Add(item);
                 }
-                else
+
+                // Update the instruction details for the first selected item if any
+                if (instructionsListView.Items.Count > 0 && instructionsListView.SelectedItems.Count == 0)
                 {
-                    completedText = instruction.is_passed_by_everyone ? "Завершен" : "В процессе";
+                    instructionsListView.Items[0].Selected = true;
                 }
-
-                item.SubItems.Add(completedText);
-
-                instructionsListView.Items.Add(item);
+            }
+            catch (Exception ex)
+            {
+                WinForms.MessageBox.Show($"Ошибка при обновлении списка инструктажей: {ex.Message}",
+                    "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
             }
         }
+
         #endregion
 
         public async Task<List<EmployeeInfo>> GetEmployeesByRoleAsync(string roleFilter = null)
@@ -2792,7 +2923,6 @@ namespace Kotova.Test1.ClientSide
                     string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                    // Create a new endpoint for getting all non-unplanned instructions
                     var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-all-instructions");
 
                     if (response.IsSuccessStatusCode)
@@ -2800,8 +2930,9 @@ namespace Kotova.Test1.ClientSide
                         string responseBody = await response.Content.ReadAsStringAsync();
                         var instructions = JsonConvert.DeserializeObject<List<Instruction>>(responseBody);
 
-                        // Filter out unplanned instructions (type 1)
-                        return instructions.Where(i => i.type_of_instruction != 1).ToList();
+                        // REMOVED: Don't filter out unplanned instructions anymore
+                        // Show all instructions including unplanned ones that are ready for assignment
+                        return instructions ?? new List<Instruction>();
                     }
                     else
                     {
@@ -2979,6 +3110,43 @@ namespace Kotova.Test1.ClientSide
             catch (Exception ex)
             {
                 MessageBox.Show($"Произошла ошибка: {ex.Message}");
+            }
+        }
+
+        private async void instructionsListView_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (instructionsListView.SelectedItems.Count == 0)
+                return;
+
+            try
+            {
+                var selectedItem = instructionsListView.SelectedItems[0];
+                var instructionId = Convert.ToInt32(selectedItem.SubItems[0].Text);
+
+                // Update the details labels
+                instructionIdLabel.Text = $"ID: {instructionId}";
+                instructionCauseLabel.Text = $"Причина: {selectedItem.SubItems[2].Text}";
+                instructionTypeLabel.Text = $"Тип: {selectedItem.SubItems[1].Text}";
+                startDateLabel.Text = $"Дата начала: {selectedItem.SubItems[3].Text}";
+                endDateLabel.Text = $"Дата окончания: {selectedItem.SubItems[4].Text}";
+                assignedStatusLabel.Text = $"Статус назначения: {selectedItem.SubItems[5].Text}";
+                completedStatusLabel.Text = $"Статус выполнения: {selectedItem.SubItems[6].Text}";
+
+                // Get full instruction details for additional information
+                var instruction = await GetInstructionById(instructionId);
+                if (instruction != null && instruction.type_of_instruction == 1) // Unplanned instruction
+                {
+                    // Add special information for unplanned instructions
+                    string additionalInfo = instruction.is_passed_by_chief_unplanned_instr ?
+                        "✅ Пройден начальником - готов к назначению" :
+                        "⏳ Ожидает прохождения начальником";
+
+                    completedStatusLabel.Text += $"\n{additionalInfo}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating instruction details: {ex.Message}");
             }
         }
     }

@@ -480,7 +480,7 @@
             instructionTypeLabel.AutoSize = true;
             instructionTypeLabel.Location = new Point(6, 62);
             instructionTypeLabel.Name = "instructionTypeLabel";
-            instructionTypeLabel.Size = new Size(30, 15);
+            instructionTypeLabel.Size = new Size(31, 15);
             instructionTypeLabel.TabIndex = 2;
             instructionTypeLabel.Text = "Тип:";
             // 
@@ -514,6 +514,7 @@
             instructionsListView.TabIndex = 0;
             instructionsListView.UseCompatibleStateImageBehavior = false;
             instructionsListView.View = View.Details;
+            instructionsListView.SelectedIndexChanged += instructionsListView_SelectedIndexChanged;
             // 
             // InstructionIdInstructionId
             // 
@@ -705,7 +706,7 @@
             helpReportLabel.ForeColor = Color.DarkBlue;
             helpReportLabel.Location = new Point(20, 500);
             helpReportLabel.Name = "helpReportLabel";
-            helpReportLabel.Size = new Size(530, 15);
+            helpReportLabel.Size = new Size(528, 15);
             helpReportLabel.TabIndex = 4;
             helpReportLabel.Text = "Выберите инструктаж и нажмите 'Экспортировать в Excel' для создания отчета о прохождении";
             // 
