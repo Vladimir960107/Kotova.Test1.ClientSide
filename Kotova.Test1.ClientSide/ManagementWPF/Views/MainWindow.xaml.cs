@@ -21,30 +21,12 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Views
         {
             if (!_forceClose)
             {
-                // Ask user if they want to sign out or just minimize
-                var result = System.Windows.MessageBox.Show(
-                    "Хотите выйти из учётной записи или свернуть окно?\n\nДа - Выйти из аккаунта\nНет - Свернуть окно\nОтмена - Остаться",
-                    "Закрытие окна",
-                    MessageBoxButton.YesNoCancel,
-                    MessageBoxImage.Question);
+                // Just minimize instead of closing
+                e.Cancel = true;
+                this.Hide();
 
-                switch (result)
-                {
-                    case MessageBoxResult.Yes:
-                        // Sign out
-                        _viewModel.SignOutCommand.Execute(null);
-                        e.Cancel = true; // Cancel the close, let SignOut handle it
-                        break;
-                    case MessageBoxResult.No:
-                        // Minimize to taskbar
-                        e.Cancel = true;
-                        this.WindowState = WindowState.Minimized;
-                        break;
-                    case MessageBoxResult.Cancel:
-                        // Stay open
-                        e.Cancel = true;
-                        break;
-                }
+                // Optional: Hide from taskbar and show in system tray
+                this.ShowInTaskbar = false;
             }
             else
             {
@@ -55,6 +37,7 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.Views
         // Method to properly close the window when needed
         public void ForceClose()
         {
+            
             _forceClose = true;
             this.Close();
         }

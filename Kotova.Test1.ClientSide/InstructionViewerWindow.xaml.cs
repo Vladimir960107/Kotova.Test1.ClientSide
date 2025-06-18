@@ -17,6 +17,7 @@ namespace Kotova.Test1.ClientSide
 {
     public partial class InstructionViewerWindow : Window
     {
+        
         #region Constants
         public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
@@ -28,6 +29,8 @@ namespace Kotova.Test1.ClientSide
         public const string db_normativeInstructionId = "id";
         public const string db_normativeInstructionName = "name";
         public const string db_normativeInstructionUrl = "url";
+
+        public bool _forceClose = true;
         #endregion
 
         #region Private Fields
@@ -336,7 +339,7 @@ namespace Kotova.Test1.ClientSide
             // Create enhanced context menu matching UserForm functionality
             var contextMenu = new ContextMenu();
 
-            // Refresh Instructions
+            /*// Refresh Instructions
             var refreshItem = new MenuItem { Header = "🔄 Обновить инструктажи" };
             refreshItem.Click += async (s, args) =>
             {
@@ -345,7 +348,7 @@ namespace Kotova.Test1.ClientSide
             };
             contextMenu.Items.Add(refreshItem);
 
-            contextMenu.Items.Add(new Separator());
+            contextMenu.Items.Add(new Separator());*/ //function to refresh instructions already exist!
 
             // Change Credentials (equivalent to changeCredentialsToolStripMenuItem_Click)
             var credentialsItem = new MenuItem { Header = "🔐 Сменить регистрационные данные" };
@@ -869,8 +872,19 @@ namespace Kotova.Test1.ClientSide
         #region Window Event Handlers
         protected override void OnClosing(CancelEventArgs e)
         {
-            // Optional: Add confirmation dialog for critical operations
-            base.OnClosing(e);
+            if (!_forceClose)
+            {
+                // Just minimize instead of closing
+                e.Cancel = true;
+                this.Hide();
+
+                // Optional: Hide from taskbar and show in system tray
+                this.ShowInTaskbar = false;
+            }
+            else
+            {
+                base.OnClosing(e);
+            }
         }
         #endregion
 

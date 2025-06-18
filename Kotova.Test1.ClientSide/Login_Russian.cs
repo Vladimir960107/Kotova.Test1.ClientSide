@@ -1,4 +1,5 @@
-﻿using Kotova.CommonClasses;
+﻿using DocumentFormat.OpenXml.Drawing;
+using Kotova.CommonClasses;
 using Kotova.Test1.ClientSide.ManagementWPF;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.CodeDom;
@@ -34,7 +35,7 @@ namespace Kotova.Test1.ClientSide
         private static readonly string _validateTokenUrl = ConfigurationClass.BASE_URL_DEVELOPMENT + "/validate-token";
         static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         static string fileName = "encrypted_jwt.dat";
-        string filePath = Path.Combine(documentsPath, fileName);
+        string filePath = System.IO.Path.Combine(documentsPath, fileName);
         public string? _jwtToken = null;
         public bool _jwtRemembered = false;
         private TaskCompletionSource<bool> _initTaskCompletionSource;
@@ -45,8 +46,8 @@ namespace Kotova.Test1.ClientSide
 
         public static Login_Russian Instance { get; private set; }
 
-        public Form activeForm;
-        private Window activeWpfWindow;
+        public Form? activeForm;
+        public Window? activeWpfWindow;
         private NotifyIcon notifyIcon;
 
         public Login_Russian()
@@ -87,11 +88,19 @@ namespace Kotova.Test1.ClientSide
                 // Show either Windows Form or WPF Window
                 if (activeForm != null)
                 {
-                    // Restore the Windows Forms form from tray if minimized or hidden
-                    activeForm.Show();
-                    activeForm.WindowState = FormWindowState.Normal;
-                    activeForm.ShowInTaskbar = true;
-                    activeForm.BringToFront();
+                    if (activeForm == this && activeWpfWindow != null) //Made just for MANAGER AND USER, cause their active form = login form and activewpfwindow just his or something. AT LEAST SHOULD BE! CHECK IT!
+                    {
+                        activeWpfWindow.Show();
+                        activeWpfWindow.WindowState = System.Windows.WindowState.Normal;
+                        activeWpfWindow.Activate();
+                    }
+                    else
+                    {
+                        activeForm.Show();
+                        activeForm.WindowState = FormWindowState.Normal;
+                        activeForm.ShowInTaskbar = true;
+                        activeForm.BringToFront();
+                    }
                 }
                 else if (activeWpfWindow != null)
                 {
@@ -363,7 +372,6 @@ namespace Kotova.Test1.ClientSide
 
                 // Store reference for potential future use
                 activeWpfWindow = mainWindow;
-                wpfApp.Run();
             }
             catch (Exception ex)
             {

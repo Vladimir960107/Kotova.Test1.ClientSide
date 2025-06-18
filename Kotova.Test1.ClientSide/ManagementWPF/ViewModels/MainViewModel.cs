@@ -1,5 +1,6 @@
 ﻿using Kotova.Test1.ClientSide.ManagementWPF.Helpers;
 using Kotova.Test1.ClientSide.ManagementWPF.Services;
+using Kotova.Test1.ClientSide.ManagementWPF.Views;
 using Kotova.Test1.ClientSideManagementWPF.ViewModels;
 using System;
 using System.Windows;
@@ -76,7 +77,14 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
                         // Use dispatcher to ensure proper thread handling
                         System.Windows.Application.Current.Dispatcher.Invoke(() =>
                         {
-                            currentWindow?.Hide();
+
+                            // SET FORCE CLOSE FLAG BEFORE CLOSING
+                            if (currentWindow is MainWindow window)
+                            {
+                                _loginForm.activeWpfWindow = null;
+                                window.ForceClose(); 
+                            }
+
                             _loginForm.Show();
                             _loginForm.BringToFront();
                         });

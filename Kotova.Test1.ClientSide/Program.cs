@@ -14,15 +14,19 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
+using Application = System.Windows.Forms.Application;
 using File = System.IO.File;
+using MessageBox = System.Windows.Forms.MessageBox;
 
 namespace Kotova.Test1.ClientSide
 {
     internal static class Program
     {
         private static Mutex mutex = null;
+        private static System.Windows.Application _wpfApp;
 
         [STAThread]
         public static void Main(string[] args)
@@ -238,6 +242,8 @@ namespace Kotova.Test1.ClientSide
             // Start the named pipe server to listen for further instances
             StartNamedPipeServer();
 
+            InitializeWPFApplication();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             ApplicationConfiguration.Initialize();
@@ -247,6 +253,41 @@ namespace Kotova.Test1.ClientSide
 
 
             GC.KeepAlive(mutex);
+        }
+
+        private static void InitializeWPFApplication()
+        {
+            if (_wpfApp == null)
+            {
+                _wpfApp = new System.Windows.Application();
+                _wpfApp.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+                // Handle unhandled exceptions
+                _wpfApp.DispatcherUnhandledException += (s, e) =>
+                {
+                    MessageBox.Show($"WPF Error: {e.Exception.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    e.Handled = true;
+                };
+            }
+        }
+
+        public static System.Windows.Application GetWPFApplication()
+        {
+            if (_wpfApp == null)
+            {
+                InitializeWPFApplication();
+            }
+            return _wpfApp;
+        }
+
+        public static void ShutdownWPFApplication()
+        {
+            if (_wpfApp != null)
+            {
+                _wpfApp.Shutdown();
+                _wpfApp = null;
+            }
         }
 
         private static bool IsSameDirectory(string dir1, string dir2)
