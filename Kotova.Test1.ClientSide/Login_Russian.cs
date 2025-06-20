@@ -637,6 +637,7 @@ namespace Kotova.Test1.ClientSide
                 // Close any active Windows Forms
                 if (activeForm != null && activeForm != this)
                 {
+                    activeForm.Close();
                     activeForm.Dispose();
                     activeForm = null;
                 }

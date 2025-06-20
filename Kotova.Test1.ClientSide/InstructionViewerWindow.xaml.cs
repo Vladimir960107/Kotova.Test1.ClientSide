@@ -430,6 +430,7 @@ namespace Kotova.Test1.ClientSide
             {
                 if (_loginForm != null)
                 {
+
                     _loginForm.ExitApplication();
                 }
                 else
@@ -872,6 +873,10 @@ namespace Kotova.Test1.ClientSide
         #region Window Event Handlers
         protected override void OnClosing(CancelEventArgs e)
         {
+            if (_loginForm.activeForm == null) // this means its user, not Chief or Coordinator. for Manager its not created, cause for manager he have only WPF Frosm, not _loginForm. So don't know how to overcome it for now.
+            {
+                _forceClose = false;
+            }
             if (!_forceClose)
             {
                 // Just minimize instead of closing
@@ -880,10 +885,12 @@ namespace Kotova.Test1.ClientSide
 
                 // Optional: Hide from taskbar and show in system tray
                 this.ShowInTaskbar = false;
+                _forceClose = true;
             }
             else
             {
                 base.OnClosing(e);
+                
             }
         }
         #endregion
