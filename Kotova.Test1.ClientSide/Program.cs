@@ -34,6 +34,8 @@ namespace Kotova.Test1.ClientSide
             [DllImport("kernel32.dll")]
             static extern bool AllocConsole();
 
+            InitializeWPFApplication();
+
             WindowsFormsHost.EnableWindowsFormsInterop();
 
             var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
@@ -242,17 +244,24 @@ namespace Kotova.Test1.ClientSide
             // Start the named pipe server to listen for further instances
             StartNamedPipeServer();
 
-            InitializeWPFApplication();
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             ApplicationConfiguration.Initialize();
 
             Login_Russian loginForm = new Login_Russian();
-            Application.Run(loginForm);
+            RunHybridApplication(loginForm);
 
 
             GC.KeepAlive(mutex);
+        }
+
+        private static void RunHybridApplication(Login_Russian loginForm)
+        {
+            // Show the Windows Forms login initially
+            loginForm.Show();
+
+            // Run both message loops
+            System.Windows.Threading.Dispatcher.Run();
         }
 
         private static void InitializeWPFApplication()
@@ -268,6 +277,13 @@ namespace Kotova.Test1.ClientSide
                     MessageBox.Show($"WPF Error: {e.Exception.Message}", "Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     e.Handled = true;
+                };
+
+                // Handle application shutdown properly
+                _wpfApp.Exit += (s, e) =>
+                {
+                    // Shutdown Windows Forms application too
+                    Application.Exit();
                 };
             }
         }

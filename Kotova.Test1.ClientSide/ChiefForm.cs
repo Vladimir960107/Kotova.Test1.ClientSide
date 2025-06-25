@@ -502,6 +502,7 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        // Enhanced ExportToExcel method in ChiefForm.cs
         private void ExportToExcel(InstructionReportItem report)
         {
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
@@ -521,8 +522,6 @@ namespace Kotova.Test1.ClientSide
                         // Установка шрифта Times New Roman 12 для всего листа
                         worksheet.Style.Font.FontName = "Times New Roman";
                         worksheet.Style.Font.FontSize = 12;
-
-
 
                         // Add column headers - exactly as in the other method
                         worksheet.Cell(1, 1).Value = "Дата проведения инструктажа по охране труда";
@@ -546,7 +545,7 @@ namespace Kotova.Test1.ClientSide
                             cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                         }
 
-                        // Добавление нумерации столбцов во вторую строку (среднее выравнивание и по центру)
+                        // Добавление нумерации столбцов во вторую строку
                         for (int col = 1; col <= 10; col++)
                         {
                             var cell = worksheet.Cell(2, col);
@@ -569,45 +568,34 @@ namespace Kotova.Test1.ClientSide
                             var employee = sortedEmployees[i];
                             int rowIndex = i + 3; // Начинаем с 3 строки
 
-                            // Колонка 1: Дата проведения инструктажа - пустая для непройденных инструктажей
+                            // Колонка 1: Дата проведения инструктажа
                             worksheet.Cell(rowIndex, 1).Value = employee.HasPassed && employee.DatePassed.HasValue
                                 ? employee.DatePassed.Value.ToString("dd.MM.yyyy")
-                                : ""; // Пустое значение вместо текущей даты для непройденных инструктажей
+                                : "";
 
-                            // Колонка 2: ФИО работника (с Alt+Enter между словами)
-                            string[] nameParts = employee.FullName.Split(' ');
-                            worksheet.Cell(rowIndex, 2).Value = string.Join("\n", nameParts);
+                            // Колонка 2: ФИО работника
+                            worksheet.Cell(rowIndex, 2).Value = employee.FullName;
 
-                            // Колонка 3: Профессия (должность) (с Alt+Enter между словами)
-                            string[] positionParts = employee.Position.Split(' ');
-                            worksheet.Cell(rowIndex, 3).Value = string.Join("\n", positionParts);
+                            // Колонка 3: Должность
+                            worksheet.Cell(rowIndex, 3).Value = employee.Position;
 
                             // Колонка 4: Дата рождения
                             worksheet.Cell(rowIndex, 4).Value = employee.BirthDate.ToString("dd.MM.yyyy");
 
                             // Колонка 5: Вид инструктажа
-                            string typeName = report.TypeName;
-                            if (typeName == "Повторный (Для водителей)")
-                            {
-                                typeName = "Повторный";
-                            }
-                            worksheet.Cell(rowIndex, 5).Value = typeName;
+                            worksheet.Cell(rowIndex, 5).Value = report.TypeName;
 
-                            // Колонка 6: Причина проведения (только для внепланового или целевого)
-                            if (report.TypeOfInstruction == 1 || report.TypeOfInstruction == 5)
-                            {
-                                worksheet.Cell(rowIndex, 6).Value = report.CauseOfInstruction;
-                            }
-                            else
-                            {
-                                worksheet.Cell(rowIndex, 6).Value = "";
-                            }
+                            // Колонка 6: Причина (только для внепланового и целевого)
+                            worksheet.Cell(rowIndex, 6).Value = (report.TypeOfInstruction == 1 || report.TypeOfInstruction == 5)
+                                ? report.CauseOfInstruction
+                                : "";
 
                             // Колонка 7: Проводивший инструктаж
                             worksheet.Cell(rowIndex, 7).Value = employee.AssignedBy;
 
-                            // Колонка 8: Локальные акты
-                            worksheet.Cell(rowIndex, 8).Value = string.Join("; ", employee.NormativeDocuments);
+                            // Колонка 8: Локальные акты - ENHANCED PROCESSING FOR UNPLANNED INSTRUCTIONS
+                            string normativeDocumentsText = ProcessNormativeDocuments(employee.NormativeDocuments, report.TypeOfInstruction);
+                            worksheet.Cell(rowIndex, 8).Value = normativeDocumentsText;
 
                             // Колонка 9-10: Подписи (пусто)
                             worksheet.Cell(rowIndex, 9).Value = "";
@@ -622,51 +610,130 @@ namespace Kotova.Test1.ClientSide
                             }
                         }
 
-                        // Настройка полей страницы - в ДЮЙМАХ (0.5 см ≈ 0.197 дюйма)
-                        worksheet.PageSetup.Margins.Left = 0.197;  // 0.5 см в дюймах
-                        worksheet.PageSetup.Margins.Right = 0.197; // 0.5 см в дюймах
-                        worksheet.PageSetup.Margins.Top = 0.394;   // 1 см в дюймах
-                        worksheet.PageSetup.Margins.Bottom = 0.394; // 1 см в дюймах
+                        // Page setup settings...
+                        worksheet.PageSetup.Margins.Left = 0.197;
+                        worksheet.PageSetup.Margins.Right = 0.197;
+                        worksheet.PageSetup.Margins.Top = 0.394;
+                        worksheet.PageSetup.Margins.Bottom = 0.394;
 
-                        // Настройка ширины столбцов в соответствии с изображением и с учетом формата A4
-                        worksheet.Column(1).Width = 12;  // Дата проведения
-                        worksheet.Column(2).Width = 20;  // ФИО - немного уменьшил
-                        worksheet.Column(3).Width = 12;  // Профессия (должность)
-                        worksheet.Column(4).Width = 12;  // Число, месяц, год рождения - уменьшил
-                        worksheet.Column(5).Width = 14;  // Вид инструктажа - уменьшил
-                        worksheet.Column(6).Width = 14;  // Причина проведения
-                        worksheet.Column(7).Width = 20;  // Фамилия, имя отчество проводящего - уменьшил
-                        worksheet.Column(8).Width = 28;  // Наименование локального акта - уменьшил
-                        worksheet.Column(9).Width = 11;   // Подпись работника, проводившего - уменьшил
-                        worksheet.Column(10).Width = 11;  // Подпись работника, прошедшего - уменьшил
+                        // Column width settings...
+                        worksheet.Column(1).Width = 12;
+                        worksheet.Column(2).Width = 25;
+                        worksheet.Column(3).Width = 20;
+                        worksheet.Column(4).Width = 12;
+                        worksheet.Column(5).Width = 15;
+                        worksheet.Column(6).Width = 30;
+                        worksheet.Column(7).Width = 25;
+                        worksheet.Column(8).Width = 35; // Increased for normative documents
+                        worksheet.Column(9).Width = 10;
+                        worksheet.Column(10).Width = 10;
 
-                        // Настройка параметров страницы
                         worksheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
-                        worksheet.PageSetup.FitToPages(1, 1); // Уместить на 1 страницу по ширине и 1 по высоте
-                        worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape; // Альбомная ориентация
-                        worksheet.PageSetup.ScaleHFWithDocument = true; // Масштабировать колонтитулы вместе с документом
+                        worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
 
-                        // Сохранение и открытие файла
                         workbook.SaveAs(filePath);
+                    }
 
-                        MessageBox.Show($"Отчет успешно сохранен в файл: {filePath}",
-                            "Экспорт завершен", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Отчет успешно экспортирован: {filePath}", "Экспорт завершен",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
 
-                        try
-                        {
-                            Process.Start(new ProcessStartInfo
-                            {
-                                FileName = filePath,
-                                UseShellExecute = true
-                            });
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Не удалось автоматически открыть файл: {ex.Message}",
-                                "Предупреждение", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
+        /// <summary>
+        /// Processes normative documents for Excel export with special handling for unplanned instructions
+        /// </summary>
+        /// <param name="normativeDocuments">List of normative document names/URLs</param>
+        /// <param name="instructionType">Type of instruction (1 = Внеплановый)</param>
+        /// <returns>Formatted string for Excel cell</returns>
+        private string ProcessNormativeDocuments(List<string> normativeDocuments, byte instructionType)
+        {
+            if (normativeDocuments == null || !normativeDocuments.Any())
+            {
+                return "";
+            }
+
+            // For unplanned instructions (Внеплановый), apply special processing
+            if (instructionType == 1)
+            {
+                var processedDocuments = new List<string>();
+
+                foreach (var document in normativeDocuments)
+                {
+                    if (string.IsNullOrWhiteSpace(document))
+                        continue;
+
+                    // Check if this document contains the "Нормативная база:" prefix and "|" separators
+                    if (document.Contains("Нормативная база:") && document.Contains("|"))
+                    {
+                        // Remove the "Нормативная база:" prefix
+                        string cleanDocument = document.Replace("Нормативная база:", "").Trim();
+
+                        // Split by "|" and clean each part
+                        var parts = cleanDocument.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(part => part.Trim())
+                            .Where(part => !string.IsNullOrWhiteSpace(part))
+                            .ToList();
+
+                        processedDocuments.AddRange(parts);
+                    }
+                    else
+                    {
+                        // Regular document, add as-is
+                        processedDocuments.Add(document.Trim());
                     }
                 }
+
+                // Join with semicolon and newline for Excel cell line breaks
+                return string.Join(";\n", processedDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+            else
+            {
+                // For other instruction types, use standard processing
+                return string.Join("; ", normativeDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+        }
+
+        // Alternative method if you want to use Alt+Enter line breaks in Excel
+        private string ProcessNormativeDocumentsWithLineBreaks(List<string> normativeDocuments, byte instructionType)
+        {
+            if (normativeDocuments == null || !normativeDocuments.Any())
+            {
+                return "";
+            }
+
+            if (instructionType == 1) // Внеплановый
+            {
+                var processedDocuments = new List<string>();
+
+                foreach (var document in normativeDocuments)
+                {
+                    if (string.IsNullOrWhiteSpace(document))
+                        continue;
+
+                    if (document.Contains("Нормативная база:") && document.Contains("|"))
+                    {
+                        string cleanDocument = document.Replace("Нормативная база:", "").Trim();
+                        var parts = cleanDocument.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(part => part.Trim())
+                            .Where(part => !string.IsNullOrWhiteSpace(part))
+                            .Select(part => $"{part};") // Add semicolon to each part
+                            .ToList();
+
+                        processedDocuments.AddRange(parts);
+                    }
+                    else
+                    {
+                        processedDocuments.Add($"{document.Trim()};");
+                    }
+                }
+
+                // Use \n for line breaks in Excel (equivalent to Alt+Enter)
+                return string.Join("\n", processedDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+            else
+            {
+                return string.Join("; ", normativeDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
             }
         }
 

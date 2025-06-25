@@ -5,7 +5,7 @@ using Kotova.Test1.ClientSide.ManagementWPF.ViewModels;
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.Views
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window
     {
         private MainViewModel _viewModel;
         private bool _forceClose = false;

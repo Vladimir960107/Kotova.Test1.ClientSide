@@ -344,9 +344,15 @@ namespace Kotova.Test1.ClientSide
                 // Create ViewModel with login form reference for sign out
                 var mainViewModel = new ManagementWPF.ViewModels.MainViewModel(apiService, fullName, this);
 
+
                 // Create main window
                 var mainWindow = new ManagementWPF.Views.MainWindow(mainViewModel);
                 mainWindow.Title = $"Система управления инструктажами - {fullName}";
+
+                mainWindow.Focusable = true;
+                System.Windows.Input.KeyboardNavigation.SetTabNavigation(mainWindow,
+                    System.Windows.Input.KeyboardNavigationMode.Local);
+                System.Windows.Input.InputMethod.SetIsInputMethodEnabled(mainWindow, true);
 
                 // Handle window events
                 mainWindow.OnWindowHidden += () =>
