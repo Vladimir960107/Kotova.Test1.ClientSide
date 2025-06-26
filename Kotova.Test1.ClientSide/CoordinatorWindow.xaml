@@ -1,0 +1,476 @@
+﻿<Window x:Class="Kotova.Test1.ClientSide.CoordinatorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Coordinator" Height="600" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        Background="#F8F9FA">
+
+    <Window.Resources>
+        <!-- Nordic Color Palette Styles -->
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+        </Style>
+
+        <Style x:Key="ButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#5E81AC"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4C566A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#81A1C1"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#434C5E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Background" Value="#A3BE8C"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style x:Key="ExportButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Background" Value="#EBCB8B"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+        </Style>
+
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Background" Value="#BF616A"/>
+        </Style>
+
+        <Style x:Key="ListBoxStyle" TargetType="ListBox">
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#ECEFF4"/>
+        </Style>
+
+        <Style x:Key="TextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <Style x:Key="CheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+        </Style>
+
+        <Style x:Key="DataGridStyle" TargetType="DataGrid">
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#ECEFF4"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8F9FA"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E5E9F0"/>
+        </Style>
+
+        <Style x:Key="GroupBoxStyle" TargetType="GroupBox">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="#ECEFF4"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+        </Style>
+
+        <Style x:Key="TabItemStyle" TargetType="TabItem">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+        </Style>
+
+        <Style x:Key="DatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Bar -->
+        <Border Grid.Row="0" Background="#5E81AC" BorderBrush="#4C566A" BorderThickness="0,0,0,2">
+            <Grid Height="50" Margin="15,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="👤" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="White"/>
+                    <TextBlock Text="Вы вошли как:" VerticalAlignment="Center" Margin="0,0,8,0" 
+                               Foreground="White" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="UserLabel" Text="[User]" FontWeight="Bold" VerticalAlignment="Center" 
+                               Foreground="#EBCB8B" FontSize="14"/>
+                </StackPanel>
+
+                <Button x:Name="LogoutButton" Grid.Column="1" Content="❌ Выйти" 
+                        Style="{StaticResource DangerButtonStyle}" Click="LogoutButton_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Main Tab Control -->
+        <TabControl x:Name="CoordinatorTabControl" Grid.Row="1" Margin="10" Background="Transparent">
+
+            <!-- Tab 1: Initial Instructions -->
+            <TabItem Header="📋 Вводные инструктажи" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Date Selection -->
+                    <GroupBox Grid.Row="0" Grid.Column="0" Header="📅 Дата проведения" Style="{StaticResource GroupBoxStyle}">
+                        <DatePicker x:Name="DatePickerEnd" Style="{StaticResource DatePickerStyle}" Width="200" HorizontalAlignment="Left"/>
+                    </GroupBox>
+
+                    <!-- Sync Button -->
+                    <Button x:Name="ButtonSyncInitialInstr" Grid.Row="1" Grid.Column="0" 
+                            Content="🔄 Синхронизировать инструктажи с Базой Данных"
+                            Style="{StaticResource ActionButtonStyle}" Margin="5,0,0,10" HorizontalAlignment="Left"
+                            Click="ButtonSyncInitialInstr_Click"/>
+
+                    <!-- Names List -->
+                    <GroupBox Grid.Row="2" Grid.Column="0" Header="👥 Список людей для вводного инструктажа" 
+                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <ListBox x:Name="NamesOfPeopleForInitialInstr" Style="{StaticResource ListBoxStyle}"
+                                 ItemsSource="{Binding InitialInstructionPeople}"
+                                 SelectedItem="{Binding SelectedPerson}"
+                                 DisplayMemberPath="DisplayName"/>
+                    </GroupBox>
+
+                    <!-- Person Details -->
+                    <GroupBox Grid.Row="2" Grid.Column="1" Header="ℹ️ Детали сотрудника" 
+                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <StackPanel Margin="5">
+                            <TextBlock Text="Отдел:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
+                            <TextBox x:Name="DepartmentInitInstr" IsReadOnly="True" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding SelectedPerson.Department}"/>
+
+                            <TextBlock Text="Дата рождения:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="BirthDateInitInstr" IsReadOnly="True" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding SelectedPerson.BirthDate}"/>
+
+                            <TextBlock Text="Профессия:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="ProfessionInitInstr" IsReadOnly="True" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding SelectedPerson.Profession}"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Excel Export -->
+                    <Button x:Name="ExcelFormButton" Grid.Row="2" Grid.Column="2" 
+                            Content="📊 Сформировать Excel форму об инструктаже"
+                            Style="{StaticResource ExportButtonStyle}" VerticalAlignment="Top" 
+                            Click="ExcelFormButton_Click"/>
+
+                    <!-- Confirmation -->
+                    <CheckBox x:Name="PassInstruction" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                              Content="✅ Подтверждаю, что инструктаж пройден" 
+                              Style="{StaticResource CheckBoxStyle}" Margin="5,10,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 2: Database Connection -->
+            <TabItem Header="🔗 Связь баз данных" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Button x:Name="ButtonRefreshTelpDatabase" Grid.Row="0" 
+                            Content="🔄 Обновить базу данных TELP"
+                            Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,10" HorizontalAlignment="Left"
+                            Click="ButtonRefreshTelpDatabase_Click"/>
+
+                    <GroupBox Grid.Row="1" Header="👥 Сотрудники TELP" Style="{StaticResource GroupBoxStyle}">
+                        <ListView x:Name="TelpEmployeesListView" Background="White" BorderBrush="#D8DEE9"
+                                  ItemsSource="{Binding TelpEmployees}">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="ФИО" DisplayMemberBinding="{Binding FullName}" Width="200"/>
+                                    <GridViewColumn Header="Отдел" DisplayMemberBinding="{Binding Department}" Width="150"/>
+                                    <GridViewColumn Header="Должность" DisplayMemberBinding="{Binding Position}" Width="150"/>
+                                    <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="200"/>
+                                    <GridViewColumn Header="Табельный номер" DisplayMemberBinding="{Binding PersonnelNumber}" Width="120"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 3: Employee Data -->
+            <TabItem Header="👤 Данные сотрудника" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left Column - Basic Info -->
+                    <GroupBox Grid.Column="0" Header="📝 Основная информация" Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="ФИО:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
+                            <TextBox x:Name="EmployeeFullNameTextBox" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding NewEmployee.FullName}"/>
+
+                            <TextBlock Text="Должность:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="EmployeesPositionTextBox" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding NewEmployee.Position}"/>
+
+                            <TextBlock Text="Табельный номер:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="PersonnelNumberTextBox" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding NewEmployee.PersonnelNumber}"/>
+
+                            <TextBlock Text="Номер рабочего места:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="WorkplaceNumberTextBox" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding NewEmployee.WorkplaceNumber}"/>
+
+                            <TextBlock Text="Дата рождения:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <DatePicker x:Name="DateOfBirthDateTimePicker" Style="{StaticResource DatePickerStyle}"
+                                        SelectedDate="{Binding NewEmployee.BirthDate}"/>
+
+                            <TextBlock Text="Отдел:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <ListBox x:Name="DepartmentForNewcomer" Height="80" Style="{StaticResource ListBoxStyle}"
+                                     ItemsSource="{Binding Departments}"
+                                     SelectedItem="{Binding NewEmployee.Department}"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Right Column - Credentials & Options -->
+                    <GroupBox Grid.Column="1" Header="🔐 Учетные данные и настройки" Style="{StaticResource GroupBoxStyle}">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Логин:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
+                            <TextBox x:Name="LoginTextBox" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding NewEmployee.Login}"/>
+
+                            <TextBlock Text="Пароль:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="PasswordTextBox" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding NewEmployee.Password}"/>
+
+                            <TextBlock Text="Роль:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <ListBox x:Name="RoleOfNewcomerListBox" Height="80" Style="{StaticResource ListBoxStyle}"
+                                     ItemsSource="{Binding Roles}"
+                                     SelectedItem="{Binding NewEmployee.Role}"/>
+
+                            <CheckBox x:Name="AddInitialInstructionToNewcomer" Margin="0,15,0,15"
+                                      Content="✅ Добавить ли сотруднику вводный инструктаж?"
+                                      Style="{StaticResource CheckBoxStyle}"
+                                      IsChecked="{Binding NewEmployee.AddInitialInstruction}"/>
+
+                            <Button x:Name="UploadNewcommer" Content="💾 Сохранить сотрудника"
+                                    Style="{StaticResource ActionButtonStyle}" Click="UploadNewcommer_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 4: Taking Instructions -->
+            <TabItem Header="📚 Прохождение инструктажей" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Grid.Row="0" Grid.Column="0" Header="📋 Непройденные инструктажи" 
+                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <ListBox x:Name="ListOfInstructionsForUser" Style="{StaticResource ListBoxStyle}"
+                                 ItemsSource="{Binding UserInstructions}"
+                                 SelectedItem="{Binding SelectedInstruction}"
+                                 DisplayMemberPath="CauseOfInstruction"/>
+                    </GroupBox>
+
+                    <GroupBox Grid.Row="0" Grid.Column="1" Header="📁 Файлы инструктажа" 
+                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <ListView x:Name="FilesOfInstructionCheckedListBox" Background="White"
+                                  ItemsSource="{Binding SelectedInstruction.Files}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding FileName}" IsChecked="{Binding IsChecked}"
+                                              Style="{StaticResource CheckBoxStyle}"/>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </GroupBox>
+
+                    <Button x:Name="HyperLinkForInstructionsFolder" Grid.Row="0" Grid.Column="2"
+                            Content="🔗 Гиперссылка на инструктаж" 
+                            Style="{StaticResource ButtonStyle}" VerticalAlignment="Top"
+                            Click="HyperLinkForInstructionsFolder_Click"/>
+
+                    <CheckBox x:Name="PassInstructionAsUser" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                              Content="✅ Подтверждаю, что инструктаж пройден"
+                              Style="{StaticResource CheckBoxStyle}" Margin="5,10,0,0"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 5: Reports -->
+            <TabItem Header="📊 Отчеты" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Date Range -->
+                    <GroupBox Grid.Row="0" Grid.Column="0" Header="📅 Период" Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,10">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="Дата начала:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
+                            <DatePicker x:Name="BeginingDateOfPassedInstructions" Style="{StaticResource DatePickerStyle}"
+                                        SelectedDate="{Binding ReportStartDate}"/>
+
+                            <TextBlock Text="Дата окончания:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <DatePicker x:Name="EndDateOfPassedInstructions" Style="{StaticResource DatePickerStyle}"
+                                        SelectedDate="{Binding ReportEndDate}"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Types of Instructions -->
+                    <GroupBox Grid.Row="1" Grid.Column="0" Header="📝 Типы инструктажей" Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <ListBox x:Name="TypesOfInstructionListBox" Style="{StaticResource ListBoxStyle}"
+                                 ItemsSource="{Binding InstructionTypes}"
+                                 SelectedItem="{Binding SelectedInstructionType}"/>
+                    </GroupBox>
+
+                    <!-- Departments -->
+                    <GroupBox Grid.Row="1" Grid.Column="1" Header="🏢 Отделы" Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <ListBox x:Name="DepartmentsListBox" Style="{StaticResource ListBoxStyle}"
+                                 ItemsSource="{Binding Departments}"
+                                 SelectedItem="{Binding SelectedDepartment}"/>
+                    </GroupBox>
+
+                    <!-- Additional Filter -->
+                    <GroupBox Grid.Row="1" Grid.Column="2" Header="⚙️ Дополнительно" Style="{StaticResource GroupBoxStyle}">
+                        <ListBox x:Name="AdditionalListBox" Style="{StaticResource ListBoxStyle}"
+                                 ItemsSource="{Binding AdditionalFilters}"
+                                 SelectedItem="{Binding SelectedAdditionalFilter}"/>
+                    </GroupBox>
+
+                    <!-- Export Button -->
+                    <Button x:Name="ExcelExportForCoordinatorButton" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
+                            Content="📊 Экспорт в Excel" Style="{StaticResource ExportButtonStyle}" 
+                            Margin="0,10,0,0" HorizontalAlignment="Center" Click="ExcelExportForCoordinatorButton_Click"/>
+                </Grid>
+            </TabItem>
+
+            <!-- Tab 6: Normative Instructions (Functional) -->
+            <TabItem Header="📖 Нормативная база" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- DataGrid for Normative Instructions -->
+                    <GroupBox Grid.Row="0" Grid.Column="0" Header="📋 Список нормативных инструкций" 
+                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
+                        <DataGrid x:Name="DgvNormativeInstructions" Style="{StaticResource DataGridStyle}" 
+                                  AutoGenerateColumns="False" ItemsSource="{Binding NormativeInstructions}"
+                                  SelectedItem="{Binding SelectedNormativeInstruction}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                                <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="200"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+
+                    <!-- Details Panel -->
+                    <GroupBox x:Name="GbNormativeInstructionDetails" Grid.Row="0" Grid.Column="1" 
+                              Header="📝 Детали инструкции" Style="{StaticResource GroupBoxStyle}">
+                        <StackPanel Margin="10">
+                            <TextBlock Text="ID:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
+                            <TextBox x:Name="TxtNormativeInstructionId" IsReadOnly="True" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding SelectedNormativeInstruction.Id}"/>
+
+                            <TextBlock Text="Название:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="TxtNormativeInstructionName" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding SelectedNormativeInstruction.Name}"/>
+
+                            <TextBlock Text="URL:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                            <TextBox x:Name="TxtNormativeInstructionUrl" Style="{StaticResource TextBoxStyle}"
+                                     Text="{Binding SelectedNormativeInstruction.Url}"/>
+
+                            <Button x:Name="BtnSaveNormativeInstruction" Content="💾 Сохранить" 
+                                    Style="{StaticResource ActionButtonStyle}" Margin="0,15,0,5" 
+                                    Click="BtnSaveNormativeInstruction_Click"/>
+                            <Button x:Name="BtnCancelNormativeInstruction" Content="❌ Отмена" 
+                                    Style="{StaticResource ButtonStyle}" Click="BtnCancelNormativeInstruction_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,10,0,0">
+                        <Button x:Name="BtnNewNormativeInstruction" Content="➕ Новый" 
+                                Style="{StaticResource ActionButtonStyle}" Click="BtnNewNormativeInstruction_Click"/>
+                        <Button x:Name="BtnDeleteNormativeInstruction" Content="🗑️ Удалить" 
+                                Style="{StaticResource DangerButtonStyle}" Click="BtnDeleteNormativeInstruction_Click"/>
+                        <Button x:Name="BtnRefreshNormativeInstructions" Content="🔄 Обновить" 
+                                Style="{StaticResource ButtonStyle}" Click="BtnRefreshNormativeInstructions_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</Window>
