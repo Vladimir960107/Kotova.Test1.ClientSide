@@ -278,7 +278,7 @@ namespace Kotova.Test1.ClientSide
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
 
                     var response = await httpClient.GetAsync(
-                        ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-normative-instructions");
+                        ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions?isUnplannedInstruction=false");
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -319,7 +319,7 @@ namespace Kotova.Test1.ClientSide
                     Name = "Новая инструкция",
                     Url = "",
                     CreatedAt = DateTime.Now,
-                    IsUnplannedInstruction = false
+                    IsUnplannedInstruction = false  // Ensure new instructions are NOT unplanned
                 };
 
                 TxtNormativeInstructionName.Focus();
@@ -359,8 +359,8 @@ namespace Kotova.Test1.ClientSide
                     HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
 
                     string url = SelectedNormativeInstruction.Id == 0
-                        ? ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-normative-instruction"
-                        : ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/update-normative-instruction";
+                        ? ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions"
+                        : ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/normative-instructions/{SelectedNormativeInstruction.Id}";
 
                     var response = SelectedNormativeInstruction.Id == 0
                         ? await httpClient.PostAsync(url, content)
@@ -408,7 +408,7 @@ namespace Kotova.Test1.ClientSide
                         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
 
                         var response = await httpClient.DeleteAsync(
-                            ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/delete-normative-instruction/{SelectedNormativeInstruction.Id}");
+                            ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/normative-instructions/{SelectedNormativeInstruction.Id}");
 
                         if (response.IsSuccessStatusCode)
                         {

@@ -413,8 +413,9 @@ namespace Kotova.Test1.ClientSide
                     break;
 
                 case "Coordinator":
-                    formToOpen = new CoordinatorForm(this, username, fullName, departmentName);
-                    break;
+                    // UPDATED: Launch WPF CoordinatorWindow instead of WinForms CoordinatorForm
+                    LaunchWPFCoordinatorWindow(username, fullName, departmentName);
+                    return; // Return early since this is now WPF
 
                 case "DeputyChief":
                     // STEP 1: Launch WPF InstructionViewerWindow for deputy chiefs
@@ -434,7 +435,7 @@ namespace Kotova.Test1.ClientSide
                     return;
             }
 
-            // Handle remaining Windows Forms (Coordinator, Admin)
+            // Handle remaining Windows Forms (Admin only now)
             if (formToOpen != null)
             {
                 activeForm = formToOpen;          // Set Windows Forms active form
@@ -452,13 +453,100 @@ namespace Kotova.Test1.ClientSide
 
                         this.Invoke(new Action(() =>
                         {
-                            if (formToOpen is CoordinatorForm coordinatorForm && coordinatorForm._signUpForm != null)
-                                coordinatorForm._signUpForm.Show();
-                            /*else if (formToOpen is AdminForm adminForm && adminForm._signUpForm != null)
-                                adminForm._signUpForm.Show();*/
+                            // Note: Only AdminForm remains as WinForms
+                            // Coordinator is now WPF and handled separately
                         }));
                     });
                 }
+            }
+        }
+
+        /// <summary>
+        /// Launches the WPF CoordinatorWindow for Coordinator role
+        /// </summary>
+        /// <param name="username">The username</param>
+        /// <param name="fullName">The full name</param>
+        /// <param name="departmentName">The department name</param>
+        private void LaunchWPFCoordinatorWindow(string username, string fullName, string departmentName)
+        {
+            try
+            {
+                // Create the WPF CoordinatorWindow
+                var coordinatorWindow = new CoordinatorWindow(this, username);
+
+                // Set window properties
+                coordinatorWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                coordinatorWindow.Title = $"Coordinator - {fullName}";
+
+                // Handle window closing to return to login
+                coordinatorWindow.Closed += (s, e) => {
+                    activeWpfWindow = null;
+                    this.ShowForm();
+                };
+
+                // Handle window state changes
+                coordinatorWindow.StateChanged += (s, e) => {
+                    if (coordinatorWindow.WindowState == System.Windows.WindowState.Minimized)
+                    {
+                        coordinatorWindow.Hide();
+                        ShowNotifyIconMessage($"Coordinator - {fullName}", "Приложение свернуто в системный трей");
+                    }
+                };
+
+                // Show the window and update tracking
+                activeForm = null;                    // Clear Windows Forms reference
+                activeWpfWindow = coordinatorWindow;  // Set WPF window as active
+                coordinatorWindow.Show();
+                this.Hide();
+
+                // Handle default username scenario for WPF
+                if (isDefaultUsername(username))
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+
+                        coordinatorWindow.Dispatcher.Invoke(() =>
+                        {
+                            // Show WPF message for credential update
+                            System.Windows.MessageBox.Show(
+                                "Пожалуйста, обновите свои учётные данные в настройках.",
+                                "Обновление данных",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+
+                            // Note: SignUpForm integration for WPF coordinator can be added here later
+                            // For now, we show a message and let user handle it through the UI
+                        });
+                    });
+                }
+
+                // Log successful launch
+                Console.WriteLine($"Successfully launched WPF CoordinatorWindow for {fullName}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска координаторского интерфейса: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Fallback to showing login form
+                this.ShowForm();
+            }
+        }
+
+        // Also add this helper method if it doesn't exist already:
+        private void ShowNotifyIconMessage(string title, string message)
+        {
+            try
+            {
+                if (notifyIcon != null)
+                {
+                    notifyIcon.ShowBalloonTip(3000, title, message, ToolTipIcon.Info);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error showing notify icon message: {ex.Message}");
             }
         }
 
