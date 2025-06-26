@@ -2247,60 +2247,61 @@ namespace Kotova.Test1.ClientSide
 
 
 
-        private async Task<bool> SyncNormativeInstructionNamesWithDBInternal()
+        private async Task SyncNormativeInstructionNamesWithDBInternal(bool? isUnplannedInstruction = null)
         {
             try
             {
-                ListOfNormativeInstrNames.Items.Clear();
-
                 using (var httpClient = new HttpClient())
                 {
                     string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                    // Use the existing endpoint
-                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions");
+                    // Build the URL with the filter parameter
+                    string url = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/normative-instructions";
+
+                    if (isUnplannedInstruction.HasValue)
+                    {
+                        url += $"?isUnplannedInstruction={isUnplannedInstruction.Value.ToString().ToLower()}";
+                    }
+
+                    var response = await httpClient.GetAsync(url);
 
                     if (response.IsSuccessStatusCode)
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        if (string.IsNullOrWhiteSpace(responseBody))
-                        {
-                            throw new Exception("responseBody пуст");
-                        }
+                        var normativeInstructions = JsonConvert.DeserializeObject<List<NormativeInstructionInfo>>(responseBody);
 
-                        // Deserialize the response - note the property names match what your endpoint returns
-                        var result = JsonConvert.DeserializeObject<List<NormativeInstructionDto>>(responseBody);
+                        // Clear existing items
+                        ListOfNormativeInstrNames.Items.Clear();
 
-                        if (result == null)
+                        // Add new items
+                        if (normativeInstructions != null)
                         {
-                            throw new Exception("Не удалось десериализовать ответ");
-                        }
-
-                        // Add items to the listbox
-                        foreach (var instruction in result)
-                        {
-                            ListOfNormativeInstrNames.Items.Add(new ListBoxItem
+                            foreach (var instruction in normativeInstructions)
                             {
-                                Text = instruction.Name,
-                                Value = instruction.Id
-                            });
+                                ListOfNormativeInstrNames.Items.Add(new ListBoxItem
+                                {
+                                    Text = instruction.Name,
+                                    Value = instruction.Id
+                                });
+                            }
                         }
 
-                        return true;
+                        Console.WriteLine($"Successfully synced {normativeInstructions?.Count ?? 0} normative instruction names. Filter: isUnplannedInstruction={isUnplannedInstruction}");
                     }
                     else
                     {
-                        string errorMessage = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Не удалось синхронизировать нормативные инструкции. Status code: {response.StatusCode} {errorMessage}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return false;
+                        Console.WriteLine($"Failed to sync normative instruction names: {response.StatusCode}");
+                        WinForms.MessageBox.Show($"Не удалось загрузить список нормативных инструкций: {response.StatusCode}",
+                            "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                Console.WriteLine($"Error syncing normative instruction names: {ex.Message}");
+                WinForms.MessageBox.Show($"Произошла ошибка при загрузке нормативных инструкций: {ex.Message}",
+                    "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
             }
         }
 
@@ -2431,7 +2432,7 @@ namespace Kotova.Test1.ClientSide
                 if (instructionsListView.SelectedItems.Count == 0)
                 {
                     WinForms.MessageBox.Show("Выберите инструктаж для назначения.",
-                        "Предупреждение", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Warning);
+                        "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
                     return;
                 }
 
@@ -2487,8 +2488,8 @@ namespace Kotova.Test1.ClientSide
                 // Fetch employee data with roles
                 await SyncEmployeesWithRolesAsync();
 
-                // Fetch normative instruction names  
-                await SyncNormativeInstructionNamesWithDBInternal();
+                // Fetch normative instruction names - FILTERED for non-unplanned instructions only
+                await SyncNormativeInstructionNamesWithDBInternal(isUnplannedInstruction: false);
 
                 // Create and show the regular instruction assignment manager
                 var assignmentManager = new InstructionAssignmentManager(
@@ -2511,7 +2512,8 @@ namespace Kotova.Test1.ClientSide
             }
             catch (Exception ex)
             {
-                WinForms.MessageBox.Show($"Ошибка при назначении инструктажа: {ex.Message}",
+                Console.WriteLine($"Error assigning instruction: {ex.Message}");
+                WinForms.MessageBox.Show($"Произошла ошибка при назначении инструктажа: {ex.Message}",
                     "Ошибка", WinForms.MessageBoxButtons.OK, WinForms.MessageBoxIcon.Error);
             }
         }
