@@ -221,20 +221,67 @@
                     </Grid.RowDefinitions>
 
                     <Button x:Name="ButtonRefreshTelpDatabase" Grid.Row="0" 
-                            Content="🔄 Обновить базу данных TELP"
-                            Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,10" HorizontalAlignment="Left"
-                            Click="ButtonRefreshTelpDatabase_Click"/>
+                Content="🔄 Обновить базу данных TELP"
+                Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,10" HorizontalAlignment="Left"
+                Click="ButtonRefreshTelpDatabase_Click"/>
 
                     <GroupBox Grid.Row="1" Header="👥 Сотрудники TELP" Style="{StaticResource GroupBoxStyle}">
-                        <ListView x:Name="TelpEmployeesListView" Background="White" BorderBrush="#D8DEE9"
-                                  ItemsSource="{Binding TelpEmployees}">
+                        <ListView x:Name="TelpEmployeesListView" 
+                      Background="White" 
+                      BorderBrush="#D8DEE9"
+                      ItemsSource="{Binding TelpEmployees}"
+                      MouseDoubleClick="TelpEmployeesListView_MouseDoubleClick">
+
+                            <!-- Custom ItemContainerStyle for row coloring -->
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Background" Value="{Binding BackgroundBrush}"/>
+                                    <Setter Property="Foreground" Value="{Binding ForegroundBrush}"/>
+                                    <Setter Property="FontWeight" Value="Normal"/>
+                                    <Setter Property="Padding" Value="5,2"/>
+                                    <Setter Property="Margin" Value="1"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+
+                                    <!-- All triggers combined in one section -->
+                                    <Style.Triggers>
+                                        <!-- Trigger for rows with differences -->
+                                        <DataTrigger Binding="{Binding HasDifferences}" Value="True">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="ToolTip" Value="Дважды щелкните для разрешения различий"/>
+                                        </DataTrigger>
+
+                                        <!-- Hover effects -->
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background">
+                                                <Setter.Value>
+                                                    <SolidColorBrush Color="#E3F2FD" Opacity="0.8"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+
+                                        <!-- Selection effects -->
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#2196F3"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="ФИО" DisplayMemberBinding="{Binding FullName}" Width="200"/>
-                                    <GridViewColumn Header="Отдел" DisplayMemberBinding="{Binding Department}" Width="150"/>
-                                    <GridViewColumn Header="Должность" DisplayMemberBinding="{Binding Position}" Width="150"/>
+                                    <GridViewColumn Header="Отдел" DisplayMemberBinding="{Binding DepartmentName}" Width="150"/>
+                                    <GridViewColumn Header="Должность" DisplayMemberBinding="{Binding PositionName}" Width="150"/>
                                     <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="200"/>
                                     <GridViewColumn Header="Табельный номер" DisplayMemberBinding="{Binding PersonnelNumber}" Width="120"/>
+                                    <GridViewColumn Header="Статус" DisplayMemberBinding="{Binding StatusText}" Width="100">
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="GridViewColumnHeader">
+                                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+                                    </GridViewColumn>
                                 </GridView>
                             </ListView.View>
                         </ListView>

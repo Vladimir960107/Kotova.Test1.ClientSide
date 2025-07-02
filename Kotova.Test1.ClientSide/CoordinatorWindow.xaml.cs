@@ -18,7 +18,12 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Kotova.CommonClasses;
 using Newtonsoft.Json;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
+using Cursors = System.Windows.Input.Cursors;
 using MessageBox = System.Windows.MessageBox;
+
 
 namespace Kotova.Test1.ClientSide
 {
@@ -28,6 +33,9 @@ namespace Kotova.Test1.ClientSide
         private Login_Russian? _loginForm;
         private string? _userName;
         private string? _jwtToken;
+
+        private static readonly string GetEmployeesWithDifferencesUrl =
+    ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/DatabaseComparison/employees-with-differences";
 
         // Data collections for binding (using common DTOs)
         private ObservableCollection<InitialInstructionPersonDto> _initialInstructionPeople;
@@ -241,9 +249,90 @@ namespace Kotova.Test1.ClientSide
         #endregion
 
         #region Tab 2: Database Connection Events (Not Implemented)
-        private void ButtonRefreshTelpDatabase_Click(object sender, RoutedEventArgs e)
+        private async void ButtonRefreshTelpDatabase_Click(object sender, RoutedEventArgs e)
         {
-            ShowNotImplementedMessage("обновление базы данных TELP");
+            try
+            {
+                ButtonRefreshTelpDatabase.IsEnabled = false;
+                ButtonRefreshTelpDatabase.Content = "🔄 Обновление...";
+                this.Cursor = Cursors.Wait;
+
+                using (var client = new HttpClient())
+                {
+                    if (string.IsNullOrEmpty(_jwtToken))
+                    {
+                        MessageBox.Show("Ошибка авторизации. Пожалуйста, войдите в систему заново.",
+                                      "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
+                    var response = await client.GetAsync(GetEmployeesWithDifferencesUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonResponse = await response.Content.ReadAsStringAsync();
+                        var employeesComparison = JsonConvert.DeserializeObject<List<EmployeeComparisonDto>>(jsonResponse);
+
+                        // Clear and populate the TelpEmployees collection
+                        TelpEmployees.Clear();
+
+                        foreach (var employeeComparison in employeesComparison)
+                        {
+                            var enhancedEmployee = new TelpEmployeeDtoEnhanced
+                            {
+                                FullName = employeeComparison.FullName ?? "",
+                                DepartmentName = employeeComparison.DepartmentName ?? "",
+                                PositionName = employeeComparison.PositionName ?? "",
+                                Email = employeeComparison.Email ?? "",
+                                PersonnelNumber = employeeComparison.PersonnelNumber ?? "",
+                                HasDifferences = employeeComparison.HasDifferences,
+                                DifferenceFields = employeeComparison.DifferenceFields ?? new List<string>()
+                            };
+
+                            TelpEmployees.Add(enhancedEmployee);
+                        }
+
+                        // Show summary
+                        var totalEmployees = employeesComparison.Count;
+                        var employeesWithDifferences = employeesComparison.Count(e => e.HasDifferences);
+                        var employeesMatching = totalEmployees - employeesWithDifferences;
+
+                        MessageBox.Show(
+                            $"База данных успешно обновлена!\n\n" +
+                            $"Всего сотрудников: {totalEmployees}\n" +
+                            $"✅ Совпадающих записей: {employeesMatching}\n" +
+                            $"⚠️ Записей с различиями: {employeesWithDifferences}\n\n" +
+                            $"Дважды щелкните на красной строке для разрешения различий.",
+                            "Результат сравнения баз данных",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show(
+                            $"Ошибка при получении данных: {response.StatusCode}.\n\n{errorContent}",
+                            "Ошибка API",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Произошла ошибка: {ex.Message}",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            finally
+            {
+                ButtonRefreshTelpDatabase.IsEnabled = true;
+                ButtonRefreshTelpDatabase.Content = "🔄 Обновить базу данных TELP";
+                this.Cursor = Cursors.Arrow;
+            }
         }
         #endregion
 
@@ -479,5 +568,108 @@ namespace Kotova.Test1.ClientSide
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         #endregion
+
+        private void TelpEmployeesListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (TelpEmployeesListView.SelectedItem is TelpEmployeeDtoEnhanced selectedEmployee)
+                {
+                    if (selectedEmployee.HasDifferences)
+                    {
+                        if (string.IsNullOrEmpty(selectedEmployee.PersonnelNumber))
+                        {
+                            MessageBox.Show("Не удалось получить табельный номер сотрудника.",
+                                          "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+
+                        if (string.IsNullOrEmpty(_jwtToken))
+                        {
+                            MessageBox.Show("Ошибка авторизации. Пожалуйста, войдите в систему заново.",
+                                          "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+
+                        // Open the database differences resolver form
+                        var differencesForm = new DatabaseDifferencesResolverForm(selectedEmployee.PersonnelNumber, _jwtToken);
+                        differencesForm.ShowDialog();
+
+                        // Refresh the list after the form closes to show updated data
+                        ButtonRefreshTelpDatabase_Click(sender, new RoutedEventArgs());
+                    }
+                    else
+                    {
+                        MessageBox.Show("У данного сотрудника нет различий в базах данных.",
+                                      "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии формы разрешения различий: {ex.Message}",
+                              "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        public class TelpEmployeeDtoEnhanced : TelpEmployeeDto, INotifyPropertyChanged
+        {
+            private bool _hasDifferences;
+            private string _statusText = "";
+            private Brush _backgroundBrush = Brushes.White;
+            private Brush _foregroundBrush = Brushes.Black;
+
+            public bool HasDifferences
+            {
+                get => _hasDifferences;
+                set
+                {
+                    _hasDifferences = value;
+                    OnPropertyChanged();
+                    UpdateDisplayProperties();
+                }
+            }
+
+            public string StatusText
+            {
+                get => _statusText;
+                set { _statusText = value; OnPropertyChanged(); }
+            }
+
+            public Brush BackgroundBrush
+            {
+                get => _backgroundBrush;
+                set { _backgroundBrush = value; OnPropertyChanged(); }
+            }
+
+            public Brush ForegroundBrush
+            {
+                get => _foregroundBrush;
+                set { _foregroundBrush = value; OnPropertyChanged(); }
+            }
+
+            public List<string> DifferenceFields { get; set; } = new List<string>();
+
+            private void UpdateDisplayProperties()
+            {
+                if (HasDifferences)
+                {
+                    StatusText = "⚠️ Различия";
+                    BackgroundBrush = new SolidColorBrush(Color.FromRgb(255, 235, 238)); // Light red
+                    ForegroundBrush = new SolidColorBrush(Color.FromRgb(183, 28, 28));   // Dark red
+                }
+                else
+                {
+                    StatusText = "✅ Совпадает";
+                    BackgroundBrush = new SolidColorBrush(Color.FromRgb(232, 245, 233)); // Light green
+                    ForegroundBrush = new SolidColorBrush(Color.FromRgb(27, 94, 32));    // Dark green
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
     }
 }
