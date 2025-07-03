@@ -212,76 +212,102 @@
                 </Grid>
             </TabItem>
 
+            <!-- Replace the "Связь баз данных" TabItem in CoordinatorWindow.xaml with this updated version -->
+
             <!-- Tab 2: Database Connection -->
             <TabItem Header="🔗 Связь баз данных" Style="{StaticResource TabItemStyle}">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Refresh Button -->
                     <Button x:Name="ButtonRefreshTelpDatabase" Grid.Row="0" 
-                Content="🔄 Обновить базу данных TELP"
-                Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,10" HorizontalAlignment="Left"
-                Click="ButtonRefreshTelpDatabase_Click"/>
+            Content="🔄 Обновить базу данных TELP"
+            Style="{StaticResource ActionButtonStyle}" Margin="0,0,0,10" HorizontalAlignment="Left"
+            Click="ButtonRefreshTelpDatabase_Click"/>
 
-                    <GroupBox Grid.Row="1" Header="👥 Сотрудники TELP" Style="{StaticResource GroupBoxStyle}">
+                    <!-- Legend -->
+                    <Border Grid.Row="1" Background="#F8F9FA" BorderBrush="#D8DEE9" BorderThickness="1" 
+                Padding="10,8" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Легенда(?):" FontWeight="SemiBold" Margin="0,0,15,0" VerticalAlignment="Center"/>
+
+                            <Border Background="#E8F5E8" BorderBrush="#1B5E20" BorderThickness="1" 
+                        CornerRadius="3" Padding="8,2" Margin="0,0,10,0">
+                                <TextBlock Text="🟢 Данные совпадают" FontSize="11" Foreground="#1B5E20"/>
+                            </Border>
+
+                            <Border Background="#FFEBEE" BorderBrush="#B71C1C" BorderThickness="1" 
+                        CornerRadius="3" Padding="8,2" Margin="0,0,10,0">
+                                <TextBlock Text="🔴 Есть различия" FontSize="11" Foreground="#B71C1C"/>
+                            </Border>
+
+                            <Border Background="#E3F2FD" BorderBrush="#0D47A1" BorderThickness="1" 
+                        CornerRadius="3" Padding="8,2" Margin="0,0,10,0">
+                                <TextBlock Text="🔵 Только в Lynks" FontSize="11" Foreground="#0D47A1"/>
+                            </Border>
+
+                            <Border Background="#FFF8E1" BorderBrush="#E65100" BorderThickness="1" 
+                        CornerRadius="3" Padding="8,2">
+                                <TextBlock Text="🟡 Только в TransElectro" FontSize="11" Foreground="#E65100"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Employee List -->
+                    <GroupBox Grid.Row="2" Header="👥 Сотрудники TELP" Style="{StaticResource GroupBoxStyle}">
                         <ListView x:Name="TelpEmployeesListView" 
-                      Background="White" 
-                      BorderBrush="#D8DEE9"
-                      ItemsSource="{Binding TelpEmployees}"
-                      MouseDoubleClick="TelpEmployeesListView_MouseDoubleClick">
+                  Background="White" 
+                  BorderBrush="#D8DEE9"
+                  ItemsSource="{Binding TelpEmployees}"
+                  MouseDoubleClick="TelpEmployeesListView_MouseDoubleClick">
 
                             <!-- Custom ItemContainerStyle for row coloring -->
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
                                     <Setter Property="Background" Value="{Binding BackgroundBrush}"/>
                                     <Setter Property="Foreground" Value="{Binding ForegroundBrush}"/>
-                                    <Setter Property="FontWeight" Value="Normal"/>
-                                    <Setter Property="Padding" Value="5,2"/>
-                                    <Setter Property="Margin" Value="1"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-
-                                    <!-- All triggers combined in one section -->
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="#E5E9F0"/>
+                                    <Setter Property="Padding" Value="5"/>
+                                    <Setter Property="Margin" Value="0"/>
                                     <Style.Triggers>
-                                        <!-- Trigger for rows with differences -->
-                                        <DataTrigger Binding="{Binding HasDifferences}" Value="True">
-                                            <Setter Property="FontWeight" Value="Bold"/>
-                                            <Setter Property="ToolTip" Value="Дважды щелкните для разрешения различий"/>
-                                        </DataTrigger>
-
-                                        <!-- Hover effects -->
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background">
-                                                <Setter.Value>
-                                                    <SolidColorBrush Color="#E3F2FD" Opacity="0.8"/>
-                                                </Setter.Value>
-                                            </Setter>
+                                            <Setter Property="Background" Value="#E8F5E8"/>
                                         </Trigger>
-
-                                        <!-- Selection effects -->
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#2196F3"/>
-                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#D4EDDA"/>
+                                            <Setter Property="BorderThickness" Value="2"/>
+                                            <Setter Property="BorderBrush" Value="#28A745"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
                             </ListView.ItemContainerStyle>
 
+                            <!-- GridView for columns -->
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="ФИО" DisplayMemberBinding="{Binding FullName}" Width="200"/>
-                                    <GridViewColumn Header="Отдел" DisplayMemberBinding="{Binding DepartmentName}" Width="150"/>
-                                    <GridViewColumn Header="Должность" DisplayMemberBinding="{Binding PositionName}" Width="150"/>
-                                    <GridViewColumn Header="Email" DisplayMemberBinding="{Binding Email}" Width="200"/>
-                                    <GridViewColumn Header="Табельный номер" DisplayMemberBinding="{Binding PersonnelNumber}" Width="120"/>
-                                    <GridViewColumn Header="Статус" DisplayMemberBinding="{Binding StatusText}" Width="100">
-                                        <GridViewColumn.HeaderContainerStyle>
-                                            <Style TargetType="GridViewColumnHeader">
-                                                <Setter Property="HorizontalContentAlignment" Value="Center"/>
-                                            </Style>
-                                        </GridViewColumn.HeaderContainerStyle>
+                                    <GridViewColumn Header="Статус" Width="120">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" 
+                                             Foreground="{Binding ForegroundBrush}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
+
+                                    <GridViewColumn Header="ФИО" Width="200" DisplayMemberBinding="{Binding FullName}"/>
+
+                                    <GridViewColumn Header="Отдел" Width="150" DisplayMemberBinding="{Binding DepartmentName}"/>
+
+                                    <GridViewColumn Header="Должность" Width="180" DisplayMemberBinding="{Binding PositionName}"/>
+
+                                    <GridViewColumn Header="Email" Width="200" DisplayMemberBinding="{Binding Email}"/>
+
+                                    <GridViewColumn Header="Табельный номер" Width="120" DisplayMemberBinding="{Binding PersonnelNumber}"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>

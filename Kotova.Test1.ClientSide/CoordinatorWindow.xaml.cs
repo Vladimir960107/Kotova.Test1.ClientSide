@@ -248,14 +248,14 @@ namespace Kotova.Test1.ClientSide
         }
         #endregion
 
-        #region Tab 2: Database Connection Events (Not Implemented)
+        #region Tab 2: Database Connection Events (Working Implementation)
         private async void ButtonRefreshTelpDatabase_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                ButtonRefreshTelpDatabase.IsEnabled = false;
-                ButtonRefreshTelpDatabase.Content = "🔄 Обновление...";
                 this.Cursor = Cursors.Wait;
+                ButtonRefreshTelpDatabase.IsEnabled = false;
+                ButtonRefreshTelpDatabase.Content = "🔄 Загрузка...";
 
                 using (var client = new HttpClient())
                 {
@@ -287,51 +287,48 @@ namespace Kotova.Test1.ClientSide
                                 Email = employeeComparison.Email ?? "",
                                 PersonnelNumber = employeeComparison.PersonnelNumber ?? "",
                                 HasDifferences = employeeComparison.HasDifferences,
-                                DifferenceFields = employeeComparison.DifferenceFields ?? new List<string>()
+                                DifferenceFields = employeeComparison.DifferenceFields ?? new List<string>(),
+                                RowColor = employeeComparison.RowColor ?? "Green" // Use the server-provided color
                             };
 
                             TelpEmployees.Add(enhancedEmployee);
                         }
 
-                        // Show summary
+                        // Show summary with color breakdown
                         var totalEmployees = employeesComparison.Count;
-                        var employeesWithDifferences = employeesComparison.Count(e => e.HasDifferences);
-                        var employeesMatching = totalEmployees - employeesWithDifferences;
+                        var redCount = employeesComparison.Count(e => e.RowColor == "Red");
+                        var greenCount = employeesComparison.Count(e => e.RowColor == "Green");
+                        var blueCount = employeesComparison.Count(e => e.RowColor == "Blue");
+                        var yellowCount = employeesComparison.Count(e => e.RowColor == "Yellow");
 
                         MessageBox.Show(
                             $"База данных успешно обновлена!\n\n" +
                             $"Всего сотрудников: {totalEmployees}\n" +
-                            $"✅ Совпадающих записей: {employeesMatching}\n" +
-                            $"⚠️ Записей с различиями: {employeesWithDifferences}\n\n" +
-                            $"Дважды щелкните на красной строке для разрешения различий.",
-                            "Результат сравнения баз данных",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Information);
+                            $"🟢(Зеленые) Данные совпадают: {greenCount}\n" +
+                            $"🔴(Красные) Есть различия: {redCount}\n" +
+                            $"🔵(Синие) Только в Lynks: {blueCount}\n" +
+                            $"🟡(Желтые) Только в TransElectro: {yellowCount}\n\n" +
+                            $"Дважды щелкните на строке для детального просмотра.",
+                            "Результат обновления", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     else
                     {
-                        string errorContent = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show(
-                            $"Ошибка при получении данных: {response.StatusCode}.\n\n{errorContent}",
-                            "Ошибка API",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                        var errorContent = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка при обновлении базы данных: {response.StatusCode}\n{errorContent}",
+                                      "Ошибка API", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Произошла ошибка: {ex.Message}",
-                    "Ошибка",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка соединения с сервером: {ex.Message}",
+                              "Ошибка сети", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
+                this.Cursor = Cursors.Arrow;
                 ButtonRefreshTelpDatabase.IsEnabled = true;
                 ButtonRefreshTelpDatabase.Content = "🔄 Обновить базу данных TELP";
-                this.Cursor = Cursors.Arrow;
             }
         }
         #endregion
@@ -617,6 +614,7 @@ namespace Kotova.Test1.ClientSide
             private string _statusText = "";
             private Brush _backgroundBrush = Brushes.White;
             private Brush _foregroundBrush = Brushes.Black;
+            private string _rowColor = "Green"; // Default to green
 
             public bool HasDifferences
             {
@@ -624,6 +622,17 @@ namespace Kotova.Test1.ClientSide
                 set
                 {
                     _hasDifferences = value;
+                    OnPropertyChanged();
+                    UpdateDisplayProperties();
+                }
+            }
+
+            public string RowColor
+            {
+                get => _rowColor;
+                set
+                {
+                    _rowColor = value;
                     OnPropertyChanged();
                     UpdateDisplayProperties();
                 }
@@ -651,17 +660,42 @@ namespace Kotova.Test1.ClientSide
 
             private void UpdateDisplayProperties()
             {
-                if (HasDifferences)
+                switch (RowColor?.ToLower())
                 {
-                    StatusText = "⚠️ Различия";
-                    BackgroundBrush = new SolidColorBrush(Color.FromRgb(255, 235, 238)); // Light red
-                    ForegroundBrush = new SolidColorBrush(Color.FromRgb(183, 28, 28));   // Dark red
-                }
-                else
-                {
-                    StatusText = "✅ Совпадает";
-                    BackgroundBrush = new SolidColorBrush(Color.FromRgb(232, 245, 233)); // Light green
-                    ForegroundBrush = new SolidColorBrush(Color.FromRgb(27, 94, 32));    // Dark green
+                    case "red":
+                        // Red: Employees exist in both databases but have data differences
+                        StatusText = "🔴 Различия";
+                        BackgroundBrush = new SolidColorBrush(Color.FromRgb(255, 235, 238)); // Light red
+                        ForegroundBrush = new SolidColorBrush(Color.FromRgb(183, 28, 28));   // Dark red
+                        break;
+
+                    case "green":
+                        // Green: Employees exist in both databases with identical data
+                        StatusText = "🟢 Совпадает";
+                        BackgroundBrush = new SolidColorBrush(Color.FromRgb(232, 245, 233)); // Light green
+                        ForegroundBrush = new SolidColorBrush(Color.FromRgb(27, 94, 32));    // Dark green
+                        break;
+
+                    case "blue":
+                        // Blue: Employees exist only in Lynks database (not in TransElectro)
+                        StatusText = "🔵 Только в Lynks";
+                        BackgroundBrush = new SolidColorBrush(Color.FromRgb(227, 242, 253)); // Light blue
+                        ForegroundBrush = new SolidColorBrush(Color.FromRgb(13, 71, 161));   // Dark blue
+                        break;
+
+                    case "yellow":
+                        // Yellow: Employees exist only in TransElectro database (not in Lynks) - "Так не должно было быть"
+                        StatusText = "🟡 Только в TransElectro";
+                        BackgroundBrush = new SolidColorBrush(Color.FromRgb(255, 248, 225)); // Light yellow
+                        ForegroundBrush = new SolidColorBrush(Color.FromRgb(230, 81, 0));    // Dark orange
+                        break;
+
+                    default:
+                        // Fallback for unknown colors
+                        StatusText = "❓ Неизвестно";
+                        BackgroundBrush = Brushes.White;
+                        ForegroundBrush = Brushes.Black;
+                        break;
                 }
             }
 

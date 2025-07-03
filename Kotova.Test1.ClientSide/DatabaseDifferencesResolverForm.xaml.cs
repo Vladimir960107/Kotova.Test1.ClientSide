@@ -122,7 +122,6 @@ namespace Kotova.Test1.ClientSide
                 TransElectroEmailTextBox.Text = transElectroData.Email ?? "";
                 TransElectroPersonnelNumberTextBox.Text = transElectroData.PersonnelNumber ?? "";
 
-                NotFoundMessageTextBlock.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -133,7 +132,6 @@ namespace Kotova.Test1.ClientSide
                 TransElectroEmailTextBox.Text = "Не найден";
                 TransElectroPersonnelNumberTextBox.Text = "Не найден";
 
-                NotFoundMessageTextBlock.Visibility = Visibility.Visible;
             }
 
             // Highlight differences and update differences section
@@ -197,7 +195,6 @@ namespace Kotova.Test1.ClientSide
                 DifferencesTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(231, 76, 60)); // #E74C3C
 
                 // Show synchronization options
-                SyncOptionsGrid.Visibility = Visibility.Visible;
                 SynchronizeButton.Visibility = Visibility.Visible;
 
                 // Create checkboxes for different fields
@@ -209,7 +206,6 @@ namespace Kotova.Test1.ClientSide
                 DifferencesTextBlock.Text = "✅ Различия не обнаружены";
                 DifferencesTextBlock.Foreground = new SolidColorBrush(Color.FromRgb(39, 174, 96)); // #27AE60
 
-                SyncOptionsGrid.Visibility = Visibility.Collapsed;
                 SynchronizeButton.Visibility = Visibility.Collapsed;
             }
         }

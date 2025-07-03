@@ -155,7 +155,7 @@
 
                     <!-- Header -->
                     <TextBlock Grid.Row="0" Text="Лист непройденных инструктажей" 
-                               Style="{StaticResource HeaderTextStyle}" FontSize="16"/>
+                       Style="{StaticResource HeaderTextStyle}" FontSize="16"/>
 
                     <!-- Main Content Grid -->
                     <Grid Grid.Row="1" Margin="0,10,0,0">
@@ -167,9 +167,9 @@
                         <!-- Left Side - Instructions List -->
                         <GroupBox Grid.Column="0" Header="Список инструктажей" Style="{StaticResource GroupBoxStyle}">
                             <ListBox x:Name="InstructionsListBox" 
-                                     Style="{StaticResource ListBoxStyle}"
-                                     SelectionChanged="InstructionsListBox_SelectionChanged"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                             Style="{StaticResource ListBoxStyle}"
+                             SelectionChanged="InstructionsListBox_SelectionChanged"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#D8DEE9" BorderThickness="0,0,0,1" Padding="8">
@@ -183,15 +183,15 @@
                         <!-- Right Side - Normative Instructions -->
                         <GroupBox Grid.Column="1" Header="Нормативные документы" Style="{StaticResource GroupBoxStyle}">
                             <ListBox x:Name="NormativeInstructionsListBox" 
-                                     Style="{StaticResource ListBoxStyle}"
-                                     MouseDoubleClick="NormativeInstructionsListBox_MouseDoubleClick">
+                             Style="{StaticResource ListBoxStyle}"
+                             MouseDoubleClick="NormativeInstructionsListBox_MouseDoubleClick">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#D8DEE9" BorderThickness="0,0,0,1" Padding="8">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                                 <TextBlock Text="{Binding Url}" Foreground="Blue" 
-                                                           TextDecorations="Underline" Cursor="Hand" TextWrapping="Wrap"/>
+                                                   TextDecorations="Underline" Cursor="Hand" TextWrapping="Wrap"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -204,12 +204,12 @@
                     <Border Grid.Row="2" Background="#A3BE8C" CornerRadius="5" Margin="0,10,0,0" Padding="15">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <CheckBox x:Name="PassInstructionCheckBox" 
-                                      Content="✅ Подтверждаю, что инструктаж пройден"
-                                      Style="{StaticResource CheckBoxStyle}"
-                                      IsEnabled="False"
-                                      Foreground="White"
-                                      FontSize="14"
-                                      Checked="PassInstructionCheckBox_Checked"/>
+                              Content="✅ Подтверждаю, что инструктаж пройден"
+                              Style="{StaticResource CheckBoxStyle}"
+                              IsEnabled="False"
+                              Foreground="White"
+                              FontSize="14"
+                              Checked="PassInstructionCheckBox_Checked"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -225,7 +225,7 @@
 
                     <!-- Header -->
                     <TextBlock Grid.Row="0" Text="Лист пройденных инструктажей" 
-                               Style="{StaticResource HeaderTextStyle}" FontSize="16"/>
+                       Style="{StaticResource HeaderTextStyle}" FontSize="16"/>
 
                     <!-- Content Grid -->
                     <Grid Grid.Row="1" Margin="0,10,0,0">
@@ -237,11 +237,11 @@
                         <!-- Passed Instructions DataGrid -->
                         <GroupBox Grid.Column="0" Header="История пройденных инструктажей" Style="{StaticResource GroupBoxStyle}">
                             <DataGrid x:Name="PassedInstructionsDataGrid" 
-                                      Style="{StaticResource DataGridStyle}"
-                                      AutoGenerateColumns="False" 
-                                      IsReadOnly="True"
-                                      SelectionMode="Single"
-                                      SelectionChanged="PassedInstructionsDataGrid_SelectionChanged">
+                              Style="{StaticResource DataGridStyle}"
+                              AutoGenerateColumns="False" 
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              SelectionChanged="PassedInstructionsDataGrid_SelectionChanged">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="📅 Дата инструктажа" Binding="{Binding DatePassed}" Width="140"/>
                                     <DataGridTextColumn Header="📋 Тип инструктажа" Binding="{Binding Type}" Width="160"/>
@@ -253,16 +253,16 @@
                         <!-- Related Files List -->
                         <GroupBox Grid.Column="1" Header="Связанные документы" Style="{StaticResource GroupBoxStyle}">
                             <ListBox x:Name="RelatedFilesListBox" 
-                                     Style="{StaticResource ListBoxStyle}"
-                                     MouseDoubleClick="RelatedFilesListBox_MouseDoubleClick">
+                             Style="{StaticResource ListBoxStyle}"
+                             MouseDoubleClick="RelatedFilesListBox_MouseDoubleClick">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#D8DEE9" BorderThickness="0,0,0,1" Padding="8">
                                             <TextBlock Text="{Binding}" TextWrapping="Wrap"
-                                                       Foreground="Blue" 
-                                                       TextDecorations="Underline"
-                                                       Cursor="Hand"
-                                                       FontWeight="Medium"/>
+                                               Foreground="Blue" 
+                                               TextDecorations="Underline"
+                                               Cursor="Hand"
+                                               FontWeight="Medium"/>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -281,7 +281,7 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" Text="Панель управления инструктажами" 
-                               Style="{StaticResource HeaderTextStyle}" FontSize="16"/>
+                       Style="{StaticResource HeaderTextStyle}" FontSize="16"/>
 
                     <Grid Grid.Row="1" Margin="0,10,0,0">
                         <Grid.ColumnDefinitions>
@@ -293,11 +293,11 @@
                         <GroupBox Grid.Column="0" Header="Управление сотрудниками" Style="{StaticResource GroupBoxStyle}">
                             <StackPanel>
                                 <Button Content="📊 Назначить инструктаж" Style="{StaticResource ButtonStyle}" 
-                                        Click="AssignInstructionButton_Click" Margin="5"/>
+                                Click="AssignInstructionButton_Click" Margin="5"/>
                                 <Button Content="👥 Просмотр сотрудников" Style="{StaticResource ButtonStyle}" 
-                                        Click="ViewEmployeesButton_Click" Margin="5"/>
+                                Click="ViewEmployeesButton_Click" Margin="5"/>
                                 <Button Content="📈 Отчеты" Style="{StaticResource ButtonStyle}" 
-                                        Click="ReportsButton_Click" Margin="5"/>
+                                Click="ReportsButton_Click" Margin="5"/>
                             </StackPanel>
                         </GroupBox>
 
@@ -305,11 +305,11 @@
                         <GroupBox Grid.Column="1" Header="Системные функции" Style="{StaticResource GroupBoxStyle}">
                             <StackPanel>
                                 <Button Content="🔄 Синхронизация данных" Style="{StaticResource ButtonStyle}" 
-                                        Click="SyncDataButton_Click" Margin="5"/>
+                                Click="SyncDataButton_Click" Margin="5"/>
                                 <Button Content="⚙️ Настройки системы" Style="{StaticResource ButtonStyle}" 
-                                        Click="SystemSettingsButton_Click" Margin="5"/>
+                                Click="SystemSettingsButton_Click" Margin="5"/>
                                 <Button Content="🗂️ Управление документами" Style="{StaticResource ButtonStyle}" 
-                                        Click="DocumentManagementButton_Click" Margin="5"/>
+                                Click="DocumentManagementButton_Click" Margin="5"/>
                             </StackPanel>
                         </GroupBox>
                     </Grid>
