@@ -271,33 +271,13 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                // Get selected fields to synchronize
-                var selectedFields = new List<string>();
-                foreach (CheckBox checkBox in FieldCheckBoxesPanel.Children.OfType<CheckBox>())
-                {
-                    if (checkBox.IsChecked == true)
-                    {
-                        selectedFields.Add(checkBox.Tag.ToString());
-                    }
-                }
-
-                if (!selectedFields.Any())
-                {
-                    MessageBox.Show("Выберите поля для синхронизации.",
-                                  "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                // Get sync direction
-                var selectedDirection = ((ComboBoxItem)SyncDirectionComboBox.SelectedItem).Tag.ToString();
-
-                // Confirm synchronization
+                // Confirm synchronization (no field selection needed)
                 var result = MessageBox.Show(
-                    $"Вы уверены, что хотите синхронизировать следующие поля:\n" +
-                    $"{string.Join(", ", selectedFields.Select(GetFriendlyFieldName))}\n\n" +
-                    $"Направление: {((ComboBoxItem)SyncDirectionComboBox.SelectedItem).Content}\n\n" +
-                    $"Это действие изменит данные в базе данных.",
-                    "Подтверждение синхронизации",
+                    $"Вы уверены, что хотите синхронизировать ВСЕ данные сотрудника?\n\n" +
+                    $"Будут синхронизированы: ФИО, Должность, Email, Отдел (если существует в LYNKS)\n" +
+                    $"Направление: TransElectro → LYNKS\n\n" +
+                    $"Это действие перезапишет данные в базе LYNKS.",
+                    "Подтверждение полной синхронизации",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
 
@@ -308,7 +288,7 @@ namespace Kotova.Test1.ClientSide
                 SynchronizeButton.IsEnabled = false;
                 SynchronizeButton.Content = "🔄 Синхронизация...";
 
-                await PerformSynchronizationAsync(selectedFields, selectedDirection);
+                await PerformFullSynchronizationAsync();
             }
             catch (Exception ex)
             {
@@ -319,18 +299,18 @@ namespace Kotova.Test1.ClientSide
             {
                 this.Cursor = System.Windows.Input.Cursors.Arrow;
                 SynchronizeButton.IsEnabled = true;
-                SynchronizeButton.Content = "🔄 Синхронизировать";
+                SynchronizeButton.Content = "🔄 Синхронизировать ВСЁ";
             }
         }
 
-        private async Task PerformSynchronizationAsync(List<string> selectedFields, string syncDirection)
+        private async Task PerformFullSynchronizationAsync()
         {
             try
             {
+                // Simplified request - no field selection needed
                 var syncRequest = new EmployeeSyncRequest
                 {
-                    FieldsToSync = selectedFields,
-                    SyncDirection = syncDirection,
+                    SyncDirection = "ToLynks",
                     OverwriteExisting = true
                 };
 
@@ -345,17 +325,28 @@ namespace Kotova.Test1.ClientSide
 
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Синхронизация выполнена успешно!",
-                                      "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        var syncResult = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+                        var message = $"Синхронизация выполнена успешно!\n\n";
+
+                        if (syncResult.SyncedFields != null)
+                        {
+                            message += $"Синхронизированы поля: {string.Join(", ", syncResult.SyncedFields)}";
+                        }
+
+                        MessageBox.Show(message, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
                         // Refresh data to show updated state
                         await LoadEmployeeComparisonDataAsync();
                     }
                     else
                     {
+                        // Handle different types of errors more gracefully
                         var errorContent = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Ошибка при синхронизации: {response.StatusCode}\n{errorContent}",
-                                      "Ошибка API", MessageBoxButton.OK, MessageBoxImage.Error);
+                        string userFriendlyMessage = GetUserFriendlyErrorMessage(response.StatusCode, errorContent);
+
+                        MessageBox.Show(userFriendlyMessage, "Ошибка синхронизации", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
@@ -366,17 +357,110 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        private string GetUserFriendlyErrorMessage(System.Net.HttpStatusCode statusCode, string errorContent)
+        {
+            try
+            {
+                // Try to parse the error response
+                var errorResult = JsonConvert.DeserializeObject<dynamic>(errorContent);
+
+                // Access properties correctly from JObject (case-sensitive)
+                string serverMessage = errorResult?.message?.ToString() ?? "";
+                string errorType = errorResult?.errorType?.ToString() ?? "";
+
+                // Debug logging (remove in production)
+                System.Diagnostics.Debug.WriteLine($"ErrorType from server: '{errorType}'");
+                System.Diagnostics.Debug.WriteLine($"Server message: '{serverMessage}'");
+
+                // Handle specific error cases with user-friendly messages
+                if (errorType == "DepartmentNotFound")
+                {
+                    string departmentName = errorResult?.missingDepartment?.ToString() ?? "неизвестный";
+                    string detailedMessage = errorResult?.detailedMessage?.ToString() ?? "";
+
+                    return $"🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n" +
+                           $"❌ Причина: Отдел не найден\n\n" +
+                           $"Отдел '{departmentName}' не существует в базе данных LYNKS.\n\n" +
+                           $"📋 Что нужно сделать:\n" +
+                           $"• Обратитесь к администратору системы\n" +
+                           $"• Попросите создать отдел '{departmentName}' в LYNKS\n" +
+                           $"• После создания отдела повторите синхронизацию\n\n" +
+                           $"⚠️ Данные НЕ были изменены в системе.";
+                }
+                else if (serverMessage.Contains("not found in LYNKS database") && serverMessage.Contains("employee"))
+                {
+                    return "🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n" +
+                           "❌ Причина: Сотрудник не найден\n\n" +
+                           "Сотрудник не найден в базе данных LYNKS.\n" +
+                           "Синхронизация возможна только для существующих сотрудников.\n\n" +
+                           "⚠️ Данные НЕ были изменены в системе.";
+                }
+                else if (serverMessage.Contains("not found in TransElectro database"))
+                {
+                    return "🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n" +
+                           "❌ Причина: Сотрудник не найден в TransElectro\n\n" +
+                           "Сотрудник не найден в базе данных TransElectro.\n" +
+                           "Невозможно синхронизировать данные.\n\n" +
+                           "⚠️ Данные НЕ были изменены в системе.";
+                }
+                else if (serverMessage.Contains("User record not found"))
+                {
+                    return "🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n" +
+                           "❌ Причина: Запись пользователя не найдена\n\n" +
+                           "Запись пользователя не найдена в базе LYNKS.\n" +
+                           "Невозможно синхронизировать email.\n\n" +
+                           "📞 Обратитесь к администратору системы.\n\n" +
+                           "⚠️ Данные НЕ были изменены в системе.";
+                }
+                else if (serverMessage.Contains("foreign key") || serverMessage.Contains("constraint"))
+                {
+                    return "🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n" +
+                           "❌ Причина: Ошибка связей в базе данных\n\n" +
+                           "Обнаружены проблемы с целостностью данных.\n\n" +
+                           "📞 Обратитесь к администратору системы.\n\n" +
+                           "⚠️ Данные НЕ были изменены в системе.";
+                }
+                else if (!string.IsNullOrEmpty(serverMessage))
+                {
+                    return $"🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n" +
+                           $"❌ Ошибка: {serverMessage}\n\n" +
+                           $"⚠️ Данные НЕ были изменены в системе.";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Debug logging for parsing errors
+                System.Diagnostics.Debug.WriteLine($"Error parsing response: {ex.Message}");
+            }
+
+            // Generic error message based on status code
+            return statusCode switch
+            {
+                System.Net.HttpStatusCode.BadRequest => "🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n❌ Неправильный запрос.\nПроверьте данные сотрудника.\n\n⚠️ Данные НЕ были изменены.",
+                System.Net.HttpStatusCode.Unauthorized => "🚫 ОШИБКА АВТОРИЗАЦИИ\n\n❌ У вас нет прав для выполнения синхронизации.",
+                System.Net.HttpStatusCode.Forbidden => "🚫 ДОСТУП ЗАПРЕЩЕН\n\n❌ У вас недостаточно прав для синхронизации данных.",
+                System.Net.HttpStatusCode.NotFound => "🚫 ОШИБКА\n\n❌ Запрашиваемый ресурс не найден.",
+                System.Net.HttpStatusCode.InternalServerError => "🚫 ОШИБКА СЕРВЕРА\n\n❌ Внутренняя ошибка сервера.\nПопробуйте позже или обратитесь к администратору.",
+                _ => $"🚫 СИНХРОНИЗАЦИЯ НЕ ВЫПОЛНЕНА\n\n❌ Код ошибки: {statusCode}\n\nОбратитесь к администратору системы."
+            };
+        }
+
+
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
         }
-    }
 
-    // Helper class for synchronization requests
-    public class EmployeeSyncRequest
-    {
-        public List<string> FieldsToSync { get; set; } = new List<string>();
-        public string SyncDirection { get; set; } = "ToLynks";
-        public bool OverwriteExisting { get; set; } = false;
+        // Helper class for synchronization requests
+        /// <summary>
+        /// Simplified request model for employee synchronization (client side)
+        /// </summary>
+        public class EmployeeSyncRequest
+        {
+            public string SyncDirection { get; set; } = "ToLynks";
+            public bool OverwriteExisting { get; set; } = true;
+        }
+
+        
     }
 }

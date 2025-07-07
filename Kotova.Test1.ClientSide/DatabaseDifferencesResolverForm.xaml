@@ -127,20 +127,8 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Статусы:" FontWeight="SemiBold" Margin="0,0,15,0" VerticalAlignment="Center"/>
 
-                    <Border Style="{StaticResource LegendItemStyle}" Background="#E8F5E8" BorderBrush="#27AE60">
-                        <TextBlock Text="🟢 Совпадает" FontSize="10" Foreground="#27AE60"/>
-                    </Border>
-
                     <Border Style="{StaticResource LegendItemStyle}" Background="#FADBD8" BorderBrush="#E74C3C">
                         <TextBlock Text="🔴 Различия" FontSize="10" Foreground="#E74C3C"/>
-                    </Border>
-
-                    <Border Style="{StaticResource LegendItemStyle}" Background="#D6EAF8" BorderBrush="#3498DB">
-                        <TextBlock Text="🔵 Только Lynks" FontSize="10" Foreground="#3498DB"/>
-                    </Border>
-
-                    <Border Style="{StaticResource LegendItemStyle}" Background="#FCF3CF" BorderBrush="#F39C12">
-                        <TextBlock Text="🟡 Только TransElectro" FontSize="10" Foreground="#F39C12"/>
                     </Border>
                 </StackPanel>
             </StackPanel>
