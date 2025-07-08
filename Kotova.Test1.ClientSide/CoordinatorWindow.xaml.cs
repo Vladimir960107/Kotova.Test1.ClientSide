@@ -24,6 +24,10 @@ using Color = System.Windows.Media.Color;
 using Cursors = System.Windows.Input.Cursors;
 using MessageBox = System.Windows.MessageBox;
 
+using System.Linq;
+using System.Collections.Generic;
+using WpfBinding = System.Windows.Data.Binding;
+
 
 namespace Kotova.Test1.ClientSide
 {
@@ -33,6 +37,10 @@ namespace Kotova.Test1.ClientSide
         private Login_Russian? _loginForm;
         private string? _userName;
         private string? _jwtToken;
+
+        private GridViewColumnHeader _lastHeaderClicked = null;
+        private ListSortDirection _lastDirection = ListSortDirection.Ascending;
+        private List<GridViewColumnHeader> _allHeaders = new List<GridViewColumnHeader>();
 
         private static readonly string GetEmployeesWithDifferencesUrl =
     ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/DatabaseComparison/employees-with-differences";
@@ -236,6 +244,142 @@ namespace Kotova.Test1.ClientSide
         }
         #endregion
 
+        #region ColumnHeaderCLickedHandler stuff
+        private void GridViewColumnHeaderClickedHandler(object sender, RoutedEventArgs e)
+        {
+            var headerClicked = e.OriginalSource as GridViewColumnHeader;
+            ListSortDirection direction;
+
+            if (headerClicked != null)
+            {
+                if (headerClicked.Role != GridViewColumnHeaderRole.Padding)
+                {
+                    // Store this header in our collection if not already there
+                    if (!_allHeaders.Contains(headerClicked))
+                    {
+                        _allHeaders.Add(headerClicked);
+                    }
+
+                    if (headerClicked != _lastHeaderClicked)
+                    {
+                        direction = ListSortDirection.Ascending;
+                    }
+                    else
+                    {
+                        if (_lastDirection == ListSortDirection.Ascending)
+                        {
+                            direction = ListSortDirection.Descending;
+                        }
+                        else
+                        {
+                            direction = ListSortDirection.Ascending;
+                        }
+                    }
+
+                    // Get the property name to sort by
+                    string sortBy;
+                    var columnBinding = headerClicked.Column.DisplayMemberBinding as WpfBinding;
+
+                    if (columnBinding != null)
+                    {
+                        // For columns with DisplayMemberBinding
+                        sortBy = columnBinding.Path.Path;
+                    }
+                    else
+                    {
+                        // For columns with CellTemplate (like Status column)
+                        string headerText = headerClicked.Column.Header as string;
+                        sortBy = GetPropertyNameFromHeader(headerText);
+                    }
+
+                    Sort(sortBy, direction);
+
+                    // Update visual indicators
+                    UpdateColumnHeaders(headerClicked, direction);
+
+                    _lastHeaderClicked = headerClicked;
+                    _lastDirection = direction;
+                }
+            }
+        }
+
+        // Add this sorting method
+        private void Sort(string sortBy, ListSortDirection direction)
+        {
+            ICollectionView dataView = CollectionViewSource.GetDefaultView(TelpEmployeesListView.ItemsSource);
+
+            if (dataView != null)
+            {
+                dataView.SortDescriptions.Clear();
+                SortDescription sd = new SortDescription(sortBy, direction);
+                dataView.SortDescriptions.Add(sd);
+                dataView.Refresh();
+            }
+        }
+
+        // Updated method to properly clear all sort indicators
+        private void UpdateColumnHeaders(GridViewColumnHeader clickedHeader, ListSortDirection direction)
+        {
+            // Clear indicators from ALL headers that we've tracked
+            foreach (var header in _allHeaders)
+            {
+                if (header != clickedHeader)
+                {
+                    string originalText = GetOriginalHeaderText(header);
+                    header.Content = originalText;
+                }
+            }
+
+            // Add sort indicator to clicked header
+            if (clickedHeader != null)
+            {
+                string originalText = GetOriginalHeaderText(clickedHeader);
+                string indicator = direction == ListSortDirection.Ascending ? " ▲" : " ▼";
+                clickedHeader.Content = originalText + indicator;
+            }
+        }
+
+        // Method to clear all sort indicators from all column headers - simplified version
+        private void ClearAllSortIndicators()
+        {
+            foreach (var header in _allHeaders)
+            {
+                string originalText = GetOriginalHeaderText(header);
+                header.Content = originalText;
+            }
+        }
+
+        // Helper method to get original header text without sort indicators
+        private string GetOriginalHeaderText(GridViewColumnHeader header)
+        {
+            string content = header.Content?.ToString() ?? "";
+
+            // Remove existing sort indicators
+            if (content.EndsWith(" ▲") || content.EndsWith(" ▼"))
+            {
+                content = content.Substring(0, content.Length - 2);
+            }
+
+            return content;
+        }
+
+        // Helper method to get all GridView columns
+        private IEnumerable<GridViewColumn> GetGridViewColumns()
+        {
+            var gridView = TelpEmployeesListView.View as GridView;
+            return gridView?.Columns ?? Enumerable.Empty<GridViewColumn>();
+        }
+
+        // Helper method to get column header
+        private GridViewColumnHeader GetColumnHeader(GridViewColumn column)
+        {
+            // This is a simplified approach - in practice, you might need to traverse the visual tree
+            return null; // You might need to implement visual tree traversal here if needed
+        }
+
+        #endregion
+
+
         #region Tab 1: Initial Instructions Events (Not Implemented)
         private void ButtonSyncInitialInstr_Click(object sender, RoutedEventArgs e)
         {
@@ -331,6 +475,24 @@ namespace Kotova.Test1.ClientSide
                 ButtonRefreshTelpDatabase.Content = "🔄 Обновить базу данных TELP";
             }
         }
+
+        private string GetPropertyNameFromHeader(string headerText)
+        {
+            // Remove sort indicators if present
+            string cleanHeader = headerText?.Replace(" ▲", "").Replace(" ▼", "") ?? "";
+
+            return cleanHeader switch
+            {
+                "Статус" => "StatusText",      // Maps to the StatusText property
+                "ФИО" => "FullName",
+                "Отдел" => "DepartmentName",
+                "Должность" => "PositionName",
+                "Email" => "Email",
+                "Табельный номер" => "PersonnelNumber",
+                _ => cleanHeader  // Fallback to the header text itself
+            };
+        }
+
         #endregion
 
         #region Tab 3: Employee Data Events (Not Implemented)
@@ -704,6 +866,7 @@ namespace Kotova.Test1.ClientSide
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
+
         }
     }
 }

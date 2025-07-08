@@ -260,53 +260,46 @@
                     <!-- Employee List -->
                     <GroupBox Grid.Row="2" Header="👥 Сотрудники TELP" Style="{StaticResource GroupBoxStyle}">
                         <ListView x:Name="TelpEmployeesListView" 
-                  Background="White" 
-                  BorderBrush="#D8DEE9"
-                  ItemsSource="{Binding TelpEmployees}"
-                  MouseDoubleClick="TelpEmployeesListView_MouseDoubleClick">
+          Background="White" 
+          BorderBrush="#D8DEE9"
+          ItemsSource="{Binding TelpEmployees}"
+          MouseDoubleClick="TelpEmployeesListView_MouseDoubleClick">
 
-                            <!-- Custom ItemContainerStyle for row coloring -->
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                    <Setter Property="Background" Value="{Binding BackgroundBrush}"/>
-                                    <Setter Property="Foreground" Value="{Binding ForegroundBrush}"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="BorderBrush" Value="#E5E9F0"/>
-                                    <Setter Property="Padding" Value="5"/>
-                                    <Setter Property="Margin" Value="0"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#E8F5E8"/>
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#D4EDDA"/>
-                                            <Setter Property="BorderThickness" Value="2"/>
-                                            <Setter Property="BorderBrush" Value="#28A745"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ListView.ItemContainerStyle>
-
-                            <!-- GridView for columns -->
                             <ListView.View>
                                 <GridView>
+                                    <GridView.ColumnHeaderContainerStyle>
+                                        <Style TargetType="GridViewColumnHeader">
+                                            <EventSetter Event="Click" Handler="GridViewColumnHeaderClickedHandler"/>
+                                            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                            <Setter Property="Padding" Value="5,3"/>
+                                            <Setter Property="Background" Value="#F8F9FA"/>
+                                            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+                                            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter Property="Foreground" Value="#2E3440"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#E8F5E8"/>
+                                                    <Setter Property="Cursor" Value="Hand"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </GridView.ColumnHeaderContainerStyle>
+
+                                    <!-- Keep your existing columns exactly as they are -->
                                     <GridViewColumn Header="Статус" Width="120">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" 
-                                             Foreground="{Binding ForegroundBrush}"/>
+                                   Foreground="{Binding ForegroundBrush}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
 
                                     <GridViewColumn Header="ФИО" Width="200" DisplayMemberBinding="{Binding FullName}"/>
-
                                     <GridViewColumn Header="Отдел" Width="150" DisplayMemberBinding="{Binding DepartmentName}"/>
-
                                     <GridViewColumn Header="Должность" Width="180" DisplayMemberBinding="{Binding PositionName}"/>
-
                                     <GridViewColumn Header="Email" Width="200" DisplayMemberBinding="{Binding Email}"/>
-
                                     <GridViewColumn Header="Табельный номер" Width="120" DisplayMemberBinding="{Binding PersonnelNumber}"/>
                                 </GridView>
                             </ListView.View>
