@@ -318,32 +318,50 @@
 
                     <!-- Left Column - Basic Info -->
                     <GroupBox Grid.Column="0" Header="📝 Основная информация" Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
-                        <StackPanel Margin="10">
-                            <TextBlock Text="ФИО:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
-                            <TextBox x:Name="EmployeeFullNameTextBox" Style="{StaticResource TextBoxStyle}"
-                                     Text="{Binding NewEmployee.FullName}"/>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="520">
+                            <StackPanel Margin="10">
+                                <TextBlock Text="ФИО:" Style="{StaticResource HeaderTextStyle}" FontSize="12"/>
+                                <TextBox x:Name="EmployeeFullNameTextBox" Style="{StaticResource TextBoxStyle}"
+                     Text="{Binding NewEmployee.FullName}"/>
 
-                            <TextBlock Text="Должность:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
-                            <TextBox x:Name="EmployeesPositionTextBox" Style="{StaticResource TextBoxStyle}"
-                                     Text="{Binding NewEmployee.Position}"/>
+                                <TextBlock Text="Должность:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                                <TextBox x:Name="EmployeesPositionTextBox" Style="{StaticResource TextBoxStyle}"
+                     Text="{Binding NewEmployee.Position}"/>
 
-                            <TextBlock Text="Табельный номер:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
-                            <TextBox x:Name="PersonnelNumberTextBox" Style="{StaticResource TextBoxStyle}"
-                                     Text="{Binding NewEmployee.PersonnelNumber}"/>
+                                <TextBlock Text="Табельный номер:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                                <TextBox x:Name="PersonnelNumberTextBox" Style="{StaticResource TextBoxStyle}"
+                     Text="{Binding NewEmployee.PersonnelNumber}"/>
 
-                            <TextBlock Text="Номер рабочего места:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
-                            <TextBox x:Name="WorkplaceNumberTextBox" Style="{StaticResource TextBoxStyle}"
-                                     Text="{Binding NewEmployee.WorkplaceNumber}"/>
+                                <TextBlock Text="Номер рабочего места:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                                <TextBox x:Name="WorkplaceNumberTextBox" Style="{StaticResource TextBoxStyle}"
+                     Text="{Binding NewEmployee.WorkplaceNumber}"/>
 
-                            <TextBlock Text="Дата рождения:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
-                            <DatePicker x:Name="DateOfBirthDateTimePicker" Style="{StaticResource DatePickerStyle}"
-                                        SelectedDate="{Binding NewEmployee.BirthDate}"/>
+                                <TextBlock Text="Дата рождения:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                                <DatePicker x:Name="DateOfBirthDateTimePicker" Style="{StaticResource DatePickerStyle}"
+                        SelectedDate="{Binding NewEmployee.BirthDate}"/>
 
-                            <TextBlock Text="Отдел:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
-                            <ListBox x:Name="DepartmentForNewcomer" Height="80" Style="{StaticResource ListBoxStyle}"
-                                     ItemsSource="{Binding Departments}"
-                                     SelectedItem="{Binding NewEmployee.Department}"/>
-                        </StackPanel>
+                                <TextBlock Text="Отдел:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                                <ListBox x:Name="DepartmentForNewcomer" Height="80" Style="{StaticResource ListBoxStyle}"
+                     ItemsSource="{Binding Departments}"
+                     SelectedItem="{Binding NewEmployee.Department}"/>
+
+                                <!-- Role selection at the bottom -->
+                                <TextBlock Text="Роль:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
+                                <ListBox x:Name="RoleOfNewcomerListBox" Height="80" Style="{StaticResource ListBoxStyle}"
+                     ItemsSource="{Binding Roles}"
+                     SelectedItem="{Binding NewEmployee.Role}"/>
+
+                                <!-- CheckBox for Initial Instruction -->
+                                <CheckBox x:Name="AddInitialInstructionToNewcomer" Margin="0,15,0,15"
+                      Content="✅ Добавить ли сотруднику вводный инструктаж?"
+                      Style="{StaticResource CheckBoxStyle}"
+                      IsChecked="{Binding NewEmployee.AddInitialInstruction}"/>
+
+                                <!-- Save Button -->
+                                <Button x:Name="UploadNewcommer" Content="💾 Сохранить сотрудника"
+                    Style="{StaticResource ActionButtonStyle}" Click="UploadNewcommer_Click"/>
+                            </StackPanel>
+                        </ScrollViewer>
                     </GroupBox>
 
                     <!-- Right Column - Credentials & Options -->
@@ -356,19 +374,6 @@
                             <TextBlock Text="Пароль:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
                             <TextBox x:Name="PasswordTextBox" Style="{StaticResource TextBoxStyle}"
                                      Text="{Binding NewEmployee.Password}"/>
-
-                            <TextBlock Text="Роль:" Style="{StaticResource HeaderTextStyle}" FontSize="12" Margin="0,10,0,0"/>
-                            <ListBox x:Name="RoleOfNewcomerListBox" Height="80" Style="{StaticResource ListBoxStyle}"
-                                     ItemsSource="{Binding Roles}"
-                                     SelectedItem="{Binding NewEmployee.Role}"/>
-
-                            <CheckBox x:Name="AddInitialInstructionToNewcomer" Margin="0,15,0,15"
-                                      Content="✅ Добавить ли сотруднику вводный инструктаж?"
-                                      Style="{StaticResource CheckBoxStyle}"
-                                      IsChecked="{Binding NewEmployee.AddInitialInstruction}"/>
-
-                            <Button x:Name="UploadNewcommer" Content="💾 Сохранить сотрудника"
-                                    Style="{StaticResource ActionButtonStyle}" Click="UploadNewcommer_Click"/>
                         </StackPanel>
                     </GroupBox>
                 </Grid>
