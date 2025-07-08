@@ -208,40 +208,150 @@ namespace Kotova.Test1.ClientSide
 
             NewEmployee = new NewEmployeeDto();
 
-            // Initialize with sample data for UI testing
-            InitializeSampleData();
         }
-
-        private void InitializeSampleData()
-        {
-            // Sample departments
-            Departments.Add("IT отдел");
-            Departments.Add("Бухгалтерия");
-            Departments.Add("HR отдел");
-            Departments.Add("Производство");
-
-            // Sample roles
-            Roles.Add("Пользователь");
-            Roles.Add("Координатор");
-            Roles.Add("Начальник");
-            Roles.Add("Администратор");
-
-            // Sample instruction types
-            InstructionTypes.Add("Вводный");
-            InstructionTypes.Add("Первичный");
-            InstructionTypes.Add("Повторный");
-            InstructionTypes.Add("Внеплановый");
-
-            // Sample additional filters
-            AdditionalFilters.Add("Все сотрудники");
-            AdditionalFilters.Add("Только новые");
-            AdditionalFilters.Add("С просрочкой");
-        }
-
         private void SetupDataContext()
         {
             DataContext = this;
         }
+        #endregion
+
+        // Add these methods to your CoordinatorWindow.xaml.cs file
+
+        #region Tab Selection Event Handler
+
+        /// <summary>
+        /// Handle tab selection changes to auto-load data when needed
+        /// </summary>
+        private async void CoordinatorTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (e.Source is System.Windows.Controls.TabControl tabControl && tabControl.SelectedItem is TabItem selectedTab)
+                {
+                    // Check if the "Данные сотрудника" tab is selected
+                    if (selectedTab.Header.ToString().Contains("Данные сотрудника"))
+                    {
+                        await LoadDepartmentsAndRolesForEmployeeTabAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in tab selection: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Loads departments and roles data specifically for the employee tab
+        /// </summary>
+        private async Task LoadDepartmentsAndRolesForEmployeeTabAsync()
+        {
+            try
+            {
+                // Only load if collections are empty or need refresh
+                if (Departments.Count == 0 || Roles.Count == 0 || ShouldRefreshData())
+                {
+                    Console.WriteLine("Loading departments and roles for employee tab...");
+
+                    bool success = await LoadDepartmentsAndRolesAsync();
+
+                    if (success)
+                    {
+                        Console.WriteLine($"Successfully loaded {Departments.Count} departments and {Roles.Count} roles");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Failed to load departments and roles data");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Data already loaded, skipping refresh");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading data for employee tab: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check if data should be refreshed (optional logic)
+        /// </summary>
+        private bool ShouldRefreshData()
+        {
+            // Refresh data if it's older than 5 minutes (optional)
+            // You can remove this check if you want to load only once
+            return false; // For now, only load if collections are empty
+        }
+
+        #endregion
+
+        #region Data Download Methods (Simplified)
+
+        /// <summary>
+        /// Downloads departments and roles data from the server (silent operation)
+        /// </summary>
+        /// <returns>True if successful, false otherwise</returns>
+        private async Task<bool> LoadDepartmentsAndRolesAsync()
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    // Set authorization header
+                    client.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", _jwtToken);
+                    client.Timeout = TimeSpan.FromSeconds(15); // Shorter timeout for auto-load
+
+                    // Call the departments-and-roles endpoint
+                    string url = ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/datadownload/departments-and-roles";
+
+                    HttpResponseMessage response = await client.GetAsync(url);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string jsonContent = await response.Content.ReadAsStringAsync();
+                        var responseData = JsonConvert.DeserializeObject<DepartmentsAndRolesResponse>(jsonContent);
+
+                        if (responseData?.Success == true)
+                        {
+                            // Clear existing collections
+                            Departments.Clear();
+                            Roles.Clear();
+
+                            // Populate departments
+                            if (responseData.Departments?.Data != null)
+                            {
+                                foreach (var dept in responseData.Departments.Data)
+                                {
+                                    Departments.Add(dept.DepartmentName);
+                                }
+                            }
+
+                            // Populate roles with Russian names
+                            if (responseData.Roles?.Data != null)
+                            {
+                                foreach (var role in responseData.Roles.Data)
+                                {
+                                    Roles.Add(role.RoleNameRussian);
+                                }
+                            }
+
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading departments and roles: {ex.Message}");
+                return false;
+            }
+        }
+
         #endregion
 
         #region ColumnHeaderCLickedHandler stuff
