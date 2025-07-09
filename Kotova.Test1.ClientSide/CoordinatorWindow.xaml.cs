@@ -624,7 +624,7 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                // Step 1: Insert new employee using EmployeeCreationDto
+                // Single API call - Insert Employee and get credentials in one response
                 var insertResponse = await InsertNewEmployeeWithDto(newEmployeeDto, token, NewEmployee.AddInitialInstruction);
 
                 if (!insertResponse.IsSuccessStatusCode)
@@ -635,52 +635,40 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                MessageBox.Show("Сотрудник успешно добавлен в базу данных", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Parse the response to get employee data and credentials
+                var jsonResponse = await insertResponse.Content.ReadAsStringAsync();
+                var employeeResponse = JsonConvert.DeserializeObject<EmployeeCreationResponseDto>(jsonResponse);
 
-                // Step 2: Get login and password (this part can remain the same)
-                string roleName = RoleMappings.GetRoleDisplayName(NewEmployee.Role);
-                if (string.IsNullOrEmpty(roleName))
+                if (employeeResponse?.UserCredentials != null && employeeResponse.Success)
                 {
-                    MessageBox.Show("Выбрана недопустимая роль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    UploadNewcommer.IsEnabled = true;
-                    return;
-                }
-
-                var loginPasswordResponse = await GetLoginPassword(
-                    new List<string> {
-                NewEmployee.PersonnelNumber,
-                NewEmployee.Department,
-                NewEmployee.WorkplaceNumber ?? "1", // Default workplace number
-                roleName,
-                NewEmployee.AddInitialInstruction.ToString()
-                    },
-                    token);
-
-                if (loginPasswordResponse.IsSuccessStatusCode)
-                {
-                    var jsonResponse = await loginPasswordResponse.Content.ReadAsStringAsync();
-                    var loginAndPassword = JsonConvert.DeserializeObject<Tuple<string, string>>(jsonResponse);
-
                     // Update NewEmployee properties with generated credentials
-                    NewEmployee.Login = loginAndPassword.Item1;
-                    NewEmployee.Password = loginAndPassword.Item2;
+                    NewEmployee.Login = employeeResponse.UserCredentials.Username;
+                    NewEmployee.Password = employeeResponse.UserCredentials.Password;
 
-                    string successMessage = $"Учетные данные созданы:\nЛогин: {NewEmployee.Login}\nПароль: {NewEmployee.Password}";
+                    string successMessage = $"Сотрудник успешно добавлен в базу данных!\n\n" +
+                                           $"Учетные данные созданы:\n" +
+                                           $"Логин: {NewEmployee.Login}\n" +
+                                           $"Пароль: {NewEmployee.Password}\n" +
+                                           $"Рабочее место: {employeeResponse.UserCredentials.DeskNumber}";
 
-                    if (NewEmployee.AddInitialInstruction)
+                    if (employeeResponse.InitialInstructionCreated)
                     {
                         successMessage += "\n\nВводный инструктаж автоматически назначен сотруднику.";
                     }
-
+                    
                     MessageBox.Show(successMessage, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
+                    LoginTextBox.Text = NewEmployee.Login;
+                    PasswordTextBox.Text = NewEmployee.Password;
+
                     // Clear form after successful creation
-                    ClearEmployeeForm();
+                    ClearEmployeeForm(false);
+
+                    
                 }
                 else
                 {
-                    string errorText = await loginPasswordResponse.Content.ReadAsStringAsync();
-                    MessageBox.Show($"Ошибка при получении логина/пароля: {errorText}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Сотрудник добавлен, но возникла ошибка при создании учетных данных.", "Частичный успех", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
@@ -708,17 +696,6 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        // Helper method for getting login/password (same as in other forms)
-        private async Task<HttpResponseMessage> GetLoginPassword(List<string> dataAboutUser, string token)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var json = JsonConvert.SerializeObject(dataAboutUser);
-                var data = new StringContent(json, Encoding.UTF8, "application/json");
-                return await client.PostAsync(GetLoginPasswordUrl, data);
-            }
-        }
 
         // Keep the existing validation and helper methods...
         private bool ValidateEmployeeData()
@@ -781,23 +758,7 @@ namespace Kotova.Test1.ClientSide
             return age >= 18;
         }
 
-        private Employee CreateEmployeeFromForm()
-        {
-            return new Employee
-            {
-                full_name = NewEmployee.FullName,
-                job_position = NewEmployee.Position,
-                personnel_number = NewEmployee.PersonnelNumber,
-                department = NewEmployee.Department,
-                birth_date = NewEmployee.BirthDate ?? DateTime.Now,
-                gender = 0, // Default value
-                is_driver = false, // Default value
-                is_working_in_department = true, // Default for new employees
-                group = null // Optional field
-            };
-        }
-
-        private void ClearEmployeeForm()
+        private void ClearEmployeeForm(bool clearCredentials = true)
         {
             NewEmployee.FullName = string.Empty;
             NewEmployee.Position = string.Empty;
@@ -807,8 +768,14 @@ namespace Kotova.Test1.ClientSide
             NewEmployee.Department = string.Empty;
             NewEmployee.Role = string.Empty;
             NewEmployee.AddInitialInstruction = false;
-            NewEmployee.Login = string.Empty;
-            NewEmployee.Password = string.Empty;
+
+            if (clearCredentials)
+            {
+                NewEmployee.Login = string.Empty;
+                NewEmployee.Password = string.Empty;
+                LoginTextBox.Text = string.Empty;
+                PasswordTextBox.Text = string.Empty;
+            }
         }
 
 
