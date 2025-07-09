@@ -589,22 +589,34 @@ namespace Kotova.Test1.ClientSide
 
         private async void UploadNewcommer_Click(object sender, RoutedEventArgs e)
         {
-            // Disable button during processing
-            UploadNewcommer.IsEnabled = false;
-
             try
             {
-                // Validate required fields
+                UploadNewcommer.IsEnabled = false;
+
                 if (!ValidateEmployeeData())
                 {
                     UploadNewcommer.IsEnabled = true;
                     return;
                 }
 
-                // Create Employee object from form data
-                var newEmployee = CreateEmployeeFromForm();
+                // Create EmployeeCreationDto object (matches server-side expectations)
+                var newEmployeeDto = new EmployeeCreationDto
+                {
+                    PersonnelNumber = NewEmployee.PersonnelNumber,
+                    FullName = NewEmployee.FullName,
+                    JobPosition = NewEmployee.Position, // Note: Position maps to JobPosition
+                    Department = NewEmployee.Department,
+                    Role = NewEmployee.Role,
+                    Email = string.IsNullOrWhiteSpace(NewEmployee.Login) ? null : $"{NewEmployee.Login}@company.com", // Or however you handle email
+                    WorkplaceNumber = NewEmployee.WorkplaceNumber,
+                    Group = null, // Set if you have group information
+                    BirthDate = NewEmployee.BirthDate ?? DateTime.Today,
+                    Gender = 3, // Default value, modify if you have gender selection
+                    IsDriver = false, // Set if you have driver information
+                    IsWorkingInDepartment = true // Default value
+                };
 
-                string token = _loginForm?._jwtToken ?? _jwtToken;
+                string? token = _loginForm?._jwtToken;
                 if (string.IsNullOrEmpty(token))
                 {
                     MessageBox.Show("Токен авторизации отсутствует", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -612,8 +624,8 @@ namespace Kotova.Test1.ClientSide
                     return;
                 }
 
-                // Step 1: Insert new employee (server will handle initial instruction internally)
-                var insertResponse = await InsertNewEmployeeAsync(newEmployee, token, NewEmployee.AddInitialInstruction);
+                // Step 1: Insert new employee using EmployeeCreationDto
+                var insertResponse = await InsertNewEmployeeWithDto(newEmployeeDto, token, NewEmployee.AddInitialInstruction);
 
                 if (!insertResponse.IsSuccessStatusCode)
                 {
@@ -625,7 +637,7 @@ namespace Kotova.Test1.ClientSide
 
                 MessageBox.Show("Сотрудник успешно добавлен в базу данных", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // Step 2: Get login and password
+                // Step 2: Get login and password (this part can remain the same)
                 string roleName = RoleMappings.GetRoleDisplayName(NewEmployee.Role);
                 if (string.IsNullOrEmpty(roleName))
                 {
@@ -681,13 +693,13 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        // Helper method for inserting employee
-        private async Task<HttpResponseMessage> InsertNewEmployeeAsync(Employee employee, string token, bool addInitialInstruction)
+        // New helper method that sends EmployeeCreationDto
+        private async Task<HttpResponseMessage> InsertNewEmployeeWithDto(EmployeeCreationDto employeeDto, string token, bool addInitialInstruction)
         {
             using (HttpClient client = new HttpClient())
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                var json = JsonConvert.SerializeObject(employee);
+                var json = JsonConvert.SerializeObject(employeeDto);
                 var data = new StringContent(json, Encoding.UTF8, "application/json");
 
                 // Add query parameter for initial instruction
