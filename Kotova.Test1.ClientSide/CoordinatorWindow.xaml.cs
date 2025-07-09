@@ -452,16 +452,6 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        // Method to clear all sort indicators from all column headers - simplified version
-        private void ClearAllSortIndicators()
-        {
-            foreach (var header in _allHeaders)
-            {
-                string originalText = GetOriginalHeaderText(header);
-                header.Content = originalText;
-            }
-        }
-
         // Helper method to get original header text without sort indicators
         private string GetOriginalHeaderText(GridViewColumnHeader header)
         {
@@ -476,19 +466,6 @@ namespace Kotova.Test1.ClientSide
             return content;
         }
 
-        // Helper method to get all GridView columns
-        private IEnumerable<GridViewColumn> GetGridViewColumns()
-        {
-            var gridView = TelpEmployeesListView.View as GridView;
-            return gridView?.Columns ?? Enumerable.Empty<GridViewColumn>();
-        }
-
-        // Helper method to get column header
-        private GridViewColumnHeader GetColumnHeader(GridViewColumn column)
-        {
-            // This is a simplified approach - in practice, you might need to traverse the visual tree
-            return null; // You might need to implement visual tree traversal here if needed
-        }
 
         #endregion
 
