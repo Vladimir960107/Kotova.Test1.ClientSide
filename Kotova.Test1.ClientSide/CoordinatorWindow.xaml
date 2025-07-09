@@ -355,6 +355,7 @@
                                 <!-- CheckBox for Initial Instruction -->
                                 <CheckBox x:Name="AddInitialInstructionToNewcomer" Margin="0,15,0,15"
                       Content="✅ Добавить ли сотруднику вводный инструктаж?"
+                      
                       Style="{StaticResource CheckBoxStyle}"
                       IsChecked="{Binding NewEmployee.AddInitialInstruction}"/>
 

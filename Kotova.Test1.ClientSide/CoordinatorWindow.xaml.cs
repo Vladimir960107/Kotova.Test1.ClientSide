@@ -45,6 +45,9 @@ namespace Kotova.Test1.ClientSide
         private static readonly string GetEmployeesWithDifferencesUrl =
     ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/DatabaseComparison/employees-with-differences";
 
+        private static readonly string InsertNewEmployeeURL = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/insert-new-employee";
+        private static readonly string GetLoginPasswordUrl = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-login-and-password-for-newcommer";
+
         // Data collections for binding (using common DTOs)
         private ObservableCollection<InitialInstructionPersonDto> _initialInstructionPeople;
         private ObservableCollection<TelpEmployeeDtoEnhanced> _telpEmployees;
@@ -606,10 +609,220 @@ namespace Kotova.Test1.ClientSide
         #endregion
 
         #region Tab 3: Employee Data Events (Not Implemented)
-        private void UploadNewcommer_Click(object sender, RoutedEventArgs e)
+
+        private async void UploadNewcommer_Click(object sender, RoutedEventArgs e)
         {
-            ShowNotImplementedMessage("сохранение нового сотрудника");
+            // Disable button during processing
+            UploadNewcommer.IsEnabled = false;
+
+            try
+            {
+                // Validate required fields
+                if (!ValidateEmployeeData())
+                {
+                    UploadNewcommer.IsEnabled = true;
+                    return;
+                }
+
+                // Create Employee object from form data
+                var newEmployee = CreateEmployeeFromForm();
+
+                string token = _loginForm?._jwtToken ?? _jwtToken;
+                if (string.IsNullOrEmpty(token))
+                {
+                    MessageBox.Show("Токен авторизации отсутствует", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    UploadNewcommer.IsEnabled = true;
+                    return;
+                }
+
+                // Step 1: Insert new employee (server will handle initial instruction internally)
+                var insertResponse = await InsertNewEmployeeAsync(newEmployee, token, NewEmployee.AddInitialInstruction);
+
+                if (!insertResponse.IsSuccessStatusCode)
+                {
+                    string errorText = await insertResponse.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Ошибка при добавлении сотрудника: {errorText}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    UploadNewcommer.IsEnabled = true;
+                    return;
+                }
+
+                MessageBox.Show("Сотрудник успешно добавлен в базу данных", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Step 2: Get login and password
+                string roleName = RoleMappings.GetRoleDisplayName(NewEmployee.Role);
+                if (string.IsNullOrEmpty(roleName))
+                {
+                    MessageBox.Show("Выбрана недопустимая роль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    UploadNewcommer.IsEnabled = true;
+                    return;
+                }
+
+                var loginPasswordResponse = await GetLoginPassword(
+                    new List<string> {
+                NewEmployee.PersonnelNumber,
+                NewEmployee.Department,
+                NewEmployee.WorkplaceNumber ?? "1", // Default workplace number
+                roleName,
+                NewEmployee.AddInitialInstruction.ToString()
+                    },
+                    token);
+
+                if (loginPasswordResponse.IsSuccessStatusCode)
+                {
+                    var jsonResponse = await loginPasswordResponse.Content.ReadAsStringAsync();
+                    var loginAndPassword = JsonConvert.DeserializeObject<Tuple<string, string>>(jsonResponse);
+
+                    // Update NewEmployee properties with generated credentials
+                    NewEmployee.Login = loginAndPassword.Item1;
+                    NewEmployee.Password = loginAndPassword.Item2;
+
+                    string successMessage = $"Учетные данные созданы:\nЛогин: {NewEmployee.Login}\nПароль: {NewEmployee.Password}";
+
+                    if (NewEmployee.AddInitialInstruction)
+                    {
+                        successMessage += "\n\nВводный инструктаж автоматически назначен сотруднику.";
+                    }
+
+                    MessageBox.Show(successMessage, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Clear form after successful creation
+                    ClearEmployeeForm();
+                }
+                else
+                {
+                    string errorText = await loginPasswordResponse.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Ошибка при получении логина/пароля: {errorText}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                UploadNewcommer.IsEnabled = true;
+            }
         }
+
+        // Helper method for inserting employee
+        private async Task<HttpResponseMessage> InsertNewEmployeeAsync(Employee employee, string token, bool addInitialInstruction)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var json = JsonConvert.SerializeObject(employee);
+                var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+                // Add query parameter for initial instruction
+                string url = $"{InsertNewEmployeeURL}?addInitialInstruction={addInitialInstruction}";
+                return await client.PostAsync(url, data);
+            }
+        }
+
+        // Helper method for getting login/password (same as in other forms)
+        private async Task<HttpResponseMessage> GetLoginPassword(List<string> dataAboutUser, string token)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var json = JsonConvert.SerializeObject(dataAboutUser);
+                var data = new StringContent(json, Encoding.UTF8, "application/json");
+                return await client.PostAsync(GetLoginPasswordUrl, data);
+            }
+        }
+
+        // Keep the existing validation and helper methods...
+        private bool ValidateEmployeeData()
+        {
+            if (string.IsNullOrWhiteSpace(NewEmployee.FullName))
+            {
+                MessageBox.Show("Введите ФИО сотрудника", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewEmployee.Position))
+            {
+                MessageBox.Show("Введите должность сотрудника", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewEmployee.PersonnelNumber))
+            {
+                MessageBox.Show("Введите табельный номер", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (NewEmployee.BirthDate == null)
+            {
+                MessageBox.Show("Выберите дату рождения", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            else if (IsAtLeast18YearsOld(NewEmployee.BirthDate))
+
+
+            if (string.IsNullOrWhiteSpace(NewEmployee.Department))
+            {
+                MessageBox.Show("Выберите отдел", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewEmployee.Role))
+            {
+                MessageBox.Show("Выберите роль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsAtLeast18YearsOld(DateTime? birthDate_nullable)
+        {
+            if (birthDate_nullable is null)
+            {
+                return false;
+            }
+            DateTime birthDate = birthDate_nullable.Value;
+
+            var today = DateTime.Today;
+            var age = today.Year - birthDate.Year;
+
+            // Adjust if the birthday has not occurred yet this year
+            if (birthDate.Date > today.AddYears(-age)) age--;
+
+            return age >= 18;
+        }
+
+        private Employee CreateEmployeeFromForm()
+        {
+            return new Employee
+            {
+                full_name = NewEmployee.FullName,
+                job_position = NewEmployee.Position,
+                personnel_number = NewEmployee.PersonnelNumber,
+                department = NewEmployee.Department,
+                birth_date = NewEmployee.BirthDate ?? DateTime.Now,
+                gender = 0, // Default value
+                is_driver = false, // Default value
+                is_working_in_department = true, // Default for new employees
+                group = null // Optional field
+            };
+        }
+
+        private void ClearEmployeeForm()
+        {
+            NewEmployee.FullName = string.Empty;
+            NewEmployee.Position = string.Empty;
+            NewEmployee.PersonnelNumber = string.Empty;
+            NewEmployee.WorkplaceNumber = string.Empty;
+            NewEmployee.BirthDate = null;
+            NewEmployee.Department = string.Empty;
+            NewEmployee.Role = string.Empty;
+            NewEmployee.AddInitialInstruction = false;
+            NewEmployee.Login = string.Empty;
+            NewEmployee.Password = string.Empty;
+        }
+
+
         #endregion
 
         #region Tab 4: Taking Instructions Events (Not Implemented)
