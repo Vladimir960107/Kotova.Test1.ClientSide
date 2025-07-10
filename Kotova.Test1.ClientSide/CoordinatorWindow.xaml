@@ -393,36 +393,6 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-
-                    <GroupBox Grid.Row="0" Grid.Column="0" Header="📋 Непройденные инструктажи" 
-                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
-                        <ListBox x:Name="ListOfInstructionsForUser" Style="{StaticResource ListBoxStyle}"
-                                 ItemsSource="{Binding UserInstructions}"
-                                 SelectedItem="{Binding SelectedInstruction}"
-                                 DisplayMemberPath="CauseOfInstruction"/>
-                    </GroupBox>
-
-                    <GroupBox Grid.Row="0" Grid.Column="1" Header="📁 Файлы инструктажа" 
-                              Style="{StaticResource GroupBoxStyle}" Margin="0,0,10,0">
-                        <ListView x:Name="FilesOfInstructionCheckedListBox" Background="White"
-                                  ItemsSource="{Binding SelectedInstruction.Files}">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding FileName}" IsChecked="{Binding IsChecked}"
-                                              Style="{StaticResource CheckBoxStyle}"/>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </GroupBox>
-
-                    <Button x:Name="HyperLinkForInstructionsFolder" Grid.Row="0" Grid.Column="2"
-                            Content="🔗 Гиперссылка на инструктаж" 
-                            Style="{StaticResource ButtonStyle}" VerticalAlignment="Top"
-                            Click="HyperLinkForInstructionsFolder_Click"/>
-
-                    <CheckBox x:Name="PassInstructionAsUser" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                              Content="✅ Подтверждаю, что инструктаж пройден"
-                              Style="{StaticResource CheckBoxStyle}" Margin="5,10,0,0"/>
                 </Grid>
             </TabItem>
 

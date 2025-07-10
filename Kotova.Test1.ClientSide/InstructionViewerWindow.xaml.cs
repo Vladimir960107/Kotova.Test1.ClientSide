@@ -354,6 +354,7 @@ namespace Kotova.Test1.ClientSide
             var credentialsItem = new MenuItem { Header = "🔐 Сменить регистрационные данные" };
             credentialsItem.Click += (s, args) =>
             {
+                _signUpForm = null; // ЗАГЛУШКА, ЧТОБЫ ВЫКЛЮЧИТЬ ФОРМУ РЕГИСТРАЦИИ ДЛЯ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ! НА ВРЕМЯ ПОКА НЕ НАСТРОЕНА НОРМАЛЬНАЯ ФРМА + ВОССТАНОВЛЕНИЕ ПАРОЛЯ ПО ПОЧТЕ!!!!!!!!!!!
                 if (_signUpForm != null)
                 {
                     // Position SignUpForm over this WPF window manually for better control
@@ -364,7 +365,7 @@ namespace Kotova.Test1.ClientSide
                 {
                     // Fallback: Create a simple WPF input dialog or show message
                     System.Windows.MessageBox.Show(
-                        "Функция смены учётных данных временно недоступна.\nОбратитесь к администратору для смены пароля.",
+                        "Функция смены учётных данных временно недоступна (из-за разработки подключения восстановления пароля по почте).\nВ случае необходимости обратитесь к администратору для смены пароля.",
                         "Смена учётных данных",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -412,10 +413,14 @@ namespace Kotova.Test1.ClientSide
 
                 if (_loginForm != null)
                 {
+                    _loginForm.activeWpfWindow = null;
                     _loginForm.activeForm = _loginForm;
                     _loginForm.Show();
                 }
-                _someActiveFormThatShouldBeClosedWhenExitingApplication.Close();
+                if (_someActiveFormThatShouldBeClosedWhenExitingApplication != null)
+                {
+                    _someActiveFormThatShouldBeClosedWhenExitingApplication.Close();
+                }
                 this.Close();
             }
             catch (Exception ex)
