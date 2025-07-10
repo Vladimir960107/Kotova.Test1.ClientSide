@@ -1,5 +1,5 @@
 ﻿<!-- InstructionViewerControl.xaml - Clean UserControl without app-level buttons -->
-<UserControl x:Class="Kotova.Test1.ClientSide.ManagementWPF.Views.InstructionViewerControl"
+<UserControl x:Class="Kotova.Test1.ClientSide.InstructionControlWPF.InstructionViewerControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
