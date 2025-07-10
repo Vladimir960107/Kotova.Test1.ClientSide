@@ -65,6 +65,14 @@ namespace Kotova.Test1.ClientSide
             _isChief = isChief;
             _loginForm = loginForm;
 
+            // FOR DEBUGGING - Set AllowCompletion to true to see if checkbox appears
+            _allowCompletion = true; // Make sure this is set to true for testing
+
+            // Debug output
+            Debug.WriteLine($"Constructor: AllowCompletion = {_allowCompletion}");
+            Debug.WriteLine($"Constructor: IsChief = {_isChief}");
+            Debug.WriteLine($"Constructor: UserName = {_userName}");
+
             InitializeCollections();
             InitializeWindow();
         }
@@ -132,20 +140,26 @@ namespace Kotova.Test1.ClientSide
         {
             try
             {
-                // Initialize instruction service with correct constructor (jwtToken first, then logger)
+                // Initialize instruction service
                 _instructionService = new InstructionService(_jwtToken, new WpfLogger(this));
 
                 // Initialize the ViewModel for the control
                 _instructionViewModel = new InstructionViewerViewModel(_jwtToken, _userName, _isChief, _allowCompletion);
 
-                // Set up data context
+                // Set up data context - THIS IS CRITICAL
                 DataContext = this;
 
-                // Set the control's DataContext to the ViewModel
-                if (InstructionViewerControl != null)
-                {
-                    InstructionViewerControl.DataContext = _instructionViewModel;
-                }
+                // IMPORTANT: Initialize the control with the ViewModel AFTER the window is loaded
+                this.Loaded += (s, e) => {
+                    if (InstructionViewerControl != null)
+                    {
+                        // Set the control's DataContext to the ViewModel
+                        InstructionViewerControl.DataContext = _instructionViewModel;
+
+                        // OR use the Initialize method if available:
+                        // InstructionViewerControl.Initialize(_jwtToken, _userName, _isChief, _allowCompletion);
+                    }
+                };
 
                 // Load initial data
                 LoadInstructionsAsync();

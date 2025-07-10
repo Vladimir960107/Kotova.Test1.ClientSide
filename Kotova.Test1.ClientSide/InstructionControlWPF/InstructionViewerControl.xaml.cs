@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ListBox = System.Windows.Controls.ListBox;
 using UserControl = System.Windows.Controls.UserControl;
 
 namespace Kotova.Test1.ClientSide.InstructionControlWPF;
@@ -32,9 +33,13 @@ public partial class InstructionViewerControl : UserControl
     // Event handlers that delegate to the ViewModel
     private void NormativeInstructionsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (DataContext is InstructionViewerViewModel viewModel)
+        if (DataContext is InstructionViewerViewModel viewModel && sender is ListBox listBox)
         {
-            viewModel.OpenNormativeDocument();
+            if (listBox.SelectedItem is InstructionViewerViewModel.NormativeInstructionItem selectedItem)
+            {
+                // Use the new method that handles the specific item
+                viewModel.OpenNormativeDocumentByItem(selectedItem);
+            }
         }
     }
 
@@ -46,89 +51,125 @@ public partial class InstructionViewerControl : UserControl
         }
     }
 
+    // Selection changed handlers
+    private void NormativeInstructionsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is InstructionViewerViewModel viewModel && sender is ListBox listBox)
+        {
+            if (listBox.SelectedItem is InstructionViewerViewModel.NormativeInstructionItem selectedItem)
+            {
+                // Mark the selected item as checked for tracking
+                selectedItem.IsChecked = true;
+
+                // Uncheck previously selected items
+                foreach (var item in viewModel.NormativeInstructions)
+                {
+                    if (item != selectedItem)
+                    {
+                        item.IsChecked = false;
+                    }
+                }
+            }
+        }
+    }
+
+    private void RelatedFilesListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Handle related files selection if needed
+        if (DataContext is InstructionViewerViewModel viewModel && sender is ListBox listBox)
+        {
+            // Can add specific handling for related files selection here
+        }
+    }
+
+    // Button click handlers
+    private void PassInstructionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is InstructionViewerViewModel viewModel)
+        {
+            viewModel.PassInstructionCommand?.Execute(null);
+        }
+    }
+
+    private void RefreshButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is InstructionViewerViewModel viewModel)
+        {
+            viewModel.RefreshInstructions();
+        }
+    }
+
     // Dependency Properties for configuration
     public static readonly DependencyProperty AllowCompletionProperty =
-        DependencyProperty.Register("AllowCompletion", typeof(bool), typeof(InstructionViewerControl),
-            new PropertyMetadata(false, OnAllowCompletionChanged));
+        DependencyProperty.Register(
+            nameof(AllowCompletion),
+            typeof(bool),
+            typeof(InstructionViewerControl),
+            new PropertyMetadata(false));
 
     public bool AllowCompletion
     {
-        get { return (bool)GetValue(AllowCompletionProperty); }
-        set { SetValue(AllowCompletionProperty, value); }
-    }
-
-    private static void OnAllowCompletionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is InstructionViewerControl control && control.DataContext is InstructionViewerViewModel viewModel)
-        {
-            viewModel.AllowCompletion = (bool)e.NewValue;
-        }
-    }
-
-    public static readonly DependencyProperty IsChiefProperty =
-        DependencyProperty.Register("IsChief", typeof(bool), typeof(InstructionViewerControl),
-            new PropertyMetadata(false, OnIsChiefChanged));
-
-    public bool IsChief
-    {
-        get { return (bool)GetValue(IsChiefProperty); }
-        set { SetValue(IsChiefProperty, value); }
-    }
-
-    private static void OnIsChiefChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is InstructionViewerControl control && control.DataContext is InstructionViewerViewModel viewModel)
-        {
-            viewModel.IsChief = (bool)e.NewValue;
-        }
+        get => (bool)GetValue(AllowCompletionProperty);
+        set => SetValue(AllowCompletionProperty, value);
     }
 
     public static readonly DependencyProperty JwtTokenProperty =
-        DependencyProperty.Register("JwtToken", typeof(string), typeof(InstructionViewerControl),
-            new PropertyMetadata(string.Empty, OnJwtTokenChanged));
+        DependencyProperty.Register(
+            nameof(JwtToken),
+            typeof(string),
+            typeof(InstructionViewerControl),
+            new PropertyMetadata(string.Empty));
 
     public string JwtToken
     {
-        get { return (string)GetValue(JwtTokenProperty); }
-        set { SetValue(JwtTokenProperty, value); }
-    }
-
-    private static void OnJwtTokenChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is InstructionViewerControl control && control.DataContext is InstructionViewerViewModel viewModel)
-        {
-            viewModel.JwtToken = (string)e.NewValue;
-        }
+        get => (string)GetValue(JwtTokenProperty);
+        set => SetValue(JwtTokenProperty, value);
     }
 
     public static readonly DependencyProperty UserNameProperty =
-        DependencyProperty.Register("UserName", typeof(string), typeof(InstructionViewerControl),
-            new PropertyMetadata(string.Empty, OnUserNameChanged));
+        DependencyProperty.Register(
+            nameof(UserName),
+            typeof(string),
+            typeof(InstructionViewerControl),
+            new PropertyMetadata(string.Empty));
 
     public string UserName
     {
-        get { return (string)GetValue(UserNameProperty); }
-        set { SetValue(UserNameProperty, value); }
+        get => (string)GetValue(UserNameProperty);
+        set => SetValue(UserNameProperty, value);
     }
 
-    private static void OnUserNameChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    public static readonly DependencyProperty IsChiefProperty =
+        DependencyProperty.Register(
+            nameof(IsChief),
+            typeof(bool),
+            typeof(InstructionViewerControl),
+            new PropertyMetadata(false));
+
+    public bool IsChief
     {
-        if (d is InstructionViewerControl control && control.DataContext is InstructionViewerViewModel viewModel)
+        get => (bool)GetValue(IsChiefProperty);
+        set => SetValue(IsChiefProperty, value);
+    }
+
+    // Helper method to open URLs (can be used by both double-click handlers)
+    private void OpenUrl(string url)
+    {
+        try
         {
-            viewModel.UserName = (string)e.NewValue;
+            if (!string.IsNullOrEmpty(url))
+            {
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
         }
-    }
-
-    // Method to initialize the control with parameters
-    public void Initialize(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false)
-    {
-        var viewModel = new InstructionViewerViewModel(jwtToken, userName, isChief, allowCompletion);
-        DataContext = viewModel;
-
-        // Set dependency properties
-        JwtToken = jwtToken;
-        UserName = userName;
-        IsChief = isChief;
-        AllowCompletion = allowCompletion;
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Ошибка при открытии URL: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 }

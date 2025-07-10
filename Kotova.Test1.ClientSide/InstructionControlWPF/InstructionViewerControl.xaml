@@ -7,15 +7,17 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="1000">
 
+    <!-- Add this to the UserControl.Resources section in InstructionViewerControl.xaml -->
     <UserControl.Resources>
-        <!-- Same styles as InstructionViewerWindow for consistency -->
+        <!-- Missing Header Text Style -->
         <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Margin" Value="5"/>
             <Setter Property="Foreground" Value="#2E3440"/>
+            <Setter Property="Margin" Value="0,5"/>
         </Style>
 
+        <!-- Button Styles -->
         <Style x:Key="ButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Margin" Value="5"/>
@@ -29,9 +31,9 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="3">
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -77,11 +79,14 @@
             <Setter Property="BorderBrush" Value="#D8DEE9"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="#ECEFF4"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
         </Style>
 
         <Style x:Key="TabItemStyle" TargetType="TabItem">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
         </Style>
 
         <!-- Converter for bool to visibility -->
