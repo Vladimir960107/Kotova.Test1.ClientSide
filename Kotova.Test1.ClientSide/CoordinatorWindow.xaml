@@ -1,6 +1,7 @@
 ﻿<Window x:Class="Kotova.Test1.ClientSide.CoordinatorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Kotova.Test1.ClientSide.InstructionControlWPF"
         Title="Coordinator" Height="600" Width="1200"
         WindowStartupLocation="CenterScreen"
         Background="#F8F9FA">
@@ -383,17 +384,12 @@
 
             <!-- Tab 4: Taking Instructions -->
             <TabItem Header="📚 Прохождение инструктажей" Style="{StaticResource TabItemStyle}">
-                <Grid Margin="10">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                </Grid>
+                <!-- Use the InstructionViewerControl directly -->
+                <controls:InstructionViewerControl x:Name="InstructionViewerControl"
+                                       JwtToken="{Binding JwtToken}"
+                                       UserName="{Binding UserName}"
+                                       IsChief="{Binding IsChief}"
+                                       AllowCompletion="{Binding AllowCompletion}"/>
             </TabItem>
 
             <!-- Tab 5: Reports -->

@@ -138,7 +138,10 @@
                         <!-- Right Side - Normative Instructions -->
                         <GroupBox Grid.Column="1" Header="Нормативные документы" Style="{StaticResource GroupBoxStyle}">
                             <ListBox Style="{StaticResource ListBoxStyle}"
-                                     ItemsSource="{Binding NormativeInstructions}">
+                                     x:Name="NormativeInstructionsListBox"
+                                     ItemsSource="{Binding NormativeInstructions}"
+                                     MouseDoubleClick="NormativeInstructionsListBox_MouseDoubleClick"
+                                     SelectionChanged="NormativeInstructionsListBox_SelectionChanged">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#D8DEE9" BorderThickness="0,0,0,1" Padding="8">
@@ -150,10 +153,6 @@
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
-                                <!-- Add event handler for opening documents -->
-                                <ListBox.InputBindings>
-                                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding OpenNormativeDocumentCommand}"/>
-                                </ListBox.InputBindings>
                             </ListBox>
                         </GroupBox>
                     </Grid>
@@ -211,7 +210,10 @@
                         <!-- Related Files List -->
                         <GroupBox Grid.Column="1" Header="Связанные документы" Style="{StaticResource GroupBoxStyle}">
                             <ListBox Style="{StaticResource ListBoxStyle}"
-                                     ItemsSource="{Binding RelatedFiles}">
+                                     x:Name="RelatedFilesListBox"
+                                     ItemsSource="{Binding RelatedFiles}"
+                                     MouseDoubleClick="RelatedFilesListBox_MouseDoubleClick"
+                                     SelectionChanged="RelatedFilesListBox_SelectionChanged">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="#D8DEE9" BorderThickness="0,0,0,1" Padding="8">
@@ -223,10 +225,6 @@
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
-                                <!-- Add event handler for opening related files -->
-                                <ListBox.InputBindings>
-                                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding OpenRelatedFileCommand}"/>
-                                </ListBox.InputBindings>
                             </ListBox>
                         </GroupBox>
                     </Grid>
