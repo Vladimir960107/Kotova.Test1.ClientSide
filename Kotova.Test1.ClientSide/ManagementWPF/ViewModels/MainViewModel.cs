@@ -5,6 +5,7 @@ using Kotova.Test1.ClientSide.ManagementWPF.Views;
 using Kotova.Test1.ClientSideManagementWPF.ViewModels;
 using System;
 using System.Windows;
+using RelayCommand = Kotova.Test1.ClientSide.ManagementWPF.Helpers.RelayCommand;
 
 namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
 {

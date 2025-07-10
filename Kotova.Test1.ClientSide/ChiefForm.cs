@@ -1312,10 +1312,7 @@ namespace Kotova.Test1.ClientSide
                     _loginForm._jwtToken,
                     _userName,
                     isChief: true,
-                    allowCompletion: allowCompletion,
-                    _loginForm,
-                    _signUpForm,
-                    this);
+                    _loginForm);
 
                 wpfWindow.Title = $"Просмотр инструктажей - {_userName} ({TranslateRole(role)})";
 

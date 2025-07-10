@@ -568,10 +568,8 @@ namespace Kotova.Test1.ClientSide
                 var wpfWindow = new InstructionViewerWindow(
                     jwtToken: _jwtToken,
                     userName: fullName, // Use full name for display
-                    isChief: isChief,
-                    allowCompletion: true, // Allow chiefs to complete instructions if needed
-                    loginForm: this,
-                    signUpForm: null // Will be created after window is shown
+                    isChief: isChief, // Allow chiefs to complete instructions if needed
+                    loginForm: this// Will be created after window is shown
                 );
 
                 // Set window properties
@@ -606,21 +604,6 @@ namespace Kotova.Test1.ClientSide
                 activeForm = null;              // Clear Windows Forms reference  
                 activeWpfWindow = wpfWindow;    // Set WPF window as active
                 this.Hide();
-
-                // Create SignUpForm after window is shown
-                try
-                {
-                    // Create a wrapper Form to satisfy SignUpForm constructor requirements
-                    var wrapperForm = new Form() { Visible = false, ShowInTaskbar = false };
-                    var signUpForm = new SignUpForm(this, wrapperForm);
-
-                    // Update the WPF window's SignUpForm reference
-                    wpfWindow.SetSignUpForm(signUpForm);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Could not create SignUpForm: {ex.Message}");
-                }
 
                 // Handle default username scenario
                 if (isDefaultUsername(username))

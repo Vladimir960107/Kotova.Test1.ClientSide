@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
+using RelayCommand = Kotova.Test1.ClientSide.ManagementWPF.Helpers.RelayCommand;
 
 namespace Kotova.Test1.ClientSideManagementWPF.ViewModels
 {

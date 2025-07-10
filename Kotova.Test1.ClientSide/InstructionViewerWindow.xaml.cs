@@ -5,19 +5,19 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Kotova.CommonClasses;
+using Kotova.Test1.ClientSide.InstructionControlWPF;
+using ListBox = System.Windows.Controls.ListBox;
 using MessageBox = System.Windows.MessageBox;
+using RelayCommand = Kotova.Test1.ClientSide.ManagementWPF.Helpers.RelayCommand;
 
 namespace Kotova.Test1.ClientSide
 {
-    public partial class InstructionViewerWindow : Window
+    public partial class InstructionViewerWindow : Window, INotifyPropertyChanged
     {
-        
         #region Constants
         public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
         public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
@@ -29,13 +29,12 @@ namespace Kotova.Test1.ClientSide
         public const string db_normativeInstructionId = "id";
         public const string db_normativeInstructionName = "name";
         public const string db_normativeInstructionUrl = "url";
-
-        public bool _forceClose = true;
         #endregion
 
         #region Private Fields
         private bool _allowCompletion;
         private InstructionService _instructionService;
+        private InstructionViewerViewModel _instructionViewModel;
         private bool _isInstructionSelected = false;
         private List<Dictionary<string, object>> _normativeInstructionsOfNewInstr;
         private List<Dictionary<string, object>> _normativeInstructionsOfOldInstr;
@@ -44,689 +43,159 @@ namespace Kotova.Test1.ClientSide
         private string _jwtToken;
         private bool _isChief;
         private string _userName;
-        private Form _someActiveFormThatShouldBeClosedWhenExitingApplication;
-
-        private HashSet<int> _clickedNormativeIds = new HashSet<int>();
-        private int _totalNormativeLinksForCurrentInstruction = 0;
-
-        // References to main application forms (for context menu functionality)
+        private bool _forceClose = true;
         private Login_Russian _loginForm;
-        private SignUpForm _signUpForm;
-        #endregion
 
-        #region Observable Collections
-        public ObservableCollection<string> Instructions { get; set; }
-        public ObservableCollection<NormativeInstructionItem> NormativeInstructions { get; set; }
-        public ObservableCollection<PassedInstructionItem> PassedInstructions { get; set; }
-        public ObservableCollection<string> RelatedFiles { get; set; }
+        // Collections for data binding
+        private ObservableCollection<string> _instructions;
+        private ObservableCollection<NormativeInstructionItem> _normativeInstructions;
+        private ObservableCollection<PassedInstructionItem> _passedInstructions;
+        private ObservableCollection<string> _relatedFiles;
+        private string _statusMessage = "Готов";
+        private string _version = "v1.0";
         #endregion
 
         #region Constructor
-        public InstructionViewerWindow(string jwtToken, string userName, bool isChief = false, bool allowCompletion = false, Login_Russian loginForm = null, SignUpForm signUpForm = null, Form someActiveFormThatShouldBeClosed = null)
+        public InstructionViewerWindow(string jwtToken, string userName, bool isChief, Login_Russian loginForm = null)
         {
-
-            /*if (System.Windows.Application.Current == null)
-            {
-                // Create a minimal WPF application context
-                new System.Windows.Application();
-            }*/
+            InitializeComponent();
 
             _jwtToken = jwtToken;
-            _isChief = isChief;
             _userName = userName;
-            _allowCompletion = allowCompletion;
-            _instructionService = new InstructionService(jwtToken, new WpfLogger(this));
+            _isChief = isChief;
             _loginForm = loginForm;
-            _signUpForm = signUpForm;
-            _someActiveFormThatShouldBeClosedWhenExitingApplication = someActiveFormThatShouldBeClosed;
 
-            InitializeComponent();
             InitializeCollections();
-            InitializeInterface();
-            LoadInstructionsAsync();
-
-            // Create SignUpForm if not provided and loginForm is available
-            if (_signUpForm == null && _loginForm != null)
-            {
-                try
-                {
-                    // Use the new WPF-compatible constructor
-                    _signUpForm = new SignUpForm(_loginForm, this);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Could not create SignUpForm: {ex.Message}");
-                    // SignUpForm will remain null, so we'll handle it in the settings menu
-                }
-            }
+            InitializeWindow();
         }
         #endregion
 
-        #region Public Methods
-        /// <summary>
-        /// Sets the SignUpForm reference for the settings menu
-        /// </summary>
-        /// <param name="signUpForm">The SignUpForm instance</param>
-        public void SetSignUpForm(SignUpForm signUpForm)
+        #region Properties for Data Binding
+        public string JwtToken => _jwtToken;
+        public string UserName => _userName;
+        public bool IsChief => _isChief;
+        public bool AllowCompletion => _allowCompletion;
+        public string StatusMessage
         {
-            _signUpForm = signUpForm;
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
+        }
+        public string Version
+        {
+            get => _version;
+            set => SetProperty(ref _version, value);
         }
 
-        /// <summary>
-        /// Manually positions the SignUpForm over this WPF window
-        /// </summary>
-        private void PositionSignUpFormOverWindow()
+        public InstructionViewerViewModel InstructionViewModel => _instructionViewModel;
+
+        public ObservableCollection<string> Instructions
         {
-            if (_signUpForm == null) return;
+            get => _instructions;
+            set => SetProperty(ref _instructions, value);
+        }
 
-            try
-            {
-                // Get this window's position and size
-                double windowCenterX = this.Left + (this.ActualWidth / 2);
-                double windowCenterY = this.Top + (this.ActualHeight / 2);
+        public ObservableCollection<NormativeInstructionItem> NormativeInstructions
+        {
+            get => _normativeInstructions;
+            set => SetProperty(ref _normativeInstructions, value);
+        }
 
-                // Set SignUpForm size if needed (approximate default SignUpForm size)
-                var signUpFormWidth = 450;
-                var signUpFormHeight = 550;
+        public ObservableCollection<PassedInstructionItem> PassedInstructions
+        {
+            get => _passedInstructions;
+            set => SetProperty(ref _passedInstructions, value);
+        }
 
-                // Calculate position to center SignUpForm over this window
-                int signUpLeft = (int)(windowCenterX - (signUpFormWidth / 2));
-                int signUpTop = (int)(windowCenterY - (signUpFormHeight / 2));
+        public ObservableCollection<string> RelatedFiles
+        {
+            get => _relatedFiles;
+            set => SetProperty(ref _relatedFiles, value);
+        }
 
-                // Ensure it's within screen bounds
-                var screen = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(signUpLeft, signUpTop));
-
-                if (signUpLeft < screen.WorkingArea.Left)
-                    signUpLeft = screen.WorkingArea.Left;
-                if (signUpTop < screen.WorkingArea.Top)
-                    signUpTop = screen.WorkingArea.Top;
-                if (signUpLeft + signUpFormWidth > screen.WorkingArea.Right)
-                    signUpLeft = screen.WorkingArea.Right - signUpFormWidth;
-                if (signUpTop + signUpFormHeight > screen.WorkingArea.Bottom)
-                    signUpTop = screen.WorkingArea.Bottom - signUpFormHeight;
-
-                // Set the position
-                _signUpForm.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-                _signUpForm.Left = signUpLeft;
-                _signUpForm.Top = signUpTop;
-
-                Console.WriteLine($"Positioning SignUpForm at ({signUpLeft}, {signUpTop}) over WPF window at ({this.Left}, {this.Top})");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error positioning SignUpForm: {ex.Message}");
-                // Fallback to center screen
-                _signUpForm.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            }
+        public bool IsInstructionSelected
+        {
+            get => _isInstructionSelected;
+            set => SetProperty(ref _isInstructionSelected, value);
         }
         #endregion
 
-        #region Initialization Methods
+        #region Initialization
         private void InitializeCollections()
         {
             Instructions = new ObservableCollection<string>();
             NormativeInstructions = new ObservableCollection<NormativeInstructionItem>();
             PassedInstructions = new ObservableCollection<PassedInstructionItem>();
             RelatedFiles = new ObservableCollection<string>();
-
-            InstructionsListBox.ItemsSource = Instructions;
-            NormativeInstructionsListBox.ItemsSource = NormativeInstructions;
-            PassedInstructionsDataGrid.ItemsSource = PassedInstructions;
-            RelatedFilesListBox.ItemsSource = RelatedFiles;
         }
 
-        private void InitializeInterface()
-        {
-            // Set username
-            UsernameTextBlock.Text = _userName;
-
-            // Set version information
-            try
-            {
-                VersionTextBlock.Text = ConfigurationClass.BASE_VERSION ?? "v1.0.0";
-            }
-            catch
-            {
-                VersionTextBlock.Text = "v1.0.0";
-            }
-
-            // Show management tab for chiefs
-            if (_isChief)
-            {
-                ManagementTab.Visibility = Visibility.Visible;
-            }
-
-            // Handle checkbox enabling logic
-            if (_isChief && !_allowCompletion)
-            {
-                PassInstructionCheckBox.IsEnabled = false;
-                PassInstructionCheckBox.ToolTip = "Руководители не могут отмечать инструктажи как пройденные для себя";
-            }
-
-            // Set initial status
-            UpdateStatus("Готов к работе");
-        }
-
-        private async void LoadInstructionsAsync()
-        {
-            UpdateStatus("Загрузка инструктажей...");
-            await RefreshNewInstructionsAsync();
-            await RefreshOldInstructionsAsync();
-            UpdateStatus("Готов к работе");
-        }
-        #endregion
-
-        #region Status Management
-        private void UpdateStatus(string message)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                StatusTextBlock.Text = message;
-            });
-        }
-        #endregion
-
-        #region Data Refresh Methods
-        private async Task RefreshNewInstructionsAsync()
+        private void InitializeWindow()
         {
             try
             {
-                Instructions.Clear();
-                NormativeInstructions.Clear();
+                // Initialize instruction service with correct constructor (jwtToken first, then logger)
+                _instructionService = new InstructionService(_jwtToken, new WpfLogger(this));
 
-                var result = await _instructionService.GetNotPassedInstructionsAsync();
+                // Initialize the ViewModel for the control
+                _instructionViewModel = new InstructionViewerViewModel(_jwtToken, _userName, _isChief, _allowCompletion);
 
-                if (result == null)
+                // Set up data context
+                DataContext = this;
+
+                // Set the control's DataContext to the ViewModel
+                if (InstructionViewerControl != null)
                 {
-                    MessageBox.Show("Все инструктажи пройдены!", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
+                    InstructionViewerControl.DataContext = _instructionViewModel;
                 }
 
-                // Update the global lists
-                _listOfNewInstructions = result.Value.Instructions;
-                _normativeInstructionsOfNewInstr = result.Value.NormativeInstructions;
-
-                // Update the UI
-                foreach (var instruction in _listOfNewInstructions)
-                {
-                    if (instruction.ContainsKey("cause_of_instruction") && instruction["cause_of_instruction"] != null)
-                    {
-                        Instructions.Add(instruction["cause_of_instruction"].ToString());
-                    }
-                }
+                // Load initial data
+                LoadInstructionsAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception in RefreshNewInstructionsAsync: {ex}");
-                MessageBox.Show($"Ошибка при обновлении инструктажей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task RefreshOldInstructionsAsync()
-        {
-            try
-            {
-                PassedInstructions.Clear();
-
-                var result = await _instructionService.GetPassedInstructionsAsync();
-
-                if (result == null)
-                {
-                    return;
-                }
-
-                // Update the global lists
-                _listOfOldInstructions = result.Value.Instructions;
-                _normativeInstructionsOfOldInstr = result.Value.NormativeInstructions;
-
-                // Update the UI
-                foreach (var instruction in _listOfOldInstructions)
-                {
-                    DateTime? whenPassed = null;
-                    if (instruction.ContainsKey("date_when_passed") && instruction["date_when_passed"] != null)
-                    {
-                        whenPassed = Convert.ToDateTime(instruction["date_when_passed"]);
-                    }
-
-                    string type = instruction.ContainsKey("type") ?
-                         instruction["type"]?.ToString() ?? "Unknown" : "Unknown";
-
-                    string cause = instruction.ContainsKey("cause_of_instruction") ?
-                        instruction["cause_of_instruction"]?.ToString() ?? "" : "";
-
-                    int instructionId = 0;
-                    if (instruction.ContainsKey("instruction_id"))
-                    {
-                        var idValue = instruction["instruction_id"];
-                        if (idValue is JsonElement jsonElement)
-                        {
-                            instructionId = jsonElement.GetInt32();
-                        }
-                        else
-                        {
-                            instructionId = Convert.ToInt32(idValue);
-                        }
-                    }
-
-                    PassedInstructions.Add(new PassedInstructionItem
-                    {
-                        DatePassed = whenPassed?.ToString("yyyy-MM-dd") ?? "",
-                        Type = type,
-                        Cause = cause,
-                        InstructionId = instructionId
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception in RefreshOldInstructionsAsync: {ex}");
-                MessageBox.Show($"Ошибка при обновлении пройденных инструктажей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                UpdateStatus($"Ошибка инициализации: {ex.Message}");
             }
         }
         #endregion
 
-        #region Header Event Handlers
-        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
+        #region Event Handlers - Window Controls
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            UpdateStatus("Обновление...");
-            await RefreshNewInstructionsAsync();
-            await RefreshOldInstructionsAsync();
-            UpdateStatus("Обновление завершено");
+            Close();
+        }
+
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            LoadInstructionsAsync();
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Create enhanced context menu matching UserForm functionality
-            var contextMenu = new ContextMenu();
-
-            /*// Refresh Instructions
-            var refreshItem = new MenuItem { Header = "🔄 Обновить инструктажи" };
-            refreshItem.Click += async (s, args) =>
-            {
-                await RefreshNewInstructionsAsync();
-                await RefreshOldInstructionsAsync();
-            };
-            contextMenu.Items.Add(refreshItem);
-
-            contextMenu.Items.Add(new Separator());*/ //function to refresh instructions already exist!
-
-            // Change Credentials (equivalent to changeCredentialsToolStripMenuItem_Click)
-            var credentialsItem = new MenuItem { Header = "🔐 Сменить регистрационные данные" };
-            credentialsItem.Click += (s, args) =>
-            {
-                _signUpForm = null; // ЗАГЛУШКА, ЧТОБЫ ВЫКЛЮЧИТЬ ФОРМУ РЕГИСТРАЦИИ ДЛЯ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ! НА ВРЕМЯ ПОКА НЕ НАСТРОЕНА НОРМАЛЬНАЯ ФРМА + ВОССТАНОВЛЕНИЕ ПАРОЛЯ ПО ПОЧТЕ!!!!!!!!!!!
-                if (_signUpForm != null)
-                {
-                    // Position SignUpForm over this WPF window manually for better control
-                    PositionSignUpFormOverWindow();
-                    _signUpForm.Show();
-                }
-                else
-                {
-                    // Fallback: Create a simple WPF input dialog or show message
-                    System.Windows.MessageBox.Show(
-                        "Функция смены учётных данных временно недоступна (из-за разработки подключения восстановления пароля по почте).\nВ случае необходимости обратитесь к администратору для смены пароля.",
-                        "Смена учётных данных",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
-                }
-            };
-            contextMenu.Items.Add(credentialsItem);
-
-            // Sign Out (equivalent to signOutToolStripMenuItem_Click)
-            if (_loginForm != null)
-            {
-                var signOutItem = new MenuItem { Header = "🚪 Выйти из учётной записи" };
-                signOutItem.Click += (s, args) => SignOut();
-                contextMenu.Items.Add(signOutItem);
-            }
-
-            // REMOVED: Exit Application button
-            // REMOVED: Close Window button
-
-            contextMenu.IsOpen = true;
+            MessageBox.Show("Функция настроек будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        protected override void OnClosing(CancelEventArgs e)
         {
-            var result = MessageBox.Show("Вы уверены, что хотите закрыть приложение?",
-                "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
+            // Handle window closing logic
+            if (_loginForm?.activeForm == null) // User form handling
             {
-                ExitApplication();
-            }
-        }
-        #endregion
-
-        #region Context Menu Actions (from UserForm)
-        private void SignOut()
-        {
-            try
-            {
-                if (_signUpForm != null)
-                {
-                    _signUpForm.Dispose();
-                }
-
-                Decryption_stuff.DeleteJWTToken();
-
-                if (_loginForm != null)
-                {
-                    _loginForm.activeWpfWindow = null;
-                    _loginForm.activeForm = _loginForm;
-                    _loginForm.Show();
-                }
-                if (_someActiveFormThatShouldBeClosedWhenExitingApplication != null)
-                {
-                    _someActiveFormThatShouldBeClosedWhenExitingApplication.Close();
-                }
-                this.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при выходе: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void ExitApplication()
-        {
-            try
-            {
-                if (_loginForm != null)
-                {
-
-                    _loginForm.ExitApplication();
-                }
-                else
-                {
-                    System.Windows.Application.Current.Shutdown();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при закрытии приложения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                System.Windows.Application.Current.Shutdown();
-            }
-        }
-        #endregion
-
-        #region Main Event Handlers
-        // Add these helper methods to InstructionViewerWindow.xaml.cs
-
-        // Add these helper methods to InstructionViewerWindow.xaml.cs
-
-        /// <summary>
-        /// Processes unplanned instruction URLs, splitting them by "|" separator and giving them sequential names
-        /// </summary>
-        /// <param name="combinedUrl">Combined URLs separated by "|"</param>
-        /// <param name="normativeId">The normative instruction ID</param>
-        /// <returns>List of NormativeInstructionItem objects</returns>
-        private List<NormativeInstructionItem> ProcessUnplannedNormativeInstructions(string combinedUrl, int normativeId)
-        {
-            var result = new List<NormativeInstructionItem>();
-
-            // Split URLs by "|" separator
-            var urlParts = combinedUrl.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
-                                     .Select(u => u.Trim())
-                                     .Where(u => !string.IsNullOrEmpty(u))
-                                     .ToArray();
-
-            // Create individual normative instruction items with sequential names
-            for (int i = 0; i < urlParts.Length; i++)
-            {
-                result.Add(new NormativeInstructionItem
-                {
-                    Id = normativeId + i, // Give each split item a unique ID for tracking
-                    Name = $"Нормативный документ {i + 1}",
-                    Url = urlParts[i]
-                });
+                _forceClose = false;
             }
 
-            return result;
-        }
-
-        /// <summary>
-        /// Checks if the instruction is unplanned and has multiple URLs that need to be split
-        /// </summary>
-        /// <param name="instructionType">The type of instruction</param>
-        /// <param name="url">The URL string to check</param>
-        /// <returns>True if URLs should be split, false otherwise</returns>
-        private bool ShouldSplitUnplannedUrls(string instructionType, string url)
-        {
-            return instructionType == "1" && !string.IsNullOrEmpty(url) && url.Contains(" | ");
-        }
-
-        // Modified InstructionsListBox_SelectionChanged method
-        private void InstructionsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            NormativeInstructions.Clear();
-            _isInstructionSelected = false;
-            PassInstructionCheckBox.IsEnabled = false;
-
-            // Reset tracking for new instruction
-            _clickedNormativeIds.Clear();
-            _totalNormativeLinksForCurrentInstruction = 0;
-
-            if (InstructionsListBox.SelectedItem == null)
-                return;
-
-            string selectedInstruction = InstructionsListBox.SelectedItem.ToString();
-            var selectedDict = GetDictFromSelectedInstruction(selectedInstruction);
-
-            if (selectedDict == null)
-                return;
-
-            int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
-            string instructionType = selectedDict[db_typeOfInstruction].ToString();
-
-            // Check if this is an introductory instruction (type 0)
-            if (instructionType == "0")
+            if (!_forceClose)
             {
-                _isInstructionSelected = true;
-                UpdatePassInstructionCheckboxState();
-                return;
-            }
-
-            // Load normative instructions and count them
-            bool hasNormativeInstructions = false;
-            foreach (var normativeInstruction in _normativeInstructionsOfNewInstr)
-            {
-                if (Convert.ToInt32(normativeInstruction[dB_instructionId].ToString()) == instructionId)
-                {
-                    string name = normativeInstruction[db_normativeInstructionName]?.ToString() ?? "";
-                    string url = normativeInstruction[db_normativeInstructionUrl]?.ToString() ?? "";
-                    int normativeId = Convert.ToInt32(normativeInstruction[db_normativeInstructionId]);
-
-                    // Check if this is an unplanned instruction with multiple URLs
-                    if (ShouldSplitUnplannedUrls(instructionType, url))
-                    {
-                        // Process unplanned instruction with multiple URLs
-                        var splitItems = ProcessUnplannedNormativeInstructions(url, normativeId);
-                        foreach (var item in splitItems)
-                        {
-                            NormativeInstructions.Add(item);
-                            _totalNormativeLinksForCurrentInstruction++;
-                        }
-                    }
-                    else
-                    {
-                        // For regular instructions or unplanned instructions with single URL
-                        NormativeInstructions.Add(new NormativeInstructionItem
-                        {
-                            Id = normativeId,
-                            Name = name,
-                            Url = url
-                        });
-                        _totalNormativeLinksForCurrentInstruction++;
-                    }
-
-                    hasNormativeInstructions = true;
-                }
-            }
-
-            if (hasNormativeInstructions)
-            {
-                _isInstructionSelected = true;
-                UpdatePassInstructionCheckboxState(); // This will now require clicking all links
-
-                // Show initial status
-                UpdateStatus($"Необходимо просмотреть все нормативные документы: 0/{_totalNormativeLinksForCurrentInstruction}");
-            }
-        }
-
-        private void NormativeInstructionsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (NormativeInstructionsListBox.SelectedItem is NormativeInstructionItem selectedItem)
-            {
-                // Track that this normative instruction was clicked
-                _clickedNormativeIds.Add(selectedItem.Id);
-
-                // Update checkbox enabled state
-                UpdatePassInstructionCheckboxState();
-
-                // Open the URL
-                OpenUrl(selectedItem.Url);
-            }
-        }
-
-        private void UpdatePassInstructionCheckboxState()
-        {
-            if (!_isInstructionSelected)
-            {
-                PassInstructionCheckBox.IsEnabled = false;
-                return;
-            }
-
-            // For introductory instructions (type 0), enable immediately
-            if (InstructionsListBox.SelectedItem != null)
-            {
-                string selectedInstruction = InstructionsListBox.SelectedItem.ToString();
-                var selectedDict = GetDictFromSelectedInstruction(selectedInstruction);
-
-                if (selectedDict != null)
-                {
-                    string instructionType = selectedDict[db_typeOfInstruction].ToString();
-                    if (instructionType == "0")
-                    {
-                        // Introductory instruction - enable immediately
-                        if (_isChief)
-                        {
-                            PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
-                        }
-                        else
-                        {
-                            PassInstructionCheckBox.IsEnabled = true;
-                        }
-                        return;
-                    }
-                }
-            }
-
-            // For other instructions, check if all normative links have been clicked
-            bool allLinksClicked = _clickedNormativeIds.Count >= _totalNormativeLinksForCurrentInstruction;
-
-            if (allLinksClicked)
-            {
-                if (_isChief)
-                {
-                    PassInstructionCheckBox.IsEnabled = CanChiefCompleteInstruction();
-                }
-                else
-                {
-                    PassInstructionCheckBox.IsEnabled = true;
-                }
-
-                // Update UI to show completion status
-                UpdateStatus($"Все нормативные документы просмотрены ({_clickedNormativeIds.Count}/{_totalNormativeLinksForCurrentInstruction})");
+                e.Cancel = true;
+                Hide();
+                ShowInTaskbar = false;
+                _forceClose = true;
             }
             else
             {
-                PassInstructionCheckBox.IsEnabled = false;
-                UpdateStatus($"Просмотрено документов: {_clickedNormativeIds.Count}/{_totalNormativeLinksForCurrentInstruction}. Нажмите на все ссылки для продолжения.");
-            }
-        }
-
-        private async void PassInstructionCheckBox_Checked(object sender, RoutedEventArgs e)
-        {
-            if (!_isInstructionSelected || InstructionsListBox.SelectedItem == null)
-                return;
-
-            try
-            {
-                string selectedInstruction = InstructionsListBox.SelectedItem.ToString();
-                var selectedDict = GetDictFromSelectedInstruction(selectedInstruction);
-
-                if (selectedDict == null)
-                    return;
-
-                int instructionId = Convert.ToInt32(selectedDict[dB_instructionId].ToString());
-
-                UpdateStatus("Отправка данных...");
-
-                bool success = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
-
-                if (success)
-                {
-                    MessageBox.Show("Инструктаж успешно отмечен как пройденный!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                    await RefreshNewInstructionsAsync();
-                    await RefreshOldInstructionsAsync();
-                    UpdateStatus("Инструктаж отмечен как пройденный");
-                }
-                else
-                {
-                    MessageBox.Show("Ошибка при отправке данных", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    UpdateStatus("Ошибка при отправке");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                UpdateStatus("Ошибка");
-            }
-            finally
-            {
-                PassInstructionCheckBox.IsChecked = false;
-            }
-        }
-
-        private void PassedInstructionsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            RelatedFiles.Clear();
-
-            if (PassedInstructionsDataGrid.SelectedItem is not PassedInstructionItem selectedItem)
-                return;
-
-            // Load related files for the selected passed instruction
-            int instructionId = selectedItem.InstructionId;
-            LoadRelatedFilesForInstruction(instructionId);
-        }
-
-        private void RelatedFilesListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (RelatedFilesListBox.SelectedItem is not string selectedText)
-                return;
-
-            // Extract URL from the display text (format: "Name (URL)")
-            int urlStart = selectedText.LastIndexOf('(');
-            int urlEnd = selectedText.LastIndexOf(')');
-
-            if (urlStart > 0 && urlEnd > urlStart)
-            {
-                string url = selectedText.Substring(urlStart + 1, urlEnd - urlStart - 1);
-                if (!string.IsNullOrEmpty(url))
-                {
-                    OpenUrl(url);
-                }
+                base.OnClosing(e);
             }
         }
         #endregion
 
-        #region Management Event Handlers (For Chiefs)
-        private void AssignInstructionButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Функция назначения инструктажей будет реализована в следующей версии", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        #region Event Handlers - Management Functions (For Chiefs)
 
         private void ViewEmployeesButton_Click(object sender, RoutedEventArgs e)
         {
@@ -754,62 +223,218 @@ namespace Kotova.Test1.ClientSide
         }
         #endregion
 
+        #region Event Handlers - Instructions List
+        private void InstructionsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListBox listBox && listBox.SelectedItem is string selectedInstruction)
+            {
+                IsInstructionSelected = true;
+                LoadNormativeInstructionsForSelected(selectedInstruction);
+                LoadRelatedFilesForSelected(selectedInstruction);
+            }
+            else
+            {
+                IsInstructionSelected = false;
+                NormativeInstructions.Clear();
+                RelatedFiles.Clear();
+            }
+        }
+
+        private void NormativeInstructionsListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBox listBox && listBox.SelectedItem is NormativeInstructionItem item)
+            {
+                OpenUrl(item.Url);
+            }
+        }
+
+        private void RelatedFilesListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListBox listBox && listBox.SelectedItem is string selectedText)
+            {
+                // Extract URL from the display text (format: "Name (URL)")
+                int urlStart = selectedText.LastIndexOf('(');
+                int urlEnd = selectedText.LastIndexOf(')');
+
+                if (urlStart > 0 && urlEnd > urlStart)
+                {
+                    string url = selectedText.Substring(urlStart + 1, urlEnd - urlStart - 1);
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        OpenUrl(url);
+                    }
+                }
+            }
+        }
+
+        private void PassInstructionButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Delegate to the ViewModel's command
+            _instructionViewModel?.PassInstructionCommand?.Execute(null);
+        }
+        #endregion
+
+        #region Data Loading
+        private async void LoadInstructionsAsync()
+        {
+            try
+            {
+                UpdateStatus("Загрузка инструктажей...");
+
+                // Load instructions based on user type
+                if (_isChief)
+                {
+                    await LoadInstructionsForChief();
+                }
+                else
+                {
+                    await LoadInstructionsForUser();
+                }
+
+                // Update UI collections
+                await UpdateUICollections();
+
+                UpdateStatus("Инструктажи загружены");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus($"Ошибка загрузки: {ex.Message}");
+            }
+        }
+
+        private async System.Threading.Tasks.Task LoadInstructionsForChief()
+        {
+            // Load instructions for chief users using correct method names
+            var notPassedResult = await _instructionService.GetNotPassedInstructionsAsync();
+            var passedResult = await _instructionService.GetPassedInstructionsAsync();
+
+            if (notPassedResult != null)
+            {
+                _listOfNewInstructions = notPassedResult.Value.Instructions;
+                _normativeInstructionsOfNewInstr = notPassedResult.Value.NormativeInstructions;
+            }
+
+            if (passedResult != null)
+            {
+                _listOfOldInstructions = passedResult.Value.Instructions;
+                _normativeInstructionsOfOldInstr = passedResult.Value.NormativeInstructions;
+            }
+        }
+
+        private async System.Threading.Tasks.Task LoadInstructionsForUser()
+        {
+            // Load instructions for regular users using correct method names
+            var notPassedResult = await _instructionService.GetNotPassedInstructionsAsync();
+
+            if (notPassedResult != null)
+            {
+                _listOfNewInstructions = notPassedResult.Value.Instructions;
+                _normativeInstructionsOfNewInstr = notPassedResult.Value.NormativeInstructions;
+            }
+        }
+
+        private async System.Threading.Tasks.Task UpdateUICollections()
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                // Update instructions list
+                Instructions.Clear();
+                if (_listOfNewInstructions != null)
+                {
+                    foreach (var instruction in _listOfNewInstructions)
+                    {
+                        if (instruction.ContainsKey(dB_pos_users_causeOfInstruction) &&
+                            instruction[dB_pos_users_causeOfInstruction] != null)
+                        {
+                            Instructions.Add(instruction[dB_pos_users_causeOfInstruction].ToString());
+                        }
+                    }
+                }
+
+                // Update passed instructions list
+                PassedInstructions.Clear();
+                if (_listOfOldInstructions != null)
+                {
+                    foreach (var instruction in _listOfOldInstructions)
+                    {
+                        var passedItem = new PassedInstructionItem
+                        {
+                            DatePassed = instruction.ContainsKey(db_dateOfInstructionWasSentToUser) ?
+                                DateTime.Parse(instruction[db_dateOfInstructionWasSentToUser].ToString()).ToString("dd.MM.yyyy") : "N/A",
+                            Type = instruction.ContainsKey(db_typeOfInstruction) ?
+                                GetInstructionTypeText(Convert.ToByte(instruction[db_typeOfInstruction])) : "N/A",
+                            Cause = instruction.ContainsKey(dB_pos_users_causeOfInstruction) ?
+                                instruction[dB_pos_users_causeOfInstruction].ToString() : "N/A",
+                            InstructionId = instruction.ContainsKey(dB_instructionId) ?
+                                Convert.ToInt32(instruction[dB_instructionId]) : 0
+                        };
+                        PassedInstructions.Add(passedItem);
+                    }
+                }
+            });
+        }
+        #endregion
+
         #region Helper Methods
-        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedInstruction)
+        private void LoadNormativeInstructionsForSelected(string selectedInstruction)
         {
-            return _listOfNewInstructions?.FirstOrDefault(dict =>
-                dict.ContainsKey("cause_of_instruction") &&
-                dict["cause_of_instruction"]?.ToString() == selectedInstruction);
+            try
+            {
+                NormativeInstructions.Clear();
+
+                var instructionDict = GetDictFromSelectedInstruction(selectedInstruction);
+                if (instructionDict == null) return;
+
+                int instructionId = Convert.ToInt32(instructionDict[dB_instructionId]);
+                var relatedNormatives = _normativeInstructionsOfNewInstr?
+                    .Where(n => Convert.ToInt32(n[dB_instructionId]) == instructionId)
+                    .ToList();
+
+                if (relatedNormatives != null)
+                {
+                    foreach (var normative in relatedNormatives)
+                    {
+                        var item = new NormativeInstructionItem
+                        {
+                            Id = Convert.ToInt32(normative[db_normativeInstructionId]),
+                            Name = normative[db_normativeInstructionName].ToString(),
+                            Url = normative[db_normativeInstructionUrl].ToString()
+                        };
+
+                        // Check if this is unplanned and needs URL splitting
+                        string instructionType = GetInstructionType(instructionId);
+                        if (ShouldSplitUrls(instructionType, item.Url))
+                        {
+                            var splitItems = ProcessUnplannedNormativeInstructions(item.Url, item.Id);
+                            foreach (var splitItem in splitItems)
+                            {
+                                NormativeInstructions.Add(splitItem);
+                            }
+                        }
+                        else
+                        {
+                            NormativeInstructions.Add(item);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading normative instructions: {ex.Message}");
+            }
         }
 
-        private bool CanChiefCompleteInstruction()
-        {
-            return _allowCompletion;
-        }
-
-        private void LoadRelatedFilesForInstruction(int instructionId)
+        private void LoadRelatedFilesForSelected(string selectedInstruction)
         {
             try
             {
                 RelatedFiles.Clear();
 
-                var relatedInstructions = _normativeInstructionsOfOldInstr?
-                    .Where(dict => dict.ContainsKey(dB_instructionId) &&
-                                   Convert.ToInt32(dict[dB_instructionId]) == instructionId)
-                    .ToList();
+                var instructionDict = GetDictFromSelectedInstruction(selectedInstruction);
+                if (instructionDict == null) return;
 
-                if (relatedInstructions != null)
-                {
-                    foreach (var dict in relatedInstructions)
-                    {
-                        string name = dict[db_normativeInstructionName]?.ToString() ?? "";
-                        string url = dict[db_normativeInstructionUrl]?.ToString() ?? "";
-
-                        // Get the instruction type to check if it's unplanned
-                        var instructionType = GetInstructionTypeForId(instructionId);
-
-                        // Check if this is an unplanned instruction with multiple URLs that need to be split
-                        if (ShouldSplitUnplannedUrls(instructionType, url))
-                        {
-                            // Split URLs by "|" separator for unplanned instructions
-                            var urlParts = url.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
-                                             .Select(u => u.Trim())
-                                             .Where(u => !string.IsNullOrEmpty(u))
-                                             .ToArray();
-
-                            // Create individual entries with sequential names
-                            for (int i = 0; i < urlParts.Length; i++)
-                            {
-                                RelatedFiles.Add($"Нормативный документ {i + 1} ({urlParts[i]})");
-                            }
-                        }
-                        else
-                        {
-                            // For regular instructions or unplanned instructions with single URL
-                            RelatedFiles.Add($"{name} ({url})");
-                        }
-                    }
-                }
+                // Add logic to load related files based on instruction
+                // This would depend on your specific file storage structure
             }
             catch (Exception ex)
             {
@@ -817,16 +442,18 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
-        /// <summary>
-        /// Gets the instruction type for a given instruction ID
-        /// </summary>
-        /// <param name="instructionId">The instruction ID</param>
-        /// <returns>The instruction type as string</returns>
-        private string GetInstructionTypeForId(int instructionId)
+        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedInstruction)
+        {
+            return _listOfNewInstructions?.FirstOrDefault(dict =>
+                dict.ContainsKey(dB_pos_users_causeOfInstruction) &&
+                dict[dB_pos_users_causeOfInstruction]?.ToString() == selectedInstruction);
+        }
+
+        private string GetInstructionType(int instructionId)
         {
             try
             {
-                // Look for the instruction in the passed instructions list
+                // First check in passed instructions
                 var instruction = _listOfOldInstructions?.FirstOrDefault(dict =>
                     dict.ContainsKey(dB_instructionId) &&
                     Convert.ToInt32(dict[dB_instructionId]) == instructionId);
@@ -855,6 +482,18 @@ namespace Kotova.Test1.ClientSide
             }
         }
 
+        private string GetInstructionTypeText(byte typeValue)
+        {
+            // Convert numeric type to readable text
+            return typeValue switch
+            {
+                1 => "Плановый",
+                2 => "Внеплановый",
+                3 => "Целевой",
+                _ => "Неизвестный"
+            };
+        }
+
         private void OpenUrl(string url)
         {
             try
@@ -875,28 +514,61 @@ namespace Kotova.Test1.ClientSide
         }
         #endregion
 
-        #region Window Event Handlers
-        protected override void OnClosing(CancelEventArgs e)
+        #region Normative Instructions Processing
+        /// <summary>
+        /// Processes unplanned instruction URLs, splitting them by "|" separator and giving them sequential names
+        /// </summary>
+        /// <param name="combinedUrl">Combined URLs separated by "|"</param>
+        /// <param name="normativeId">The normative instruction ID</param>
+        /// <returns>List of NormativeInstructionItem objects</returns>
+        private List<NormativeInstructionItem> ProcessUnplannedNormativeInstructions(string combinedUrl, int normativeId)
         {
-            if (_loginForm.activeForm == null) // this means its user, not Chief or Coordinator. for Manager its not created, cause for manager he have only WPF Frosm, not _loginForm. So don't know how to overcome it for now.
-            {
-                _forceClose = false;
-            }
-            if (!_forceClose)
-            {
-                // Just minimize instead of closing
-                e.Cancel = true;
-                this.Hide();
+            var result = new List<NormativeInstructionItem>();
 
-                // Optional: Hide from taskbar and show in system tray
-                this.ShowInTaskbar = false;
-                _forceClose = true;
-            }
-            else
+            if (string.IsNullOrEmpty(combinedUrl))
+                return result;
+
+            // Split URLs by "|" separator
+            var urlParts = combinedUrl.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
+                                     .Select(u => u.Trim())
+                                     .Where(u => !string.IsNullOrEmpty(u))
+                                     .ToArray();
+
+            // Create individual normative instruction items with sequential names
+            for (int i = 0; i < urlParts.Length; i++)
             {
-                base.OnClosing(e);
-                
+                result.Add(new NormativeInstructionItem
+                {
+                    Id = normativeId + i,
+                    Name = $"Нормативный документ {i + 1}",
+                    Url = urlParts[i]
+                });
             }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks if the instruction is unplanned and has multiple URLs that need to be split
+        /// </summary>
+        /// <param name="instructionType">The type of instruction</param>
+        /// <param name="url">The URL string to check</param>
+        /// <returns>True if URLs should be split, false otherwise</returns>
+        private bool ShouldSplitUrls(string instructionType, string url)
+        {
+            return instructionType == "Внеплановый" && !string.IsNullOrEmpty(url) && url.Contains(" | ");
+        }
+        #endregion
+
+        #region UI Updates
+        private void UpdateStatus(string message)
+        {
+            // Update status bar or status text
+            Dispatcher.Invoke(() =>
+            {
+                StatusMessage = message;
+                Console.WriteLine($"Status: {message}");
+            });
         }
         #endregion
 
@@ -958,6 +630,24 @@ namespace Kotova.Test1.ClientSide
                 Console.WriteLine($"ERROR: {errorMessage}");
                 _window.UpdateStatus($"Ошибка: {message}");
             }
+        }
+        #endregion
+
+        #region INotifyPropertyChanged Implementation
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (!EqualityComparer<T>.Default.Equals(field, value))
+            {
+                field = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
         #endregion
     }
