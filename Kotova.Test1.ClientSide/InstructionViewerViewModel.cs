@@ -35,6 +35,19 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
         private int _totalNormativeLinksForCurrentInstruction = 0;
         #endregion
 
+        #region Constants
+        public const string dB_pos_users_isInstructionPassed = "is_instruction_passed";
+        public const string dB_pos_users_causeOfInstruction = "cause_of_instruction";
+        public const string dB_pos_users_pathToInstruction = "path_to_instruction";
+        public const string dB_instructionId = "instruction_id";
+        public const string db_filePath = "file_path";
+        public const string db_typeOfInstruction = "type_of_instruction";
+        public const string db_dateOfInstructionWasSentToUser = "when_was_send_to_user";
+        public const string db_normativeInstructionId = "id";
+        public const string db_normativeInstructionName = "name";
+        public const string db_normativeInstructionUrl = "url";
+        #endregion
+
         #region Observable Collections
         public ObservableCollection<string> Instructions { get; set; }
         public ObservableCollection<NormativeInstructionItem> NormativeInstructions { get; set; }
@@ -119,17 +132,6 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
             }
         }
 
-        public PassedInstructionItem SelectedPassedInstruction
-        {
-            get => _selectedPassedInstruction;
-            set
-            {
-                _selectedPassedInstruction = value;
-                OnPropertyChanged();
-                LoadRelatedFilesForSelectedInstruction();
-            }
-        }
-
         public ICommand PassInstructionCommand { get; private set; }
         public ICommand OpenNormativeDocumentCommand { get; private set; }
         public ICommand OpenRelatedFileCommand { get; private set; }
@@ -197,10 +199,11 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
         {
             try
             {
+                // GetNotPassedInstructionsAsync returns a tuple, not an object with IsSuccess/Data
                 var instructionsResult = await _instructionService.GetNotPassedInstructionsAsync();
-                if (instructionsResult.IsSuccess)
+                if (instructionsResult != null) // Changed from instructionsResult.IsSuccess
                 {
-                    _listOfNewInstructions = instructionsResult.Data;
+                    _listOfNewInstructions = instructionsResult.Value.Instructions; // Access tuple's Instructions property
 
                     Application.Current.Dispatcher.Invoke(() =>
                     {
@@ -225,10 +228,11 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
         {
             try
             {
+                // GetPassedInstructionsAsync returns a tuple, not an object with IsSuccess/Data
                 var instructionsResult = await _instructionService.GetPassedInstructionsAsync();
-                if (instructionsResult.IsSuccess)
+                if (instructionsResult != null) // Changed from instructionsResult.IsSuccess
                 {
-                    _listOfOldInstructions = instructionsResult.Data;
+                    _listOfOldInstructions = instructionsResult.Value.Instructions; // Access tuple's Instructions property
 
                     Application.Current.Dispatcher.Invoke(() =>
                     {
@@ -278,24 +282,61 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
                 int instructionId = instruction.ContainsKey("instruction_id") ?
                     Convert.ToInt32(instruction["instruction_id"]) : 0;
 
-                var normativeResult = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
-                if (normativeResult)
+                string instructionType = instruction.ContainsKey("type_of_instruction") ?
+                    instruction["type_of_instruction"].ToString() : "0";
+
+                // Check if this is an introductory instruction (type 0)
+                if (instructionType == "0")
                 {
-                    _normativeInstructionsOfNewInstr = normativeResult.Data;
-                    _totalNormativeLinksForCurrentInstruction = _normativeInstructionsOfNewInstr.Count;
+                    // No normative instructions needed for introductory instructions
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        NormativeInstructions.Clear();
+                    });
+                    _totalNormativeLinksForCurrentInstruction = 0;
+                    return;
+                }
+
+                // Load normative instructions from the data already fetched
+                if (_normativeInstructionsOfNewInstr != null)
+                {
+                    _totalNormativeLinksForCurrentInstruction = 0;
 
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         NormativeInstructions.Clear();
-                        foreach (var normative in _normativeInstructionsOfNewInstr)
+
+                        foreach (var normativeInstruction in _normativeInstructionsOfNewInstr)
                         {
-                            var normativeItem = new NormativeInstructionItem
+                            if (Convert.ToInt32(normativeInstruction[dB_instructionId].ToString()) == instructionId)
                             {
-                                Id = normative.ContainsKey("id") ? Convert.ToInt32(normative["id"]) : 0,
-                                Name = normative.ContainsKey("name") ? normative["name"].ToString() : "N/A",
-                                Url = normative.ContainsKey("url") ? normative["url"].ToString() : "N/A"
-                            };
-                            NormativeInstructions.Add(normativeItem);
+                                string name = normativeInstruction[db_normativeInstructionName]?.ToString() ?? "";
+                                string url = normativeInstruction[db_normativeInstructionUrl]?.ToString() ?? "";
+                                int normativeId = Convert.ToInt32(normativeInstruction[db_normativeInstructionId].ToString());
+
+                                // Check if this is an unplanned instruction with multiple URLs that need to be split
+                                if (ShouldSplitUnplannedUrls(instructionType, url))
+                                {
+                                    var splitItems = ProcessUnplannedNormativeInstructions(url, normativeId);
+                                    foreach (var item in splitItems)
+                                    {
+                                        NormativeInstructions.Add(item);
+                                        _totalNormativeLinksForCurrentInstruction++;
+                                    }
+                                }
+                                else
+                                {
+                                    // For regular instructions
+                                    var normativeItem = new NormativeInstructionItem
+                                    {
+                                        Id = normativeId,
+                                        Name = string.IsNullOrEmpty(name) ? "Нормативный документ" : name,
+                                        Url = url
+                                    };
+                                    NormativeInstructions.Add(normativeItem);
+                                    _totalNormativeLinksForCurrentInstruction++;
+                                }
+                            }
                         }
                     });
                 }
@@ -306,20 +347,6 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
             }
         }
 
-        private void LoadRelatedFilesForSelectedInstruction()
-        {
-            if (SelectedPassedInstruction == null || _listOfOldInstructions == null)
-                return;
-
-            var selectedInstruction = _listOfOldInstructions.FirstOrDefault(i =>
-                i.ContainsKey("instruction_id") && Convert.ToInt32(i["instruction_id"]) == SelectedPassedInstruction.InstructionId);
-
-            if (selectedInstruction != null)
-            {
-                LoadRelatedFilesAsync(selectedInstruction);
-            }
-        }
-
         private async Task LoadRelatedFilesAsync(Dictionary<string, object> instruction)
         {
             try
@@ -327,19 +354,48 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
                 int instructionId = instruction.ContainsKey("instruction_id") ?
                     Convert.ToInt32(instruction["instruction_id"]) : 0;
 
-                var normativeResult = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
-                if (normativeResult.IsSuccess)
+                // Load related files from the data already fetched (don't call MarkInstructionAsPassedAsync)
+                if (_normativeInstructionsOfOldInstr != null)
                 {
-                    _normativeInstructionsOfOldInstr = normativeResult.Data;
-
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         RelatedFiles.Clear();
-                        foreach (var normative in _normativeInstructionsOfOldInstr)
+
+                        var relatedInstructions = _normativeInstructionsOfOldInstr
+                            .Where(dict => dict.ContainsKey(dB_instructionId) &&
+                                           Convert.ToInt32(dict[dB_instructionId]) == instructionId)
+                            .ToList();
+
+                        if (relatedInstructions != null)
                         {
-                            if (normative.ContainsKey("url"))
+                            foreach (var dict in relatedInstructions)
                             {
-                                RelatedFiles.Add(normative["url"].ToString());
+                                string name = dict[db_normativeInstructionName]?.ToString() ?? "";
+                                string url = dict[db_normativeInstructionUrl]?.ToString() ?? "";
+
+                                // Get the instruction type to check if it's unplanned
+                                var instructionType = GetInstructionTypeForId(instructionId);
+
+                                // Check if this is an unplanned instruction with multiple URLs that need to be split
+                                if (ShouldSplitUnplannedUrls(instructionType, url))
+                                {
+                                    // Split URLs by "|" separator for unplanned instructions
+                                    var urlParts = url.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
+                                                     .Select(u => u.Trim())
+                                                     .Where(u => !string.IsNullOrEmpty(u))
+                                                     .ToArray();
+
+                                    // Create individual entries with sequential names
+                                    for (int i = 0; i < urlParts.Length; i++)
+                                    {
+                                        RelatedFiles.Add($"Нормативный документ {i + 1} ({urlParts[i]})");
+                                    }
+                                }
+                                else
+                                {
+                                    // For regular instructions or unplanned instructions with single URL
+                                    RelatedFiles.Add($"{name} ({url})");
+                                }
                             }
                         }
                     });
@@ -351,6 +407,84 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
             }
         }
         #endregion
+
+        /// <summary>
+        /// Processes unplanned instruction URLs, splitting them by "|" separator and giving them sequential names
+        /// </summary>
+        /// <param name="combinedUrl">Combined URLs separated by "|"</param>
+        /// <param name="normativeId">The normative instruction ID</param>
+        /// <returns>List of NormativeInstructionItem objects</returns>
+        private List<NormativeInstructionItem> ProcessUnplannedNormativeInstructions(string combinedUrl, int normativeId)
+        {
+            var result = new List<NormativeInstructionItem>();
+
+            // Split URLs by "|" separator
+            var urlParts = combinedUrl.Split(new[] { " | " }, StringSplitOptions.RemoveEmptyEntries)
+                                     .Select(u => u.Trim())
+                                     .Where(u => !string.IsNullOrEmpty(u))
+                                     .ToArray();
+
+            // Create individual normative instruction items with sequential names
+            for (int i = 0; i < urlParts.Length; i++)
+            {
+                result.Add(new NormativeInstructionItem
+                {
+                    Id = normativeId + i, // Give each split item a unique ID for tracking
+                    Name = $"Нормативный документ {i + 1}",
+                    Url = urlParts[i]
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Checks if the instruction is unplanned and has multiple URLs that need to be split
+        /// </summary>
+        /// <param name="instructionType">The type of instruction</param>
+        /// <param name="url">The URL string to check</param>
+        /// <returns>True if URLs should be split, false otherwise</returns>
+        private bool ShouldSplitUnplannedUrls(string instructionType, string url)
+        {
+            return instructionType == "1" && !string.IsNullOrEmpty(url) && url.Contains(" | ");
+        }
+
+        /// <summary>
+        /// Gets the instruction type for a given instruction ID
+        /// </summary>
+        /// <param name="instructionId">The instruction ID</param>
+        /// <returns>The instruction type as string</returns>
+        private string GetInstructionTypeForId(int instructionId)
+        {
+            try
+            {
+                // Look for the instruction in the passed instructions list
+                var instruction = _listOfOldInstructions?.FirstOrDefault(dict =>
+                    dict.ContainsKey(dB_instructionId) &&
+                    Convert.ToInt32(dict[dB_instructionId]) == instructionId);
+
+                if (instruction != null && instruction.ContainsKey(db_typeOfInstruction))
+                {
+                    return instruction[db_typeOfInstruction]?.ToString() ?? "0";
+                }
+
+                return "0"; // Default to introductory if not found
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting instruction type: {ex.Message}");
+                return "0";
+            }
+        }
+
+        // Add helper method for getting selected instruction dictionary
+        private Dictionary<string, object> GetDictFromSelectedInstruction(string selectedInstruction)
+        {
+            return _listOfNewInstructions?.FirstOrDefault(dict =>
+                dict.ContainsKey("cause_of_instruction") &&
+                dict["cause_of_instruction"]?.ToString() == selectedInstruction);
+        }
+
 
         #region Command Methods
         private async Task PassInstructionAsync()
@@ -369,8 +503,9 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
                 int instructionId = selectedInstruction.ContainsKey("instruction_id") ?
                     Convert.ToInt32(selectedInstruction["instruction_id"]) : 0;
 
-                var result = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
-                if (result.IsSuccess)
+                // MarkInstructionAsPassedAsync returns bool, not an object with IsSuccess
+                bool result = await _instructionService.MarkInstructionAsPassedAsync(instructionId);
+                if (result) // Changed from result.IsSuccess to just result
                 {
                     MessageBox.Show("Инструктаж успешно пройден!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
@@ -383,7 +518,8 @@ namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show($"Ошибка при прохождении инструктажа: {result.ErrorMessage}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // Removed result.ErrorMessage since bool doesn't have ErrorMessage property
+                    MessageBox.Show("Ошибка при прохождении инструктажа", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
