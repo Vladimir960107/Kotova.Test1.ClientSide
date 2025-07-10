@@ -1,4 +1,5 @@
-﻿using Kotova.Test1.ClientSide.ManagementWPF.Helpers;
+﻿using Kotova.Test1.ClientSide.InstructionControlWPF;
+using Kotova.Test1.ClientSide.ManagementWPF.Helpers;
 using Kotova.Test1.ClientSide.ManagementWPF.Services;
 using Kotova.Test1.ClientSide.ManagementWPF.Views;
 using Kotova.Test1.ClientSideManagementWPF.ViewModels;

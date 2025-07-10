@@ -13,7 +13,7 @@ using Kotova.CommonClasses;
 using Application = System.Windows.Application;
 using MessageBox = System.Windows.MessageBox;
 
-namespace Kotova.Test1.ClientSide.ManagementWPF.ViewModels
+namespace Kotova.Test1.ClientSide.InstructionControlWPF
 {
     public class InstructionViewerViewModel : INotifyPropertyChanged
     {
