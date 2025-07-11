@@ -802,6 +802,7 @@
             Name = "ChiefForm";
             Text = "ChiefOfDepartment";
             FormClosing += ChiefForm_FormClosing;
+            Load += ChiefForm_Load;
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
             tabPage1.ResumeLayout(false);

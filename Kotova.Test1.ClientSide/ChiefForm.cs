@@ -3218,6 +3218,11 @@ namespace Kotova.Test1.ClientSide
                 Console.WriteLine($"Error updating instruction details: {ex.Message}");
             }
         }
+
+        private void ChiefForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 
 
