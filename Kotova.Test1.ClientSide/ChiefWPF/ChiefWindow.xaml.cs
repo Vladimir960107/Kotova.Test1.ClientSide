@@ -35,6 +35,9 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         private bool _isEditMode = false;
         private InstructionViewModel _editingInstruction = null;
 
+        private List<EmployeeInfo> _cachedEmployees = new List<EmployeeInfo>();
+        private List<NormativeInstructionInfo> _cachedNormativeInstructions = new List<NormativeInstructionInfo>();
+
         // URLs using ConfigurationClass instead of hardcoded values
         private readonly string urlTest = ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/test/TestEndpoint";
         private readonly string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/test-task";
@@ -661,21 +664,272 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                 var selectedInstruction = instructionsListView_Wpf.SelectedItem as InstructionViewModel;
                 if (selectedInstruction == null)
                 {
-                    MessageBox.Show("Выберите инструктаж для назначения сотрудникам.", "Информация",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("Выберите инструктаж для назначения.", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // TODO: Open assignment dialog or navigate to assignment tab
-                MessageBox.Show($"Назначение инструктажа '{selectedInstruction.Cause}' сотрудникам будет реализовано позже.",
-                    "В разработке", MessageBoxButton.OK, MessageBoxImage.Information);
+                string selectedInstructionName = selectedInstruction.Cause;
+                byte instructionType = (byte)InstructionTypeMappings.GetInstructionId(selectedInstruction.Type);
+                int instructionId = selectedInstruction.Id;
+
+                // Enhanced validation for unplanned instructions
+                if (instructionType == 1) // Внеплановый (unplanned)
+                {
+                    // Check if this instruction is ready for assignment
+                    if (selectedInstruction.Tag?.ToString() == "cannot_assign")
+                    {
+                        MessageBox.Show(
+                            "Данный внеплановый инструктаж может быть назначен сотрудникам только после того, как начальник или заместитель отдела пройдет его.\n\n" +
+                            "Статус: Ожидает прохождения начальником",
+                            "Инструктаж не готов к назначению",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Get the instruction details to double-check the status
+                    var instruction = await GetInstructionByIdAsync(instructionId);
+
+                    if (instruction == null)
+                    {
+                        MessageBox.Show("Не удалось получить данные инструктажа.", "Ошибка",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    if (!instruction.is_passed_by_chief_unplanned_instr)
+                    {
+                        MessageBox.Show(
+                            "Внеплановый инструктаж еще не пройден начальником или заместителем отдела.\n\n" +
+                            "Для назначения инструктажа сотрудникам необходимо сначала пройти его самостоятельно.",
+                            "Требуется прохождение начальником",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                        return;
+                    }
+
+                    // For unplanned instructions, use the specialized handler
+                    await HandleUnplannedInstructionAssignmentAsync(selectedInstructionName, instructionId);
+                    return;
+                }
+
+                // For regular instructions, use the existing logic
+                Console.WriteLine($"Assigning instruction: {selectedInstructionName} of type: {instructionType}");
+
+                // Fetch employee data with roles
+                await SyncEmployeesWithRolesAsync();
+
+                // Fetch normative instruction names - FILTERED for non-unplanned instructions only
+                await SyncNormativeInstructionNamesAsync(isUnplannedInstruction: false);
+
+                // Create and show the regular instruction assignment manager
+                var assignmentManager = new InstructionAssignmentManager(
+                    selectedInstructionName,
+                    await ConvertToEmployeeListWithRolesAsync(),
+                    await ConvertToNormativeInstructionsListAsync(),
+                    _loginForm._jwtToken,
+                    urlSubmitInstructionToPeople,
+                    instructionType);
+
+                var result = assignmentManager.ShowDialog();
+
+                if (result == true) // WPF DialogResult.True
+                {
+                    // Refresh the list to show updated assignment status
+                    await LoadInstructionsFromDatabase();
+                    MessageBox.Show("Инструктаж успешно назначен сотрудникам!", "Успех",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при назначении инструктажа: {ex.Message}", "Ошибка",
+                Console.WriteLine($"Error assigning instruction: {ex.Message}");
+                MessageBox.Show($"Произошла ошибка при назначении инструктажа: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        #region Helper Methods for Assignment
+
+        private async Task<dynamic> GetInstructionByIdAsync(int instructionId)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync($"{ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT}/{instructionId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        return JsonConvert.DeserializeObject(responseContent);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to get instruction by ID: {response.StatusCode}");
+                        return null;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting instruction by ID: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task HandleUnplannedInstructionAssignmentAsync(string instructionName, int instructionId)
+        {
+            try
+            {
+                // Fetch employee data with roles
+                await SyncEmployeesWithRolesAsync();
+
+                // Get predetermined normative instructions for this unplanned instruction
+                var predeterminedNormativeInstructions = await GetPredeterminedNormativeInstructionsForUnplannedInstructionAsync(instructionId);
+
+                // Create and show the unplanned instruction assignment manager
+                var unplannedAssignmentManager = new InstructionAssignmentManagerUnplanned(
+                    instructionName,
+                    instructionId,
+                    await ConvertToEmployeeListWithRolesAsync(),
+                    predeterminedNormativeInstructions,
+                    _loginForm._jwtToken,
+                    $"{ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT}/assign-unplanned-instruction-to-employees");
+
+                var result = unplannedAssignmentManager.ShowDialog();
+
+                if (result == true) // WPF DialogResult.True
+                {
+                    // Refresh the list to show updated assignment status
+                    await LoadInstructionsFromDatabase();
+                    MessageBox.Show("Внеплановый инструктаж успешно назначен сотрудникам!", "Успех",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error handling unplanned instruction assignment: {ex.Message}");
+                MessageBox.Show($"Произошла ошибка при назначении внепланового инструктажа: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task SyncEmployeesWithRolesAsync()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync($"{ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT}/get-employees-with-roles");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        var employees = JsonConvert.DeserializeObject<List<EmployeeInfo>>(responseContent);
+
+                        _cachedEmployees = employees.Where(e => !string.IsNullOrWhiteSpace(e.FullName) &&
+                                                               !string.IsNullOrWhiteSpace(e.BirthDate)).ToList();
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Не получилось синхронизировать данные сотрудников. Status code: {response.StatusCode} {errorMessage}",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in SyncEmployeesWithRolesAsync: {ex}");
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task SyncNormativeInstructionNamesAsync(bool isUnplannedInstruction = false)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    string url = $"{ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT}/normative-instructions?isUnplannedInstruction={isUnplannedInstruction}";
+                    var response = await httpClient.GetAsync(url);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        var normativeInstructions = JsonConvert.DeserializeObject<List<NormativeInstructionInfo>>(responseContent);
+
+                        _cachedNormativeInstructions = normativeInstructions ?? new List<NormativeInstructionInfo>();
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Не получилось синхронизировать нормативные инструкции. Status code: {response.StatusCode} {errorMessage}",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in SyncNormativeInstructionNamesAsync: {ex}");
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task<List<EmployeeInfo>> ConvertToEmployeeListWithRolesAsync()
+        {
+            return _cachedEmployees.ToList();
+        }
+
+        private async Task<List<NormativeInstructionInfo>> ConvertToNormativeInstructionsListAsync()
+        {
+            return _cachedNormativeInstructions.ToList();
+        }
+
+        private async Task<List<NormativeInstructionInfo>> GetPredeterminedNormativeInstructionsForUnplannedInstructionAsync(int instructionId)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync($"{ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT}/get-predetermined-normative-instructions/{instructionId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        return JsonConvert.DeserializeObject<List<NormativeInstructionInfo>>(responseContent) ?? new List<NormativeInstructionInfo>();
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to get predetermined normative instructions: {response.StatusCode}");
+                        return new List<NormativeInstructionInfo>();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting predetermined normative instructions: {ex.Message}");
+                return new List<NormativeInstructionInfo>();
+            }
+        }
+
+        #endregion
 
         private async void RefreshButton_Wpf_Click(object sender, RoutedEventArgs e)
         {
@@ -735,7 +989,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                                     var instruction = new InstructionViewModel
                                     {
                                         Id = (int)item.instruction_id,
-                                        Type = GetInstructionTypeText((byte)item.type_of_instruction),
+                                        Type = InstructionTypeMappings.GetInstructionName((byte)item.type_of_instruction),
                                         Cause = item.cause_of_instruction?.ToString() ?? "N/A",
                                         StartDate = item.begin_date != null ?
                                             DateTime.Parse(item.begin_date.ToString()).ToString("dd.MM.yyyy") : "N/A",
