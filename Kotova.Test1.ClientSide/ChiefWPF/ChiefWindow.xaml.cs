@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
 using Kotova.CommonClasses;
 using MessageBox = System.Windows.MessageBox;
+using Button = System.Windows.Controls.Button;
 
 namespace Kotova.Test1.ClientSide.ChiefWPF
 {
@@ -19,21 +21,33 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
     /// </summary>
     public partial class ChiefWindowFresh : Window
     {
+        #region Fields and Properties
         // Fields from original ChiefForm.cs
         private Login_Russian _loginForm;
         private HubConnection _connection;
+        private string _userName;
 
-        // URLs from original form
-        private readonly string urlTest = "https://localhost:7048/api/test/TestEndpoint";
-        private readonly string urlTaskTest = "https://localhost:7048/api/TestTasks/test-task";
-        private readonly string urlCreateInstruction = "https://localhost:7048/api/instruction/create-custom-instruction";
-        private readonly string urlGetInstructionsByDepartment = "https://localhost:7048/api/instruction/get-instructions-by-department";
-        private readonly string urlGetAllUnplannedInstructions = "https://localhost:7048/api/instruction/get-all-unplanned-instructions";
-        private readonly string urlSkipUnplannedInstruction = "https://localhost:7048/api/instruction/skip-unplanned-instruction-for-personnel";
+        // URLs using ConfigurationClass instead of hardcoded values
+        private readonly string urlTest = ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/test/TestEndpoint";
+        private readonly string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/test-task";
+        private readonly string urlCreateInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/add-new-instruction-into-db";
+        private readonly string urlGetInstructionsByDepartment = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-instructions-by-department";
+        private readonly string urlGetAllUnplannedInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-all-unplanned-instructions";
+        private readonly string urlSkipUnplannedInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/skip-unplanned-instruction-for-personnel";
+        private readonly string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
+        private readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
+        private readonly string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
 
         // Collections for data binding
         public ObservableCollection<InstructionViewModel> Instructions { get; set; }
 
+        // Data storage
+        private List<Instruction> unplannedInstructions_global;
+        private List<Dictionary<string, object>> listOfInstructions_global;
+        private List<Dictionary<string, object>> listsOfPaths_global;
+        #endregion
+
+        #region Constructors and Initialization
         public ChiefWindowFresh()
         {
             InitializeComponent();
@@ -46,8 +60,26 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         public ChiefWindowFresh(Login_Russian loginForm) : this()
         {
             _loginForm = loginForm;
-            usernameLabel_Wpf.Text = loginForm.LoginTextBox.Text;
+            _userName = loginForm.LoginTextBox.Text;
+            usernameLabel_Wpf.Text = _userName;
             InitializeSignalR();
+
+            // Load data when window opens
+            Loaded += ChiefWindowFresh_Loaded;
+        }
+
+        private async void ChiefWindowFresh_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Load initial data
+                await LoadInstructionsFromDatabase();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке начальных данных: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void InitializeCollections()
@@ -56,6 +88,11 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
             // Set data context for binding
             instructionsListView_Wpf.ItemsSource = Instructions;
+
+            // Initially disable management buttons
+            btnEditInstruction_Wpf.IsEnabled = false;
+            btnDeleteInstruction_Wpf.IsEnabled = false;
+            assignInstructionToGroupsButton_Wpf.IsEnabled = false;
         }
 
         private async void InitializeSignalR()
@@ -63,7 +100,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             try
             {
                 _connection = new HubConnectionBuilder()
-                    .WithUrl("https://localhost:7048/taskshub", options =>
+                    .WithUrl(ConfigurationClass.BASE_SIGNALR_CONNECTION_URL_DEVELOPMENT, options =>
                     {
                         options.AccessTokenProvider = () => Task.FromResult(_loginForm?._jwtToken);
                     })
@@ -78,17 +115,35 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                     });
                 });
 
+                _connection.On<string, string>("ReceiveMessage", (user, message) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show($"{user}: {message}", "Сообщение от Hub",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    });
+                });
+
+                _connection.On<string>("ReceiveAlert", message =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        Notifications.ShowWindowsNotification("Alert", message);
+                    });
+                });
+
                 await _connection.StartAsync();
+                //MessageBox.Show("Подключено к SignalR hub.", "Подключение", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Не удалось подключиться к SignalR hub: {ex.Message}",
-                    "Ошибка подключения", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Не удалось подключиться к SignalR hub: {ex.Message}", "Ошибка подключения",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        #endregion
 
-        #region Event Handlers
-
+        #region Event Handlers - Header Buttons
         private async void testButton_Wpf_Click(object sender, RoutedEventArgs e)
         {
             await Test.connectionToUrlGet(urlTest, _loginForm._jwtToken);
@@ -96,29 +151,79 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
         private void LogOutButton_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            _loginForm.Show();
-            this.Close();
+            LogOutInternal();
         }
 
+        private async void LogOutInternal()
+        {
+            try
+            {
+                if (_connection != null)
+                {
+                    await _connection.StopAsync();
+                    await _connection.DisposeAsync();
+                    _connection = null;
+                }
+
+                Decryption_stuff.DeleteJWTToken();
+                this.Close();
+                _loginForm.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при выходе: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        #endregion
+
+        #region Event Handlers - Tab Control
         private async void ChiefTabControl_Wpf_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ChiefTabControl_Wpf.SelectedIndex == 0) // Создание инструктажей tab
+            if (e.Source != ChiefTabControl_Wpf) return;
+
+            var selectedTab = ChiefTabControl_Wpf.SelectedItem as TabItem;
+            if (selectedTab == null) return;
+
+            // Handle tab-specific loading
+            switch (selectedTab.Header.ToString())
             {
-                await LoadInstructionsAsync();
+                case "📝 Создание инструктажа":
+                    await LoadInstructionCreationTab();
+                    break;
+                case "📋 Назначение инструктажей":
+                    await LoadInstructionAssignmentTab();
+                    break;
+                    // Add other tabs as needed
             }
         }
 
+        private async Task LoadInstructionCreationTab()
+        {
+            // Instruction types are already in XAML as ListBoxItems
+            // Just refresh the instructions list
+            await LoadInstructionsFromDatabase();
+        }
+
+        private async Task LoadInstructionAssignmentTab()
+        {
+            // This would be implemented when you add the second tab
+            // For now, just load instructions
+            await LoadInstructionsFromDatabase();
+        }
+        #endregion
+
+        #region Event Handlers - Instruction Creation Tab
         private async void buttonCreateInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
             buttonCreateInstruction_Wpf.IsEnabled = false;
-
             try
             {
                 // Basic validation
                 if (string.IsNullOrWhiteSpace(InstructionTextBox_Wpf.Text))
                 {
-                    MessageBox.Show("Причина инструктажа пуста. Исправьте это пожалуйста.",
-                        "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Причина инструктажа пуста. Исправьте это пожалуйста.", "Ошибка валидации",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -127,308 +232,490 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
                 if (endDate <= startTime)
                 {
-                    MessageBox.Show("До какой даты должно быть больше текущего времени!",
-                        "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("До какой даты должно быть больше текущего времени!", "Ошибка валидации",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 if (typeOfInstructionListBox_Wpf.SelectedIndex == -1)
                 {
-                    MessageBox.Show("Не выбран тип инструктажа!",
-                        "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Не выбран тип инструктажа!", "Ошибка валидации",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Create the instruction
+                // Create the instruction DTO that matches server expectations
                 string causeOfInstruction = InstructionTextBox_Wpf.Text;
-                byte typeOfInstruction = (byte)(typeOfInstructionListBox_Wpf.SelectedIndex + 2);
+                Byte typeOfInstruction = (Byte)(typeOfInstructionListBox_Wpf.SelectedIndex + 2);
 
-                var instruction = new
+                // Server expects InstructionCreateDto format
+                var instructionDto = new
                 {
                     CauseOfInstruction = causeOfInstruction,
                     EndDate = endDate,
-                    PathToInstruction = (string)null,
                     TypeOfInstruction = typeOfInstruction
                 };
 
-                var requestObject = new
-                {
-                    Instruction = instruction,
-                    Paths = new List<string>()
-                };
-
-                string json = JsonConvert.SerializeObject(requestObject);
+                string json = JsonConvert.SerializeObject(instructionDto);
                 HttpContent content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                await Test.connectionToUrlPost(urlCreateInstruction, content,
-                    $"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", _loginForm._jwtToken);
+                // Use HttpClient for proper error handling
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _loginForm._jwtToken);
 
-                // Reset form
-                InstructionTextBox_Wpf.Text = "";
-                typeOfInstructionListBox_Wpf.SelectedIndex = -1;
-                datePickerEnd_Wpf.SelectedDate = DateTime.Now.AddDays(1);
+                    var response = await httpClient.PostAsync(urlCreateInstruction, content);
 
-                MessageBox.Show("Инструктаж успешно создан. Используйте кнопку 'Назначить инструктаж сотрудникам' для назначения сотрудникам и выбора нормативных инструкций.",
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Reset form
+                        InstructionTextBox_Wpf.Text = "";
+                        typeOfInstructionListBox_Wpf.SelectedIndex = -1;
+                        datePickerEnd_Wpf.SelectedDate = DateTime.Now.AddDays(1);
 
-                // Refresh the instructions list
-                await LoadInstructionsAsync();
+                        MessageBox.Show($"Инструктаж '{causeOfInstruction}' успешно добавлен в базу данных.", "Успех",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        // Refresh the instructions list
+                        await LoadInstructionsFromDatabase();
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка при создании инструктажа. Status: {response.StatusCode}. Error: {errorMessage}",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при создании инструктажа: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Произошла ошибка при создании инструктажа: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
                 buttonCreateInstruction_Wpf.IsEnabled = true;
             }
         }
+        #endregion
 
+        #region Event Handlers - Instructions Management
         private async void btnRefreshInstructions_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            await LoadInstructionsAsync();
+            try
+            {
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.IsEnabled = false;
+                    button.Content = "⏳ Загрузка...";
+                }
+
+                await LoadInstructionsFromDatabase();
+
+                if (button != null)
+                {
+                    button.Content = "🔄 Обновить";
+                    button.IsEnabled = true;
+                }
+
+                MessageBox.Show("Список инструктажей обновлен.", "Информация",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при обновлении: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "🔄 Обновить";
+                    button.IsEnabled = true;
+                }
+            }
         }
 
         private void btnAddInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            // Focus on instruction creation form
-            InstructionTextBox_Wpf.Focus();
+            try
+            {
+                // Clear the form for new instruction
+                InstructionTextBox_Wpf.Text = "";
+                typeOfInstructionListBox_Wpf.SelectedIndex = -1;
+                datePickerEnd_Wpf.SelectedDate = DateTime.Now.AddDays(1);
+
+                // Focus on the instruction text box
+                InstructionTextBox_Wpf.Focus();
+
+                MessageBox.Show("Форма очищена для создания нового инструктажа.", "Информация",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при подготовке формы: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private void btnEditInstruction_Wpf_Click(object sender, RoutedEventArgs e)
+        private async void btnEditInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            if (instructionsListView_Wpf.SelectedItem is InstructionViewModel selectedInstruction)
+            try
             {
-                // Pre-fill form with selected instruction data
+                var selectedInstruction = instructionsListView_Wpf.SelectedItem as InstructionViewModel;
+                if (selectedInstruction == null)
+                {
+                    MessageBox.Show("Выберите инструктаж для редактирования.", "Информация",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                // Fill the form with selected instruction data for editing
                 InstructionTextBox_Wpf.Text = selectedInstruction.Cause;
 
-                // Set instruction type based on the type
-                var typeText = selectedInstruction.Type.ToLower();
-                if (typeText.Contains("первичный")) typeOfInstructionListBox_Wpf.SelectedIndex = 0;
-                else if (typeText.Contains("повторный") && typeText.Contains("водител")) typeOfInstructionListBox_Wpf.SelectedIndex = 2;
-                else if (typeText.Contains("повторный")) typeOfInstructionListBox_Wpf.SelectedIndex = 1;
-                else if (typeText.Contains("целевой")) typeOfInstructionListBox_Wpf.SelectedIndex = 3;
+                // Parse the type and set the listbox selection
+                var typeText = selectedInstruction.Type;
+                int typeIndex = typeText switch
+                {
+                    "Первичный" => 0,
+                    "Повторный" => 1,
+                    "Повторный (для водителей)" => 2,
+                    "Целевой" => 3,
+                    _ => -1
+                };
+                typeOfInstructionListBox_Wpf.SelectedIndex = typeIndex;
 
+                // Parse and set the end date
                 if (DateTime.TryParse(selectedInstruction.EndDate, out DateTime endDate))
                 {
                     datePickerEnd_Wpf.SelectedDate = endDate;
                 }
 
-                MessageBox.Show("Данные инструктажа загружены в форму. Внесите изменения и нажмите 'Внести новый инструктаж'.",
+                MessageBox.Show($"Данные инструктажа '{selectedInstruction.Cause}' загружены в форму для редактирования. Внесите изменения и нажмите 'Внести новый инструктаж'.",
                     "Редактирование", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Выберите инструктаж для редактирования.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Ошибка при загрузке данных для редактирования: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         private async void btnDeleteInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            if (instructionsListView_Wpf.SelectedItem is InstructionViewModel selectedInstruction)
+            try
             {
+                var selectedInstruction = instructionsListView_Wpf.SelectedItem as InstructionViewModel;
+                if (selectedInstruction == null)
+                {
+                    MessageBox.Show("Выберите инструктаж для удаления.", "Информация",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
                 var result = MessageBox.Show($"Вы уверены, что хотите удалить инструктаж '{selectedInstruction.Cause}'?",
                     "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    MessageBox.Show("Функция удаления будет реализована в следующей версии.",
-                        "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Выберите инструктаж для удаления.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        private async void assignInstructionToGroupsButton_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            if (instructionsListView_Wpf.SelectedItem is InstructionViewModel selectedInstruction)
-            {
-                try
-                {
-                    // Create empty collections for the constructor parameters
-                    var employees = new List<EmployeeInfo>();
-                    var normativeInstructions = new List<NormativeInstructionInfo>();
-
-                    // Open the InstructionAssignmentManager window with required parameters
-                    var assignmentWindow = new InstructionAssignmentManager(
-                        selectedInstruction.Cause,
-                        employees,
-                        normativeInstructions,
-                        _loginForm._jwtToken,
-                        "assignment-endpoint",
-                        1 // instruction type
-                    );
-                    assignmentWindow.Show();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ошибка при открытии окна назначения: {ex.Message}",
-                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Выберите инструктаж для назначения сотрудникам.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        private void instructionsListView_Wpf_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // Enable/disable buttons based on selection
-            bool hasSelection = instructionsListView_Wpf.SelectedItem != null;
-            btnEditInstruction_Wpf.IsEnabled = hasSelection;
-            btnDeleteInstruction_Wpf.IsEnabled = hasSelection;
-            assignInstructionToGroupsButton_Wpf.IsEnabled = hasSelection;
-        }
-
-        private async void RefreshButton_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            await LoadInstructionsAsync();
-        }
-
-        #endregion
-
-        #region Helper Methods
-
-        private async Task LoadInstructionsAsync()
-        {
-            try
-            {
-                // Clear existing instructions
-                Instructions.Clear();
-
-                // Load instructions by department
-                if (_loginForm?.GetDepartmentIdFromToken(_loginForm._jwtToken) != -1)
-                {
-                    int departmentId = _loginForm.GetDepartmentIdFromToken(_loginForm._jwtToken);
-                    string departmentUrl = $"{urlGetInstructionsByDepartment}?departmentId={departmentId}";
-                    var instructionsResponse = await ConnectionToUrlGetWithReturn(departmentUrl, _loginForm._jwtToken);
-
-                    if (!string.IsNullOrEmpty(instructionsResponse))
+                    var button = sender as Button;
+                    if (button != null)
                     {
-                        var instructions = JsonConvert.DeserializeObject<List<dynamic>>(instructionsResponse);
-                        foreach (var instr in instructions)
-                        {
-                            Instructions.Add(new InstructionViewModel
-                            {
-                                Id = instr.instruction_id,
-                                Type = GetInstructionTypeName((int)instr.type_of_instruction),
-                                Cause = instr.cause_of_instruction,
-                                StartDate = DateTime.Parse(instr.creation_date.ToString()).ToString("dd.MM.yyyy"),
-                                EndDate = DateTime.Parse(instr.end_date.ToString()).ToString("dd.MM.yyyy"),
-                                AssignedStatus = "Не назначен", // This would come from API
-                                CompletedStatus = "Не выполнен" // This would come from API
-                            });
-                        }
+                        button.IsEnabled = false;
+                        button.Content = "⏳ Удаление...";
+                    }
+
+                    await DeleteInstructionFromServer(selectedInstruction.Id);
+                    await LoadInstructionsFromDatabase();
+
+                    MessageBox.Show("Инструктаж успешно удален.", "Успех",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    if (button != null)
+                    {
+                        button.Content = "🗑️ Удалить";
+                        button.IsEnabled = true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при загрузке инструктажей: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ошибка при удалении инструктажа: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "🗑️ Удалить";
+                    button.IsEnabled = true;
+                }
             }
         }
 
-        private int GetPersonnelIdFromToken(string jwtToken)
+        private void instructionsListView_Wpf_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (string.IsNullOrEmpty(jwtToken))
-                return -1;
-
             try
             {
-                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadToken(jwtToken) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
-
-                if (jsonToken == null)
-                    return -1;
-
-                // Look for personnel ID claim
-                var personnelIdClaim = jsonToken.Claims.FirstOrDefault(claim =>
-                    claim.Type == "PersonnelId" ||
-                    claim.Type == "personnel_id");
-
-                if (personnelIdClaim != null && int.TryParse(personnelIdClaim.Value, out int personnelId))
+                // Handle instruction selection for details display if needed
+                var selectedInstruction = instructionsListView_Wpf.SelectedItem as InstructionViewModel;
+                if (selectedInstruction != null)
                 {
-                    return personnelId;
+                    // Update details or enable/disable buttons as needed
+                    btnEditInstruction_Wpf.IsEnabled = true;
+                    btnDeleteInstruction_Wpf.IsEnabled = true;
+                    assignInstructionToGroupsButton_Wpf.IsEnabled = true;
+                }
+                else
+                {
+                    btnEditInstruction_Wpf.IsEnabled = false;
+                    btnDeleteInstruction_Wpf.IsEnabled = false;
+                    assignInstructionToGroupsButton_Wpf.IsEnabled = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при обработке выбора: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void assignInstructionToGroupsButton_Wpf_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedInstruction = instructionsListView_Wpf.SelectedItem as InstructionViewModel;
+                if (selectedInstruction == null)
+                {
+                    MessageBox.Show("Выберите инструктаж для назначения сотрудникам.", "Информация",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
                 }
 
-                return -1;
+                // TODO: Open assignment dialog or navigate to assignment tab
+                MessageBox.Show($"Назначение инструктажа '{selectedInstruction.Cause}' сотрудникам будет реализовано позже.",
+                    "В разработке", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return -1; // Return -1 for any parsing errors
+                MessageBox.Show($"Ошибка при назначении инструктажа: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        // Helper method to replace Test.connectionToUrlGetWithReturn
-        private async Task<string> ConnectionToUrlGetWithReturn(string url, string token)
+        private async void RefreshButton_Wpf_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                using (HttpClient client = new HttpClient())
+                await LoadInstructionsFromDatabase();
+                LabelTray_Wpf.Text = "📋 Статус: Обновлено";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при обновлении: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                LabelTray_Wpf.Text = "📋 Статус: Ошибка обновления";
+            }
+        }
+        #endregion
+
+        #region Data Loading Methods
+        private async Task LoadInstructionsFromDatabase()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
                 {
-                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                    HttpResponseMessage response = await client.GetAsync(url);
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync(urlSyncInstructions);
 
                     if (response.IsSuccessStatusCode)
                     {
-                        return await response.Content.ReadAsStringAsync();
+                        string responseContent = await response.Content.ReadAsStringAsync();
+
+                        // Debug: Show what we received
+                        MessageBox.Show($"Server response length: {responseContent.Length} characters\nFirst 500 chars: {responseContent.Substring(0, Math.Min(500, responseContent.Length))}",
+                            "Debug: Server Response", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        // Try to deserialize as the expected format first
+                        try
+                        {
+                            var result = JsonConvert.DeserializeObject<List<Instruction>>(responseContent);
+
+                            MessageBox.Show($"Deserialized {result?.Count ?? 0} instructions as Instruction objects",
+                                "Debug: Deserialization", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                            if (result != null && result.Count > 0)
+                            {
+                                unplannedInstructions_global = result;
+
+                                // Update UI
+                                Instructions.Clear();
+                                foreach (var instruction in result)
+                                {
+                                    Instructions.Add(new InstructionViewModel
+                                    {
+                                        Id = instruction.instruction_id,
+                                        Cause = instruction.cause_of_instruction ?? "No Cause",
+                                        Type = InstructionTypeToName(instruction.type_of_instruction),
+                                        StartDate = instruction.begin_date.ToString("dd.MM.yyyy") ?? "Не указано",
+                                        EndDate = instruction.end_date.ToString("dd.MM.yyyy") ?? "Не указано",
+                                        AssignedStatus = "Готов к назначению",
+                                        CompletedStatus = "Ожидает назначения"
+                                    });
+                                }
+
+                                MessageBox.Show($"Added {Instructions.Count} items to ObservableCollection",
+                                    "Debug: UI Update", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show("Server returned empty list or null",
+                                    "Debug: Empty Result", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            }
+                        }
+                        catch (JsonException jsonEx)
+                        {
+                            // If it fails, try deserializing as dynamic to see the actual structure
+                            try
+                            {
+                                var dynamicResult = JsonConvert.DeserializeObject(responseContent);
+                                MessageBox.Show($"JSON deserialization failed for Instruction type. Raw structure type: {dynamicResult?.GetType().Name}\nError: {jsonEx.Message}",
+                                    "Debug: JSON Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                            catch
+                            {
+                                MessageBox.Show($"Complete JSON parsing failure: {jsonEx.Message}\nResponse: {responseContent}",
+                                    "Debug: JSON Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                        }
                     }
-                    return null;
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Server error: Status {response.StatusCode}\nError: {errorMessage}",
+                            "Debug: Server Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return null;
+                MessageBox.Show($"Exception in LoadInstructionsFromDatabase: {ex.Message}\nStack: {ex.StackTrace}",
+                    "Debug: Exception", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private string GetInstructionTypeName(int typeId)
+        private async Task DeleteInstructionFromServer(int instructionId)
         {
-            return typeId switch
+            using (var httpClient = new HttpClient())
             {
+                string jwtToken = _loginForm._jwtToken;
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await httpClient.DeleteAsync(
+                    ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/delete-instruction/{instructionId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Failed to delete instruction. Status code: {response.StatusCode}. Error: {errorMessage}");
+                }
+            }
+        }
+        #endregion
+
+        #region Helper Methods
+        private string InstructionTypeToName(byte instructionType)
+        {
+            return instructionType switch
+            {
+                0 => "Вводный",
+                1 => "Внеплановый",
                 2 => "Первичный",
                 3 => "Повторный",
                 4 => "Повторный (для водителей)",
                 5 => "Целевой",
-                1 => "Внеплановый",
                 _ => "Неизвестный"
             };
         }
-
         #endregion
 
-        #region Window Lifecycle
-
-        protected override void OnClosed(EventArgs e)
+        #region Window Events
+        protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            _connection?.DisposeAsync();
-            base.OnClosed(e);
-        }
+            try
+            {
+                if (_connection != null)
+                {
+                    await _connection.StopAsync();
+                    await _connection.DisposeAsync();
+                    _connection = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't prevent closing
+                Console.WriteLine($"Error closing SignalR connection: {ex.Message}");
+            }
 
+            base.OnClosing(e);
+        }
         #endregion
     }
 
-    #region ViewModels for Data Binding
-
+    #region View Models
     public class InstructionViewModel
     {
         public int Id { get; set; }
-        public string Type { get; set; }
         public string Cause { get; set; }
+        public string Type { get; set; }
         public string StartDate { get; set; }
         public string EndDate { get; set; }
         public string AssignedStatus { get; set; }
         public string CompletedStatus { get; set; }
     }
 
+    public class PersonViewModel : System.ComponentModel.INotifyPropertyChanged
+    {
+        private bool _isSelected;
+
+        public string FullName { get; set; }
+        public string PersonnelNumber { get; set; }
+        public string Department { get; set; }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
+            }
+        }
+
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+    }
+
+    public class NormativeInstructionViewModel : System.ComponentModel.INotifyPropertyChanged
+    {
+        private bool _isSelected;
+
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Url { get; set; }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
+            }
+        }
+
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+    }
     #endregion
 }
