@@ -1,6 +1,10 @@
-﻿using System;
+﻿using Kotova.CommonClasses;
+using Microsoft.AspNetCore.SignalR.Client;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,11 +12,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using Microsoft.AspNetCore.SignalR.Client;
-using Newtonsoft.Json;
-using Kotova.CommonClasses;
-using MessageBox = System.Windows.MessageBox;
+using System.Windows.Media;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
 using Button = System.Windows.Controls.Button;
+using Color = System.Windows.Media.Color;
+using MessageBox = System.Windows.MessageBox;
 
 namespace Kotova.Test1.ClientSide.ChiefWPF
 {
@@ -37,6 +42,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         private readonly string urlSyncNames = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-names-with-db";
         private readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
         private readonly string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
+        private readonly string urlGetAllInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-all-instructions";
 
         // Collections for data binding
         public ObservableCollection<InstructionViewModel> Instructions { get; set; }
@@ -336,7 +342,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             }
         }
 
-        private void btnAddInstruction_Wpf_Click(object sender, RoutedEventArgs e)
+        private void btnClearForm_Wpf_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -528,81 +534,90 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                     string jwtToken = _loginForm._jwtToken;
                     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                    var response = await httpClient.GetAsync(urlSyncInstructions);
+                    var response = await httpClient.GetAsync(urlGetAllInstructions);
 
                     if (response.IsSuccessStatusCode)
                     {
                         string responseContent = await response.Content.ReadAsStringAsync();
 
-                        // Debug: Show what we received
-                        MessageBox.Show($"Server response length: {responseContent.Length} characters\nFirst 500 chars: {responseContent.Substring(0, Math.Min(500, responseContent.Length))}",
-                            "Debug: Server Response", MessageBoxButton.OK, MessageBoxImage.Information);
+                        // Check if response is empty
+                        if (string.IsNullOrWhiteSpace(responseContent))
+                        {
+                            Instructions.Clear();
+                            instructionsListView_Wpf.ItemsSource = Instructions;
+                            MessageBox.Show("Нет доступных инструктажей для отображения.", "Информация",
+                                MessageBoxButton.OK, MessageBoxImage.Information);
+                            return;
+                        }
 
-                        // Try to deserialize as the expected format first
                         try
                         {
-                            var result = JsonConvert.DeserializeObject<List<Instruction>>(responseContent);
+                            // Deserialize as the full instruction objects from get-all-instructions endpoint
+                            var serverResponse = JsonConvert.DeserializeObject<List<dynamic>>(responseContent);
 
-                            MessageBox.Show($"Deserialized {result?.Count ?? 0} instructions as Instruction objects",
-                                "Debug: Deserialization", MessageBoxButton.OK, MessageBoxImage.Information);
+                            // Clear existing instructions
+                            Instructions.Clear();
 
-                            if (result != null && result.Count > 0)
+                            // Convert server response to InstructionViewModel objects
+                            if (serverResponse != null && serverResponse.Count > 0)
                             {
-                                unplannedInstructions_global = result;
-
-                                // Update UI
-                                Instructions.Clear();
-                                foreach (var instruction in result)
+                                foreach (var item in serverResponse)
                                 {
-                                    Instructions.Add(new InstructionViewModel
+                                    var instruction = new InstructionViewModel
                                     {
-                                        Id = instruction.instruction_id,
-                                        Cause = instruction.cause_of_instruction ?? "No Cause",
-                                        Type = InstructionTypeToName(instruction.type_of_instruction),
-                                        StartDate = instruction.begin_date.ToString("dd.MM.yyyy") ?? "Не указано",
-                                        EndDate = instruction.end_date.ToString("dd.MM.yyyy") ?? "Не указано",
-                                        AssignedStatus = "Готов к назначению",
-                                        CompletedStatus = "Ожидает назначения"
-                                    });
+                                        Id = (int)item.instruction_id,
+                                        Type = GetInstructionTypeText((byte)item.type_of_instruction),
+                                        Cause = item.cause_of_instruction?.ToString() ?? "N/A",
+                                        StartDate = item.begin_date != null ?
+                                            DateTime.Parse(item.begin_date.ToString()).ToString("dd.MM.yyyy") : "N/A",
+                                        EndDate = item.end_date != null ?
+                                            DateTime.Parse(item.end_date.ToString()).ToString("dd.MM.yyyy") : "N/A",
+                                        AssignedStatus = GetAssignedStatusText(item),
+                                        CompletedStatus = GetCompletedStatusText(item)
+                                    };
+
+                                    // Apply styling and tags based on ChiefForm.cs logic
+                                    ApplyInstructionStyling(instruction, item);
+                                    if (instruction.Tag == "can_assign")
+                                    {
+                                        Instructions.Add(instruction);
+                                    }
                                 }
 
-                                MessageBox.Show($"Added {Instructions.Count} items to ObservableCollection",
-                                    "Debug: UI Update", MessageBoxButton.OK, MessageBoxImage.Information);
+                                // Update the ListView
+                                instructionsListView_Wpf.ItemsSource = Instructions;
                             }
                             else
                             {
-                                MessageBox.Show("Server returned empty list or null",
-                                    "Debug: Empty Result", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                instructionsListView_Wpf.ItemsSource = Instructions;
+                                MessageBox.Show("В базе данных нет неназначенных инструктажей для вашего отдела.", "Информация",
+                                    MessageBoxButton.OK, MessageBoxImage.Information);
                             }
+                            
                         }
                         catch (JsonException jsonEx)
                         {
-                            // If it fails, try deserializing as dynamic to see the actual structure
-                            try
-                            {
-                                var dynamicResult = JsonConvert.DeserializeObject(responseContent);
-                                MessageBox.Show($"JSON deserialization failed for Instruction type. Raw structure type: {dynamicResult?.GetType().Name}\nError: {jsonEx.Message}",
-                                    "Debug: JSON Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
-                            catch
-                            {
-                                MessageBox.Show($"Complete JSON parsing failure: {jsonEx.Message}\nResponse: {responseContent}",
-                                    "Debug: JSON Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                            }
+                            MessageBox.Show($"Ошибка при разборе ответа сервера: {jsonEx.Message}\n\nОтвет сервера: {responseContent.Substring(0, Math.Min(200, responseContent.Length))}",
+                                "Ошибка JSON", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else
                     {
-                        string errorMessage = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show($"Server error: Status {response.StatusCode}\nError: {errorMessage}",
-                            "Debug: Server Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        string errorContent = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка при загрузке инструктажей. Код статуса: {response.StatusCode}\nСообщение: {errorContent}",
+                            "Ошибка сервера", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
+            catch (HttpRequestException httpEx)
+            {
+                MessageBox.Show($"Ошибка сетевого подключения: {httpEx.Message}", "Ошибка сети",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             catch (Exception ex)
             {
-                MessageBox.Show($"Exception in LoadInstructionsFromDatabase: {ex.Message}\nStack: {ex.StackTrace}",
-                    "Debug: Exception", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Произошла неожиданная ошибка: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -626,96 +641,315 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         #endregion
 
         #region Helper Methods
-        private string InstructionTypeToName(byte instructionType)
+        private string GetAssignedStatusText(dynamic item)
         {
-            return instructionType switch
+            bool isAssigned = item.is_assigned_to_people != null && (bool)item.is_assigned_to_people;
+            return isAssigned ? "Назначен" : "Не назначен";
+        }
+
+        // Helper method to get completed status text with EXACT logic from ChiefForm.cs
+        private string GetCompletedStatusText(dynamic item)
+        {
+            bool isAssigned = item.is_assigned_to_people != null && (bool)item.is_assigned_to_people;
+            bool isPassedByEveryone = item.is_passed_by_everyone != null && (bool)item.is_passed_by_everyone;
+            byte instructionType = (byte)item.type_of_instruction;
+            bool isPassedByChief = item.is_passed_by_chief_unplanned_instr != null && (bool)item.is_passed_by_chief_unplanned_instr;
+
+            string completedText;
+
+            if (instructionType == 1) // Unplanned instruction
+            {
+                if (!isPassedByChief)
+                {
+                    completedText = "Ожидает прохождения начальником";
+                    // Note: In WPF, you would set background colors differently than WinForms
+                    // You could store additional properties in the ViewModel for styling
+                }
+                else if (!isAssigned)
+                {
+                    completedText = "Готов к назначению сотрудникам";
+                }
+                else
+                {
+                    completedText = isPassedByEveryone ? "Завершен всеми" : "В процессе выполнения";
+                }
+            }
+            else if (instructionType != 0) // Regular planned instruction that are not initial
+            {
+                if (!isAssigned)
+                {
+                    completedText = "Готов к назначению";
+                }
+                else
+                {
+                    completedText = isPassedByEveryone ? "Завершен всеми" : "В процессе";
+                }
+            }
+            else // Initial instructions (type 0)
+            {
+                // Handle initial instructions if needed
+                if (!isAssigned)
+                {
+                    completedText = "Готов к назначению";
+                }
+                else
+                {
+                    completedText = isPassedByEveryone ? "Завершен всеми" : "В процессе";
+                }
+            }
+
+            return completedText;
+        }
+
+        // Helper method to apply styling and tags based on ChiefForm.cs logic
+        private void ApplyInstructionStyling(InstructionViewModel instruction, dynamic item)
+        {
+            bool isAssigned = item.is_assigned_to_people != null && (bool)item.is_assigned_to_people;
+            bool isPassedByEveryone = item.is_passed_by_everyone != null && (bool)item.is_passed_by_everyone;
+            byte instructionType = (byte)item.type_of_instruction;
+            bool isPassedByChief = item.is_passed_by_chief_unplanned_instr != null && (bool)item.is_passed_by_chief_unplanned_instr;
+
+            if (instructionType == 1) // Unplanned instruction
+            {
+                if (!isPassedByChief)
+                {
+                    instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(240, 128, 128)); // LightCoral
+                    instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(139, 0, 0)); // DarkRed
+                    instruction.Tag = "cannot_assign";
+                }
+                else if (!isAssigned)
+                {
+                    // Note: Commented out in original ChiefForm.cs
+                    // instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(144, 238, 144)); // LightGreen
+                    // instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(0, 100, 0)); // DarkGreen
+                    instruction.Tag = "can_assign";
+                }
+                else
+                {
+                    if (isPassedByEveryone)
+                    {
+                        instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(173, 216, 230)); // LightBlue
+                        instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(0, 0, 139)); // DarkBlue
+                    }
+                    else
+                    {
+                        instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(255, 255, 224)); // LightYellow
+                        instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(255, 140, 0)); // DarkOrange
+                    }
+                    instruction.Tag = "in_progress";
+                }
+            }
+            else if (instructionType != 0) // Regular planned instruction that are not initial
+            {
+                if (!isAssigned)
+                {
+                    // Note: Commented out in original ChiefForm.cs
+                    // instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(144, 238, 144)); // LightGreen
+                    // instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(0, 100, 0)); // DarkGreen
+                    instruction.Tag = "can_assign";
+                }
+                else
+                {
+                    if (isPassedByEveryone)
+                    {
+                        instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(173, 216, 230)); // LightBlue
+                        instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(0, 0, 139)); // DarkBlue
+                    }
+                    else
+                    {
+                        instruction.BackgroundColor = new SolidColorBrush(Color.FromRgb(255, 255, 224)); // LightYellow
+                        instruction.ForegroundColor = new SolidColorBrush(Color.FromRgb(255, 140, 0)); // DarkOrange
+                    }
+                    instruction.Tag = "in_progress";
+                }
+            }
+            else // Initial instructions (type 0) - handle if needed
+            {
+                instruction.Tag = "initial_instruction";
+            }
+        }
+
+        // Helper method to get instruction type text
+        private string GetInstructionTypeText(byte typeId)
+        {
+            return typeId switch
             {
                 0 => "Вводный",
                 1 => "Внеплановый",
                 2 => "Первичный",
                 3 => "Повторный",
-                4 => "Повторный (для водителей)",
+                4 => "Внеочередной",
                 5 => "Целевой",
                 _ => "Неизвестный"
             };
         }
-        #endregion
 
-        #region Window Events
-        protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
+        #region View Models
+        public class InstructionViewModel : INotifyPropertyChanged
         {
-            try
+            private int _id;
+            private string _type;
+            private string _cause;
+            private string _startDate;
+            private string _endDate;
+            private string _assignedStatus;
+            private string _completedStatus;
+            private Brush _backgroundColor;
+            private Brush _foregroundColor;
+            private string _tag;
+
+            public int Id
             {
-                if (_connection != null)
+                get => _id;
+                set
                 {
-                    await _connection.StopAsync();
-                    await _connection.DisposeAsync();
-                    _connection = null;
+                    _id = value;
+                    OnPropertyChanged(nameof(Id));
                 }
             }
-            catch (Exception ex)
+
+            public string Type
             {
-                // Log error but don't prevent closing
-                Console.WriteLine($"Error closing SignalR connection: {ex.Message}");
+                get => _type;
+                set
+                {
+                    _type = value;
+                    OnPropertyChanged(nameof(Type));
+                }
             }
 
-            base.OnClosing(e);
+            public string Cause
+            {
+                get => _cause;
+                set
+                {
+                    _cause = value;
+                    OnPropertyChanged(nameof(Cause));
+                }
+            }
+
+            public string StartDate
+            {
+                get => _startDate;
+                set
+                {
+                    _startDate = value;
+                    OnPropertyChanged(nameof(StartDate));
+                }
+            }
+
+            public string EndDate
+            {
+                get => _endDate;
+                set
+                {
+                    _endDate = value;
+                    OnPropertyChanged(nameof(EndDate));
+                }
+            }
+
+            public string AssignedStatus
+            {
+                get => _assignedStatus;
+                set
+                {
+                    _assignedStatus = value;
+                    OnPropertyChanged(nameof(AssignedStatus));
+                }
+            }
+
+            public string CompletedStatus
+            {
+                get => _completedStatus;
+                set
+                {
+                    _completedStatus = value;
+                    OnPropertyChanged(nameof(CompletedStatus));
+                }
+            }
+
+            // New properties for styling (similar to ChiefForm.cs BackColor/ForeColor)
+            public Brush BackgroundColor
+            {
+                get => _backgroundColor ?? Brushes.Transparent;
+                set
+                {
+                    _backgroundColor = value;
+                    OnPropertyChanged(nameof(BackgroundColor));
+                }
+            }
+
+            public Brush ForegroundColor
+            {
+                get => _foregroundColor ?? Brushes.Black;
+                set
+                {
+                    _foregroundColor = value;
+                    OnPropertyChanged(nameof(ForegroundColor));
+                }
+            }
+
+            // Tag property for business logic (like "cannot_assign", "can_assign", etc.)
+            public string Tag
+            {
+                get => _tag;
+                set
+                {
+                    _tag = value;
+                    OnPropertyChanged(nameof(Tag));
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+        #endregion
+
+        public class PersonViewModel : System.ComponentModel.INotifyPropertyChanged
+        {
+            private bool _isSelected;
+
+            public string FullName { get; set; }
+            public string PersonnelNumber { get; set; }
+            public string Department { get; set; }
+
+            public bool IsSelected
+            {
+                get => _isSelected;
+                set
+                {
+                    _isSelected = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
+                }
+            }
+
+            public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        }
+
+        public class NormativeInstructionViewModel : System.ComponentModel.INotifyPropertyChanged
+        {
+            private bool _isSelected;
+
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string Url { get; set; }
+
+            public bool IsSelected
+            {
+                get => _isSelected;
+                set
+                {
+                    _isSelected = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
+                }
+            }
+
+            public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
         }
         #endregion
     }
-
-    #region View Models
-    public class InstructionViewModel
-    {
-        public int Id { get; set; }
-        public string Cause { get; set; }
-        public string Type { get; set; }
-        public string StartDate { get; set; }
-        public string EndDate { get; set; }
-        public string AssignedStatus { get; set; }
-        public string CompletedStatus { get; set; }
-    }
-
-    public class PersonViewModel : System.ComponentModel.INotifyPropertyChanged
-    {
-        private bool _isSelected;
-
-        public string FullName { get; set; }
-        public string PersonnelNumber { get; set; }
-        public string Department { get; set; }
-
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set
-            {
-                _isSelected = value;
-                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
-            }
-        }
-
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-    }
-
-    public class NormativeInstructionViewModel : System.ComponentModel.INotifyPropertyChanged
-    {
-        private bool _isSelected;
-
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Url { get; set; }
-
-        public bool IsSelected
-        {
-            get => _isSelected;
-            set
-            {
-                _isSelected = value;
-                PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsSelected)));
-            }
-        }
-
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-    }
-    #endregion
 }

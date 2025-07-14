@@ -191,8 +191,7 @@
                                 Height="80" 
                                 AcceptsReturn="True"
                                 VerticalScrollBarVisibility="Auto"
-                                Margin="0,0,0,20"
-                                Text="Работа в зоне железнодорожных путей СТО-357"/>
+                                Margin="0,0,0,20"/>
 
                         <!-- End Date -->
                         <TextBlock x:Name="label7_Wpf" Text="📅 Дата окончания (включительно):" 
@@ -213,6 +212,8 @@
                         <TextBlock Text="💡 После создания инструктажа используйте кнопку 'Назначить инструктаж сотрудникам' для назначения сотрудникам и выбора нормативных инструкций." 
                                   Style="{StaticResource HeaderTextStyle}" 
                                   FontSize="12" Foreground="#1976D2" Margin="0,15,0,0" TextWrapping="Wrap"/>
+                        <Button x:Name="btnClearForm_Wpf" Background="#FFFDE7"  Content="🧹 Очистить форму для добавления нового инструктажа" Margin="0,20,0,0"
+                            Click="btnClearForm_Wpf_Click" Height="46"/>
 
                     </StackPanel>
 
@@ -232,18 +233,16 @@
                         <!-- Management Buttons -->
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
                             <Button x:Name="btnRefreshInstructions_Wpf" Content="🔄 Обновить" 
-                                   Style="{StaticResource ButtonStyle}" Margin="0,0,10,0" Click="btnRefreshInstructions_Wpf_Click"/>
-                            <Button x:Name="btnAddInstruction_Wpf" Content="➕ Добавить" 
-                                   Style="{StaticResource SuccessButtonStyle}" Margin="0,0,10,0" Click="btnAddInstruction_Wpf_Click"/>
+                                   Style="{StaticResource ButtonStyle}" Margin="5,0,5,0" Click="btnRefreshInstructions_Wpf_Click"/>
                             <Button x:Name="btnEditInstruction_Wpf" Content="✏️ Редактировать" 
-                                   Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0" Click="btnEditInstruction_Wpf_Click"/>
+                                   Style="{StaticResource ActionButtonStyle}" Margin="0,0,25,0" Click="btnEditInstruction_Wpf_Click"/>
                             <Button x:Name="btnDeleteInstruction_Wpf" Content="🗑️ Удалить" 
                                    Style="{StaticResource DangerButtonStyle}" Click="btnDeleteInstruction_Wpf_Click"/>
                         </StackPanel>
 
                         <!-- Instructions ListView -->
                         <ListView x:Name="instructionsListView_Wpf" Grid.Row="2" 
-                                 Style="{StaticResource ListViewStyle}" SelectionChanged="instructionsListView_Wpf_SelectionChanged">
+                                 Style="{StaticResource ListViewStyle}" SelectionChanged="instructionsListView_Wpf_SelectionChanged" Margin="5,5,5,0">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="ID" Width="50" DisplayMemberBinding="{Binding Id}"/>
@@ -260,7 +259,7 @@
                         <!-- Action Buttons -->
                         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,15,0,0">
                             <Button x:Name="assignInstructionToGroupsButton_Wpf" Content="👥 Назначить инструктаж сотрудникам" 
-                                   Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0" Click="assignInstructionToGroupsButton_Wpf_Click"/>
+                                   Style="{StaticResource ActionButtonStyle}" Click="assignInstructionToGroupsButton_Wpf_Click" Height="51" Width="677"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
