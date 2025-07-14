@@ -282,33 +282,31 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         {
             try
             {
-                // Prepare update data
-                var updateData = new
+                // Create the DTO that matches the server's expected InstructionUpdateDto
+                var instructionDto = new InstructionUpdateDto
                 {
                     CauseOfInstruction = InstructionTextBox_Wpf.Text,
                     EndDate = datePickerEnd_Wpf.SelectedDate.Value,
-                    TypeOfInstruction = (byte)(typeOfInstructionListBox_Wpf.SelectedIndex + 1),
-                    FilePaths = new List<string>() // Add file paths if needed
+                    TypeOfInstruction = (byte)(typeOfInstructionListBox_Wpf.SelectedIndex + 2)
                 };
 
-                var json = JsonConvert.SerializeObject(updateData);
+                var json = JsonConvert.SerializeObject(instructionDto);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 using (var client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _loginForm._jwtToken);
 
-                    var response = await client.PutAsync($"{urleditInstruction}/{_editingInstruction.Id}", content);
+                    // Fixed URL to match the server endpoint
+                    var response = await client.PutAsync($"{ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT}/update-instruction/{_editingInstruction.Id}", content);
 
                     if (response.IsSuccessStatusCode)
                     {
                         MessageBox.Show("Инструктаж успешно обновлен!", "Успех",
                             MessageBoxButton.OK, MessageBoxImage.Information);
-
                         // Reset edit mode
                         _isEditMode = false;
                         _editingInstruction = null;
-
                         // Clear form and refresh list
                         ClearForm();
                         await LoadInstructionsFromDatabase();
@@ -482,7 +480,12 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                         MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
-
+                if (selectedInstruction.Type == "Внеплановый")
+                {
+                    MessageBox.Show("Внеплановые инструктажи не могут быть редактированы!", "Информация",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
                 // Fill the form with selected instruction data for editing
                 InstructionTextBox_Wpf.Text = selectedInstruction.Cause;
 
@@ -492,7 +495,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                 {
                     "Первичный" => 0,
                     "Повторный" => 1,
-                    "Повторный (для водителей)" => 2,
+                    "Повторный (Для водителей)" => 2,
                     "Целевой" => 3,
                     _ => -1
                 };
@@ -944,7 +947,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                 1 => "Внеплановый",
                 2 => "Первичный",
                 3 => "Повторный",
-                4 => "Внеочередной",
+                4 => "Повторный (Для водителей)",
                 5 => "Целевой",
                 _ => "Неизвестный"
             };
