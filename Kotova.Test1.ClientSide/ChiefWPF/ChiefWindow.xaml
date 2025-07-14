@@ -212,7 +212,7 @@
                         <TextBlock Text="💡 После создания инструктажа используйте кнопку 'Назначить инструктаж сотрудникам' для назначения сотрудникам и выбора нормативных инструкций." 
                                   Style="{StaticResource HeaderTextStyle}" 
                                   FontSize="12" Foreground="#1976D2" Margin="0,15,0,0" TextWrapping="Wrap"/>
-                        <Button x:Name="btnClearForm_Wpf" Background="#FFFDE7"  Content="🧹 Очистить форму для добавления нового инструктажа" Margin="0,20,0,0"
+                        <Button x:Name="btnClearForm_Wpf" Background="#FFFDE7"  Content="🧹 Очистить форму создания инструктажа" Margin="0,20,0,0"
                             Click="btnClearForm_Wpf_Click" Height="46"/>
 
                     </StackPanel>

@@ -32,6 +32,9 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         private HubConnection _connection;
         private string _userName;
 
+        private bool _isEditMode = false;
+        private InstructionViewModel _editingInstruction = null;
+
         // URLs using ConfigurationClass instead of hardcoded values
         private readonly string urlTest = ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/test/TestEndpoint";
         private readonly string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/test-task";
@@ -43,6 +46,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         private readonly string urlSubmitInstructionToPeople = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/send-instruction-to-names";
         private readonly string urlSyncInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/sync-instructions-with-db";
         private readonly string urlGetAllInstructions = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-all-instructions";
+        private readonly string urleditInstruction = ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/update-instruction";
 
         // Collections for data binding
         public ObservableCollection<InstructionViewModel> Instructions { get; set; }
@@ -222,6 +226,131 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         #region Event Handlers - Instruction Creation Tab
         private async void buttonCreateInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                // Validate input
+                if (string.IsNullOrWhiteSpace(InstructionTextBox_Wpf.Text))
+                {
+                    MessageBox.Show("Введите причину инструктажа.", "Предупреждение",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (typeOfInstructionListBox_Wpf.SelectedIndex == -1)
+                {
+                    MessageBox.Show("Выберите тип инструктажа.", "Предупреждение",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (datePickerEnd_Wpf.SelectedDate == null)
+                {
+                    MessageBox.Show("Выберите дату окончания инструктажа.", "Предупреждение",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Disable button during processing
+                buttonCreateInstruction_Wpf.IsEnabled = false;
+
+                if (_isEditMode)
+                {
+                    // Update existing instruction
+                    buttonCreateInstruction_Wpf.Content = "⏳ Обновление...";
+                    await UpdateInstruction();
+                }
+                else
+                {
+                    // Create new instruction
+                    buttonCreateInstruction_Wpf.Content = "⏳ Создание...";
+                    await CreateNewInstruction();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                buttonCreateInstruction_Wpf.IsEnabled = true;
+                ResetButtonStates();
+            }
+        }
+
+        private async Task UpdateInstruction()
+        {
+            try
+            {
+                // Prepare update data
+                var updateData = new
+                {
+                    CauseOfInstruction = InstructionTextBox_Wpf.Text,
+                    EndDate = datePickerEnd_Wpf.SelectedDate.Value,
+                    TypeOfInstruction = (byte)(typeOfInstructionListBox_Wpf.SelectedIndex + 1),
+                    FilePaths = new List<string>() // Add file paths if needed
+                };
+
+                var json = JsonConvert.SerializeObject(updateData);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _loginForm._jwtToken);
+
+                    var response = await client.PutAsync($"{urleditInstruction}/{_editingInstruction.Id}", content);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Инструктаж успешно обновлен!", "Успех",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        // Reset edit mode
+                        _isEditMode = false;
+                        _editingInstruction = null;
+
+                        // Clear form and refresh list
+                        ClearForm();
+                        await LoadInstructionsFromDatabase();
+                    }
+                    else
+                    {
+                        string errorMessage = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show($"Ошибка при обновлении инструктажа. Status: {response.StatusCode}. Error: {errorMessage}",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка при обновлении инструктажа: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ResetButtonStates()
+        {
+            // Reset button states to default
+            buttonCreateInstruction_Wpf.Content = "➕ Внести новый инструктаж";
+            buttonCreateInstruction_Wpf.ToolTip = "Создать новый инструктаж";
+
+            btnClearForm_Wpf.Content = "🧹 Очистить форму создания инструктажа";
+            btnClearForm_Wpf.ToolTip = "Очистить все поля формы";
+        }
+
+        private void ClearForm()
+        {
+            // Clear all form fields
+            InstructionTextBox_Wpf.Text = "";
+            typeOfInstructionListBox_Wpf.SelectedIndex = -1;
+            datePickerEnd_Wpf.SelectedDate = DateTime.Now.AddDays(1);
+
+            // Focus on the instruction text box
+            InstructionTextBox_Wpf.Focus();
+        }
+
+        private async Task CreateNewInstruction()
+        {
             buttonCreateInstruction_Wpf.IsEnabled = false;
             try
             {
@@ -342,28 +471,6 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             }
         }
 
-        private void btnClearForm_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // Clear the form for new instruction
-                InstructionTextBox_Wpf.Text = "";
-                typeOfInstructionListBox_Wpf.SelectedIndex = -1;
-                datePickerEnd_Wpf.SelectedDate = DateTime.Now.AddDays(1);
-
-                // Focus on the instruction text box
-                InstructionTextBox_Wpf.Focus();
-
-                MessageBox.Show("Форма очищена для создания нового инструктажа.", "Информация",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при подготовке формы: {ex.Message}", "Ошибка",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private async void btnEditInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -397,12 +504,71 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                     datePickerEnd_Wpf.SelectedDate = endDate;
                 }
 
-                MessageBox.Show($"Данные инструктажа '{selectedInstruction.Cause}' загружены в форму для редактирования. Внесите изменения и нажмите 'Внести новый инструктаж'.",
+                // Set edit mode and change button states
+                _isEditMode = true;
+                _editingInstruction = selectedInstruction;
+
+                // Change button appearance and behavior
+                buttonCreateInstruction_Wpf.Content = "💾 Сохранить изменения";
+                buttonCreateInstruction_Wpf.ToolTip = "Сохранить изменения в инструктаже";
+
+                btnClearForm_Wpf.Content = "↩️ Отменить редактирование";
+                btnClearForm_Wpf.ToolTip = "Отменить редактирование и очистить форму";
+
+                MessageBox.Show($"Данные инструктажа '{selectedInstruction.Cause}' загружены в форму для редактирования. Внесите изменения и нажмите 'Сохранить изменения'.",
                     "Редактирование", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке данных для редактирования: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnClearForm_Wpf_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_isEditMode)
+                {
+                    // This is now "Undo Edit" functionality
+                    var result = MessageBox.Show("Вы уверены, что хотите отменить редактирование? Все несохраненные изменения будут потеряны.",
+                        "Отмена редактирования", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        // Reset edit mode
+                        _isEditMode = false;
+                        _editingInstruction = null;
+
+                        // Reset button states
+                        ResetButtonStates();
+
+                        // Clear the form
+                        ClearForm();
+                    }
+                }
+                else
+                {
+                    // Normal "Add New" functionality - clear form for new instruction
+                    // If we're in edit mode, reset it first
+                    if (_isEditMode)
+                    {
+                        _isEditMode = false;
+                        _editingInstruction = null;
+                        ResetButtonStates();
+                    }
+
+                    // Clear the form for new instruction
+                    ClearForm();
+
+                    MessageBox.Show("Форма очищена для создания нового инструктажа.", "Информация",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при подготовке формы: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
