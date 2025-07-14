@@ -1,8 +1,9 @@
-﻿<Window x:Class="Kotova.Test1.ClientSide.ChiefWPF.ChiefWindow"
+﻿<Window x:Class="Kotova.Test1.ClientSide.ChiefWPF.ChiefWindowFresh"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:Kotova.Test1.ClientSide.ChiefWPF"
         mc:Ignorable="d"
         Title="ChiefOfDepartment" Height="845" Width="1102"
@@ -92,21 +93,6 @@
             <Setter Property="GridViewColumnHeader.BorderBrush" Value="#D8DEE9"/>
         </Style>
 
-        <Style x:Key="DataGridStyle" TargetType="DataGrid">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#D8DEE9"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="RowBackground" Value="White"/>
-            <Setter Property="AlternatingRowBackground" Value="#F8F9FA"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="#ECEFF4"/>
-            <Setter Property="AutoGenerateColumns" Value="False"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="SelectionMode" Value="Single"/>
-            <Setter Property="HeadersVisibility" Value="Column"/>
-        </Style>
-
         <Style x:Key="GroupBoxStyle" TargetType="GroupBox">
             <Setter Property="Margin" Value="5"/>
             <Setter Property="Padding" Value="10"/>
@@ -128,14 +114,6 @@
             <Setter Property="Padding" Value="5"/>
             <Setter Property="BorderBrush" Value="#D8DEE9"/>
             <Setter Property="Background" Value="White"/>
-        </Style>
-
-        <Style x:Key="TreeViewStyle" TargetType="TreeView">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="#D8DEE9"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="5"/>
-            <Setter Property="Margin" Value="5"/>
         </Style>
     </Window.Resources>
 
@@ -221,8 +199,6 @@
                                   Style="{StaticResource HeaderTextStyle}" Margin="0,0,0,10"/>
                         <DatePicker x:Name="datePickerEnd_Wpf" 
                                    Style="{StaticResource DatePickerStyle}" 
-                                   SelectedDate="{x:Static sys:DateTime.Now}"
-                                   xmlns:sys="clr-namespace:System;assembly=mscorlib"
                                    Margin="0,0,0,30"/>
 
                         <!-- Create Button -->
@@ -262,7 +238,7 @@
                             <Button x:Name="btnEditInstruction_Wpf" Content="✏️ Редактировать" 
                                    Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0" Click="btnEditInstruction_Wpf_Click"/>
                             <Button x:Name="btnDeleteInstruction_Wpf" Content="🗑️ Удалить" 
-                                   Style="{StaticResource DangerButtonStyle}"  Click="btnDeleteInstruction_Wpf_Click"/>
+                                   Style="{StaticResource DangerButtonStyle}" Click="btnDeleteInstruction_Wpf_Click"/>
                         </StackPanel>
 
                         <!-- Instructions ListView -->
@@ -290,138 +266,25 @@
                 </Grid>
             </TabItem>
 
-            <!-- Tab 2: Соответствие обучения -->
-            <TabItem Header="📊 Соответствие обучения" Style="{StaticResource TabItemStyle}">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+            <!-- Additional tabs would go here -->
 
-                    <!-- Header -->
-                    <TextBlock Grid.Row="0" Text="📊 Отчет о соответствии обучения" 
-                              Style="{StaticResource HeaderTextStyle}" FontSize="16" Margin="0,0,0,15"/>
-
-                    <!-- Passed Instructions -->
-                    <GroupBox Grid.Row="1" Header="✅ Пройденные инструктажи" Style="{StaticResource GroupBoxStyle}" Margin="0,0,0,10">
-                        <DataGrid x:Name="dataGridViewPassedInstructions_Wpf" Style="{StaticResource DataGridStyle}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Имя" Binding="{Binding Name}" Width="200"/>
-                                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="150"/>
-                                <DataGridTextColumn Header="Дата прохождения" Binding="{Binding DatePassed}" Width="150"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </GroupBox>
-
-                    <!-- Not Passed Instructions -->
-                    <GroupBox Grid.Row="2" Header="❌ Не пройденные инструктажи" Style="{StaticResource GroupBoxStyle}" Margin="0,10,0,0">
-                        <DataGrid x:Name="dataGridViewPeopleThatNotPassedInstr_Wpf" Style="{StaticResource DataGridStyle}">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Имя" Binding="{Binding Name}" Width="200"/>
-                                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="150"/>
-                                <DataGridTextColumn Header="Требуется до" Binding="{Binding RequiredBy}" Width="150"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </GroupBox>
-
-                    <!-- Action Buttons -->
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,15,0,0">
-                        <Button x:Name="refreshReportButton_Wpf" Content="🔄 Обновить отчет" 
-                               Style="{StaticResource ButtonStyle}" Margin="0,0,10,0" Click="refreshReportButton_Wpf_Click"/>
-                        <Button x:Name="exportReportButton_Wpf" Content="📄 Экспорт в Excel" 
-                               Style="{StaticResource ActionButtonStyle}" Click="exportReportButton_Wpf_Click"/>
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-
-            <!-- Tab 3: Журнал инструктажей сотрудника -->
-            <TabItem Header="📋 Журнал инструктажей" Style="{StaticResource TabItemStyle}">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Header -->
-                    <TextBlock Grid.Row="0" Text="📋 Журнал инструктажей сотрудника" 
-                              Style="{StaticResource HeaderTextStyle}" FontSize="16" Margin="0,0,0,15"/>
-
-                    <!-- TreeView for instruction selection -->
-                    <TreeView x:Name="instructionReportTreeView_Wpf" Grid.Row="1" 
-                             Style="{StaticResource TreeViewStyle}" SelectedItemChanged="instructionReportTreeView_Wpf_SelectedItemChanged"/>
-
-                    <!-- Help text -->
-                    <TextBlock Grid.Row="2" Text="💡 Выберите тип и причину инструктажа для просмотра журнала" 
-                              Style="{StaticResource HeaderTextStyle}" FontSize="12" Foreground="#1976D2" Margin="0,15,0,0"/>
-                </Grid>
-            </TabItem>
-
-            <!-- Tab 4: Прохождение инструктажей -->
-            <TabItem Header="🎓 Прохождение инструктажей" Style="{StaticResource TabItemStyle}">
-                <Grid Margin="20">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Header and Info -->
-                    <Border Grid.Row="0" Background="#E3F2FD" BorderBrush="#2196F3" BorderThickness="1" CornerRadius="5" Padding="15" Margin="0,0,0,20">
-                        <StackPanel>
-                            <TextBlock Text="🎓 Прохождение внеплановых инструктажей" 
-                                      Style="{StaticResource HeaderTextStyle}" FontSize="16" Margin="0,0,0,10"/>
-                            <TextBlock Text="Данный раздел позволяет начальнику отдела проходить внеплановые инструктажи перед их назначением сотрудникам." 
-                                      FontSize="12" Foreground="#1976D2" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Sync Button -->
-                    <Button Grid.Row="1" x:Name="buttonSyncManualyInstrWithDB_Wpf" 
-                           Content="🔄 Синхронизировать инструктажи с Базой Данных" 
-                           Style="{StaticResource ButtonStyle}" HorizontalAlignment="Left" Width="400" Margin="0,0,0,20" Click="buttonSyncManualyInstrWithDB_Wpf_Click"/>
-
-                    <!-- Instructions List -->
-                    <GroupBox Grid.Row="2" Header="📋 Список неплановых инструктажей" Style="{StaticResource GroupBoxStyle}">
-                        <ListBox x:Name="ListOfUnplannedInstructions_Wpf" 
-                                Style="{StaticResource ListBoxStyle}" Margin="0" SelectionChanged="ListOfUnplannedInstructions_Wpf_SelectionChanged"/>
-                    </GroupBox>
-                </Grid>
-            </TabItem>
-
-            <!-- Additional tabs can be added here following the same pattern -->
         </TabControl>
 
         <!-- Footer with Tasks -->
         <Border Grid.Row="2" Background="#ECEFF4" Padding="10" BorderBrush="#D8DEE9" BorderThickness="0,1,0,0">
-            <Grid Height="120">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <Grid Height="60">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Tasks Label -->
-                <TextBlock Grid.Row="0" Grid.Column="0" x:Name="LabelTray_Wpf" Text="📋 Список задач:" 
-                          Style="{StaticResource HeaderTextStyle}" HorizontalAlignment="Left"/>
+                <TextBlock Grid.Column="0" x:Name="LabelTray_Wpf" Text="📋 Статус: Готов к работе" 
+                          Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center"/>
 
-                <!-- Tasks List -->
-                <ListBox Grid.Row="1" Grid.Column="0" x:Name="TrayOfTasksList_Wpf" 
-                        Style="{StaticResource ListBoxStyle}" Margin="0,5,10,5"/>
-
-                <!-- Task Buttons -->
-                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center">
-                    <Button x:Name="RefreshTasksButton_Wpf" Content="🔄 Обновить задачи" 
-                           Style="{StaticResource ButtonStyle}" Width="200" Margin="0,0,0,10" Click="RefreshTasksButton_Wpf_Click"/>
-                    <Button x:Name="button1_Wpf" Content="✅ Задание выполнено" 
-                           Style="{StaticResource ActionButtonStyle}" Width="200" Click="button1_Wpf_Click"/>
-                </StackPanel>
+                <!-- Action Button -->
+                <Button Grid.Column="1" x:Name="RefreshButton_Wpf" Content="🔄 Обновить" 
+                       Style="{StaticResource ButtonStyle}" VerticalAlignment="Center" Click="RefreshButton_Wpf_Click"/>
             </Grid>
         </Border>
     </Grid>

@@ -1,29 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
+using Kotova.CommonClasses;
 using MessageBox = System.Windows.MessageBox;
 
 namespace Kotova.Test1.ClientSide.ChiefWPF
 {
     /// <summary>
-    /// Interaction logic for ChiefWindow.xaml
+    /// Interaction logic for ChiefWindowFresh.xaml
     /// </summary>
-    public partial class ChiefWindow : Window
+    public partial class ChiefWindowFresh : Window
     {
         // Fields from original ChiefForm.cs
         private Login_Russian _loginForm;
@@ -34,43 +28,34 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         private readonly string urlTaskTest = "https://localhost:7048/api/TestTasks/test-task";
         private readonly string urlCreateInstruction = "https://localhost:7048/api/instruction/create-custom-instruction";
         private readonly string urlGetInstructionsByDepartment = "https://localhost:7048/api/instruction/get-instructions-by-department";
-        private readonly string urlDownloadInstructionsForUser = "https://localhost:7048/api/instruction/download-instructions-for-user";
-        private readonly string urlMarkInstructionAsPassed = "https://localhost:7048/api/instruction/mark-instruction-as-passed-by-personnel";
         private readonly string urlGetAllUnplannedInstructions = "https://localhost:7048/api/instruction/get-all-unplanned-instructions";
-        private readonly string urlGetInstructionById = "https://localhost:7048/api/instruction/get-instruction-by-id";
         private readonly string urlSkipUnplannedInstruction = "https://localhost:7048/api/instruction/skip-unplanned-instruction-for-personnel";
 
         // Collections for data binding
         public ObservableCollection<InstructionViewModel> Instructions { get; set; }
-        public ObservableCollection<TaskViewModel> Tasks { get; set; }
-        public ObservableCollection<UnplannedInstructionViewModel> UnplannedInstructions { get; set; }
 
-        public ChiefWindow()
+        public ChiefWindowFresh()
         {
             InitializeComponent();
             InitializeCollections();
-            InitializeSignalR();
 
             // Set default end date to tomorrow
             datePickerEnd_Wpf.SelectedDate = DateTime.Now.AddDays(1);
         }
 
-        public ChiefWindow(Login_Russian loginForm) : this()
+        public ChiefWindowFresh(Login_Russian loginForm) : this()
         {
             _loginForm = loginForm;
-            usernameLabel_Wpf.Text = loginForm.UsernameTextBox.Text;
+            usernameLabel_Wpf.Text = loginForm.LoginTextBox.Text;
+            InitializeSignalR();
         }
 
         private void InitializeCollections()
         {
             Instructions = new ObservableCollection<InstructionViewModel>();
-            Tasks = new ObservableCollection<TaskViewModel>();
-            UnplannedInstructions = new ObservableCollection<UnplannedInstructionViewModel>();
 
             // Set data context for binding
             instructionsListView_Wpf.ItemsSource = Instructions;
-            TrayOfTasksList_Wpf.ItemsSource = Tasks;
-            ListOfUnplannedInstructions_Wpf.ItemsSource = UnplannedInstructions;
         }
 
         private async void InitializeSignalR()
@@ -90,9 +75,6 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                     {
                         MessageBox.Show($"Новая задача: {message}", "Уведомление о задаче",
                             MessageBoxButton.OK, MessageBoxImage.Information);
-
-                        // Refresh tasks list
-                        _ = RefreshTasksAsync();
                     });
                 });
 
@@ -122,17 +104,9 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         {
             if (ChiefTabControl_Wpf.SelectedIndex == 0) // Создание инструктажей tab
             {
-                await SyncManuallyInstrWithDBInternal();
-            }
-            else if (ChiefTabControl_Wpf.SelectedIndex == 3) // Прохождение инструктажей tab
-            {
-                await SyncManuallyInstrWithDBInternal();
+                await LoadInstructionsAsync();
             }
         }
-
-        #endregion
-
-        #region Tab 1: Создание инструктажей - Event Handlers
 
         private async void buttonCreateInstruction_Wpf_Click(object sender, RoutedEventArgs e)
         {
@@ -198,7 +172,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                     "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 // Refresh the instructions list
-                await SyncManuallyInstrWithDBInternal();
+                await LoadInstructionsAsync();
             }
             catch (Exception ex)
             {
@@ -213,7 +187,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
         private async void btnRefreshInstructions_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            await SyncManuallyInstrWithDBInternal();
+            await LoadInstructionsAsync();
         }
 
         private void btnAddInstruction_Wpf_Click(object sender, RoutedEventArgs e)
@@ -260,7 +234,6 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    // Implementation for delete instruction API call would go here
                     MessageBox.Show("Функция удаления будет реализована в следующей версии.",
                         "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -278,8 +251,19 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             {
                 try
                 {
-                    // Open the InstructionAssignmentManager window
-                    var assignmentWindow = new InstructionAssignmentManager(_loginForm._jwtToken, _loginForm.GetCurrentUserRole());
+                    // Create empty collections for the constructor parameters
+                    var employees = new List<EmployeeInfo>();
+                    var normativeInstructions = new List<NormativeInstructionInfo>();
+
+                    // Open the InstructionAssignmentManager window with required parameters
+                    var assignmentWindow = new InstructionAssignmentManager(
+                        selectedInstruction.Cause,
+                        employees,
+                        normativeInstructions,
+                        _loginForm._jwtToken,
+                        "assignment-endpoint",
+                        1 // instruction type
+                    );
                     assignmentWindow.Show();
                 }
                 catch (Exception ex)
@@ -304,104 +288,28 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             assignInstructionToGroupsButton_Wpf.IsEnabled = hasSelection;
         }
 
-        #endregion
-
-        #region Tab 2: Соответствие обучения - Event Handlers
-
-        private async void refreshReportButton_Wpf_Click(object sender, RoutedEventArgs e)
+        private async void RefreshButton_Wpf_Click(object sender, RoutedEventArgs e)
         {
-            await RefreshComplianceReport();
-        }
-
-        private void exportReportButton_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Функция экспорта в Excel будет реализована в следующей версии.",
-                "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        #endregion
-
-        #region Tab 3: Журнал инструктажей - Event Handlers
-
-        private void instructionReportTreeView_Wpf_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            // Handle tree view selection for instruction report
-            if (e.NewValue is TreeViewItem selectedItem)
-            {
-                MessageBox.Show($"Выбран элемент: {selectedItem.Header}",
-                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        #endregion
-
-        #region Tab 4: Прохождение инструктажей - Event Handlers
-
-        private async void buttonSyncManualyInstrWithDB_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            await SyncManuallyInstrWithDBInternal();
-        }
-
-        private async void ListOfUnplannedInstructions_Wpf_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ListOfUnplannedInstructions_Wpf.SelectedItem is UnplannedInstructionViewModel selectedInstruction)
-            {
-                // Show instruction details or handle selection
-                var result = MessageBox.Show($"Хотите пропустить инструктаж '{selectedInstruction.DisplayText}'?",
-                    "Прохождение инструктажа", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    await SkipUnplannedInstruction(selectedInstruction.Id);
-                }
-            }
-        }
-
-        #endregion
-
-        #region Footer Tasks - Event Handlers
-
-        private async void RefreshTasksButton_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            await RefreshTasksAsync();
-        }
-
-        private async void button1_Wpf_Click(object sender, RoutedEventArgs e)
-        {
-            if (TrayOfTasksList_Wpf.SelectedItem is TaskViewModel selectedTask)
-            {
-                var result = MessageBox.Show($"Отметить задачу '{selectedTask.Description}' как выполненную?",
-                    "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    await CompleteTask(selectedTask.Id);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Выберите задачу для отметки как выполненная.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            await LoadInstructionsAsync();
         }
 
         #endregion
 
         #region Helper Methods
 
-        private async Task SyncManuallyInstrWithDBInternal()
+        private async Task LoadInstructionsAsync()
         {
             try
             {
                 // Clear existing instructions
                 Instructions.Clear();
-                UnplannedInstructions.Clear();
 
                 // Load instructions by department
-                if (_loginForm?.GetCurrentUserDepartmentId() != null)
+                if (_loginForm?.GetDepartmentIdFromToken(_loginForm._jwtToken) != -1)
                 {
-                    string departmentUrl = $"{urlGetInstructionsByDepartment}?departmentId={_loginForm.GetCurrentUserDepartmentId()}";
-                    var instructionsResponse = await Test.connectionToUrlGetWithReturn(departmentUrl, _loginForm._jwtToken);
+                    int departmentId = _loginForm.GetDepartmentIdFromToken(_loginForm._jwtToken);
+                    string departmentUrl = $"{urlGetInstructionsByDepartment}?departmentId={departmentId}";
+                    var instructionsResponse = await ConnectionToUrlGetWithReturn(departmentUrl, _loginForm._jwtToken);
 
                     if (!string.IsNullOrEmpty(instructionsResponse))
                     {
@@ -421,106 +329,65 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке инструктажей: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
-                // Load unplanned instructions
-                var unplannedResponse = await Test.connectionToUrlGetWithReturn(urlGetAllUnplannedInstructions, _loginForm._jwtToken);
-                if (!string.IsNullOrEmpty(unplannedResponse))
+        private int GetPersonnelIdFromToken(string jwtToken)
+        {
+            if (string.IsNullOrEmpty(jwtToken))
+                return -1;
+
+            try
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(jwtToken) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return -1;
+
+                // Look for personnel ID claim
+                var personnelIdClaim = jsonToken.Claims.FirstOrDefault(claim =>
+                    claim.Type == "PersonnelId" ||
+                    claim.Type == "personnel_id");
+
+                if (personnelIdClaim != null && int.TryParse(personnelIdClaim.Value, out int personnelId))
                 {
-                    var unplannedInstructions = JsonConvert.DeserializeObject<List<dynamic>>(unplannedResponse);
-                    foreach (var instr in unplannedInstructions)
+                    return personnelId;
+                }
+
+                return -1;
+            }
+            catch (Exception)
+            {
+                return -1; // Return -1 for any parsing errors
+            }
+        }
+
+        // Helper method to replace Test.connectionToUrlGetWithReturn
+        private async Task<string> ConnectionToUrlGetWithReturn(string url, string token)
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                    HttpResponseMessage response = await client.GetAsync(url);
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        UnplannedInstructions.Add(new UnplannedInstructionViewModel
-                        {
-                            Id = instr.instruction_id,
-                            DisplayText = $"ID: {instr.instruction_id} - {instr.cause_of_instruction}"
-                        });
+                        return await response.Content.ReadAsStringAsync();
                     }
+                    return null;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show($"Ошибка при синхронизации с базой данных: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task RefreshComplianceReport()
-        {
-            try
-            {
-                // This would load compliance data from the API
-                // For now, show placeholder message
-                MessageBox.Show("Функция отчета о соответствии обучения будет реализована в следующей версии.",
-                    "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при обновлении отчета: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task RefreshTasksAsync()
-        {
-            try
-            {
-                Tasks.Clear();
-
-                var tasksResponse = await Test.connectionToUrlGetWithReturn(urlTaskTest, _loginForm._jwtToken);
-                if (!string.IsNullOrEmpty(tasksResponse))
-                {
-                    var tasks = JsonConvert.DeserializeObject<List<dynamic>>(tasksResponse);
-                    foreach (var task in tasks)
-                    {
-                        Tasks.Add(new TaskViewModel
-                        {
-                            Id = task.id ?? 0,
-                            Description = task.description ?? "Без описания",
-                            Status = task.status ?? "Новая"
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при обновлении задач: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task CompleteTask(int taskId)
-        {
-            try
-            {
-                // Implementation for completing task would go here
-                MessageBox.Show($"Задача {taskId} отмечена как выполненная.",
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                await RefreshTasksAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при выполнении задачи: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private async Task SkipUnplannedInstruction(int instructionId)
-        {
-            try
-            {
-                string url = $"{urlSkipUnplannedInstruction}?instructionId={instructionId}&personnelId={_loginForm.GetCurrentUserPersonnelId()}";
-                var response = await Test.connectionToUrlPostWithReturn(url, null, _loginForm._jwtToken);
-
-                MessageBox.Show("Инструктаж успешно пропущен.",
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                await SyncManuallyInstrWithDBInternal();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Ошибка при пропуске инструктажа: {ex.Message}",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
             }
         }
 
@@ -561,27 +428,6 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         public string EndDate { get; set; }
         public string AssignedStatus { get; set; }
         public string CompletedStatus { get; set; }
-    }
-
-    public class TaskViewModel
-    {
-        public int Id { get; set; }
-        public string Description { get; set; }
-        public string Status { get; set; }
-    }
-
-    public class UnplannedInstructionViewModel
-    {
-        public int Id { get; set; }
-        public string DisplayText { get; set; }
-    }
-
-    public class ComplianceReportViewModel
-    {
-        public string Name { get; set; }
-        public string Status { get; set; }
-        public string DatePassed { get; set; }
-        public string RequiredBy { get; set; }
     }
 
     #endregion

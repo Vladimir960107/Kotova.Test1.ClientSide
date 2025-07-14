@@ -340,7 +340,6 @@
         private PictureBox pictureBox3;
         private Panel panel3;
         private PictureBox pictureBox2;
-        private TextBox LoginTextBox;
         private Button LogInButton;
         private LinkLabel ForgotPasswordLabel;
         private Label label4;
@@ -350,5 +349,6 @@
         private PictureBox pictureBox5;
         private Label versionLabel;
         private Label label2;
+        public TextBox LoginTextBox;
     }
 }

@@ -22,6 +22,7 @@ using System.Windows.Input;
 using Windows.UI.WindowManagement;
 using static Kotova.Test1.ClientSide.Program;
 using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 using MessageBox = System.Windows.Forms.MessageBox;
 using SystemColors = System.Drawing.SystemColors;
 
@@ -408,9 +409,9 @@ namespace Kotova.Test1.ClientSide
                     return; // Return early since we're handling WPF differently
 
                 case "ChiefOfDepartment":
-                    // STEP 1: Launch WPF InstructionViewerWindow for chiefs too
-                    formToOpen = new ChiefForm(this, username, fullName, departmentName);
-                    break;
+                    // Launch WPF ChiefWindowFresh
+                    LaunchWPFChiefWindow(username, fullName, departmentName);
+                    return; // Exit early since WPF window is handled separately
 
                 case "Coordinator":
                     // UPDATED: Launch WPF CoordinatorWindow instead of WinForms CoordinatorForm
@@ -460,6 +461,138 @@ namespace Kotova.Test1.ClientSide
                 }
             }
         }
+
+
+        /// <summary>
+        /// Launches the WPF ChiefWindowFresh for Chief role
+        /// </summary>
+        /// <param name="username">The username</param>
+        /// <param name="fullName">The full name</param>
+        /// <param name="departmentName">The department name</param>
+        private void LaunchWPFChiefWindow(string username, string fullName, string departmentName)
+        {
+            try
+            {
+                // Ensure WPF interop is enabled
+                WindowsFormsHost.EnableWindowsFormsInterop();
+
+                // Create the WPF ChiefWindowFresh
+                var chiefWindow = new Kotova.Test1.ClientSide.ChiefWPF.ChiefWindowFresh(this);
+
+                // Set window properties
+                chiefWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                chiefWindow.Title = $"Руководитель отдела - {fullName} ({departmentName})";
+
+                // Center over login form if possible
+                if (this.Visible)
+                {
+                    chiefWindow.Left = this.Location.X + (this.Width - chiefWindow.Width) / 2;
+                    chiefWindow.Top = this.Location.Y + (this.Height - chiefWindow.Height) / 2;
+                }
+
+                // Handle window closing to return to login
+                chiefWindow.Closed += (s, e) => {
+                    activeWpfWindow = null;
+                    this.ShowForm();
+                };
+
+                // Handle window state changes for system tray integration
+                chiefWindow.StateChanged += (s, e) => {
+                    if (chiefWindow.WindowState == System.Windows.WindowState.Minimized)
+                    {
+                        chiefWindow.Hide();
+                        ShowNotifyIconMessage($"Руководитель - {fullName}", "Приложение свернуто в системный трей");
+                    }
+                };
+
+                // Show the window and update tracking
+                activeForm = null;                    // Clear Windows Forms reference
+                activeWpfWindow = chiefWindow;        // Set WPF window as active
+                chiefWindow.Show();
+                this.Hide();
+
+                // Handle default username scenario for WPF
+                if (isDefaultUsername(username))
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+
+                        chiefWindow.Dispatcher.Invoke(() =>
+                        {
+                            // Show WPF message for credential update
+                            System.Windows.MessageBox.Show(
+                                "Пожалуйста, обновите свои учётные данные в настройках.",
+                                "Обновление данных",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+
+                            // Note: You can integrate SignUpForm for WPF here if needed
+                            // For now, we show a message and let user handle it through the UI
+                        });
+                    });
+                }
+
+                // Log successful launch
+                Console.WriteLine($"Successfully launched WPF ChiefWindowFresh for {fullName}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска интерфейса руководителя: {ex.Message}",
+                    "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Fallback to Windows Forms ChiefForm if WPF fails
+                LaunchWindowsFormsChiefFallback(username, fullName, departmentName);
+            }
+        }
+
+        /// <summary>
+        /// Fallback method to launch Windows Forms ChiefForm if WPF fails
+        /// </summary>
+        /// <param name="username">The username</param>
+        /// <param name="fullName">The full name</param>
+        /// <param name="departmentName">The department name</param>
+        private void LaunchWindowsFormsChiefFallback(string username, string fullName, string departmentName)
+        {
+            try
+            {
+                var chiefForm = new ChiefForm(this, username, fullName, departmentName);
+
+                activeForm = chiefForm;          // Set Windows Forms as active
+                activeWpfWindow = null;          // Clear WPF reference
+                chiefForm.Location = this.Location;
+                this.Hide();
+                chiefForm.Show();
+
+                // Handle default username scenario for Windows Forms
+                if (isDefaultUsername(username))
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+
+                        this.Invoke(new Action(() =>
+                        {
+                            // Show Windows Forms signup form
+                            var signUpForm = new SignUpForm(this, chiefForm);
+                            signUpForm.Show();
+                        }));
+                    });
+                }
+
+                Console.WriteLine($"Successfully launched Windows Forms ChiefForm fallback for {fullName}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка запуска резервного интерфейса руководителя: {ex.Message}",
+                    "Критическая ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Show login form as last resort
+                this.ShowForm();
+            }
+        }
+
+
 
         /// <summary>
         /// Launches the WPF CoordinatorWindow for Coordinator role
