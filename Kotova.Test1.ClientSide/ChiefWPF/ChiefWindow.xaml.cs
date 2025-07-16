@@ -1,4 +1,5 @@
-﻿using Kotova.CommonClasses;
+﻿using ClosedXML.Excel;
+using Kotova.CommonClasses;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
 using System;
@@ -18,6 +19,8 @@ using Brushes = System.Windows.Media.Brushes;
 using Button = System.Windows.Controls.Button;
 using Color = System.Windows.Media.Color;
 using MessageBox = System.Windows.MessageBox;
+using Microsoft.Win32;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace Kotova.Test1.ClientSide.ChiefWPF
 {
@@ -40,6 +43,8 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
         public ObservableCollection<EmployeeComplianceViewModel> NotPassedEmployees { get; set; }
         public ObservableCollection<EmployeeComplianceViewModel> PassedEmployees { get; set; }
+
+        private List<InstructionReportItem> _cachedInstructions = new List<InstructionReportItem>();
 
         // Global storage for instruction data (from ChiefForm.cs)
         private List<InstructionForChiefDto> instructionForChiefs_global = new List<InstructionForChiefDto>();
@@ -761,6 +766,277 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         }
 
         #region Helper Methods for Assignment
+
+        // Enhanced ExportToExcel method adapted from ChiefForm.cs - using ClosedXML instead of OpenXML
+        private void ExportToExcel(InstructionReportItem report, string filePath)
+        {
+            try
+            {
+                using (var workbook = new XLWorkbook())
+                {
+                    var worksheet = workbook.Worksheets.Add("Data");
+
+                    // Установка шрифта Times New Roman 12 для всего листа
+                    worksheet.Style.Font.FontName = "Times New Roman";
+                    worksheet.Style.Font.FontSize = 12;
+
+                    // Add column headers - exactly as in the ChiefForm method
+                    worksheet.Cell(1, 1).Value = "Дата проведения инструктажа по охране труда";
+                    worksheet.Cell(1, 2).Value = "Фамилия, имя, отчество (при наличии) работника, прошедшего инструктаж по охране труда";
+                    worksheet.Cell(1, 3).Value = "Профессия (должность) работника, прошедшего инструктаж по охране труда";
+                    worksheet.Cell(1, 4).Value = "Число, месяц, год рождения работника, прошедшего инструктаж по охране труда";
+                    worksheet.Cell(1, 5).Value = "Вид инструктажа по охране труда";
+                    worksheet.Cell(1, 6).Value = "Причина проведения инструктажа по охране труда (для внепланового или целевого инструктажа по охране труда)";
+                    worksheet.Cell(1, 7).Value = "Фамилия, имя отчество (при наличии), профессия (должность) работника, проводившего инструктаж по охране труда";
+                    worksheet.Cell(1, 8).Value = "Наименование локального акта (локальных актов), в объеме требований которого проведён инструктаж по охране труда";
+                    worksheet.Cell(1, 9).Value = "Подпись работника, проводившего инструктаж по охране труда";
+                    worksheet.Cell(1, 10).Value = "Подпись работника, прошедшего инструктаж по охране труда";
+
+                    // Устанавливаем выравнивание для заголовков (верхнее выравнивание и по центру)
+                    for (int col = 1; col <= 10; col++)
+                    {
+                        var cell = worksheet.Cell(1, col);
+                        cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Alignment.WrapText = true;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    }
+
+                    // Добавление нумерации столбцов во вторую строку
+                    for (int col = 1; col <= 10; col++)
+                    {
+                        var cell = worksheet.Cell(2, col);
+                        cell.Value = col;
+                        cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                        cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                        cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                    }
+
+                    // Сортировка сотрудников
+                    var sortedEmployees = report.EmployeeData
+                        .OrderBy(e => e.HasPassed ? 0 : 1)
+                        .ThenBy(e => e.DatePassed)
+                        .ThenBy(e => e.FullName)
+                        .ToList();
+
+                    // Добавление данных, начиная с третьей строки
+                    for (int i = 0; i < sortedEmployees.Count; i++)
+                    {
+                        var employee = sortedEmployees[i];
+                        int rowIndex = i + 3; // Начинаем с 3 строки
+
+                        // Колонка 1: Дата проведения инструктажа
+                        worksheet.Cell(rowIndex, 1).Value = employee.HasPassed && employee.DatePassed.HasValue
+                            ? employee.DatePassed.Value.ToString("dd.MM.yyyy")
+                            : "";
+
+                        // Колонка 2: ФИО работника
+                        worksheet.Cell(rowIndex, 2).Value = employee.FullName;
+
+                        // Колонка 3: Должность
+                        worksheet.Cell(rowIndex, 3).Value = employee.Position;
+
+                        // Колонка 4: Дата рождения
+                        worksheet.Cell(rowIndex, 4).Value = employee.BirthDate.ToString("dd.MM.yyyy") ?? "";
+
+                        // Колонка 5: Вид инструктажа
+                        worksheet.Cell(rowIndex, 5).Value = report.TypeName ?? InstructionTypeMappings.GetInstructionName(report.TypeOfInstruction);
+
+                        // Колонка 6: Причина (только для внепланового и целевого)
+                        worksheet.Cell(rowIndex, 6).Value = (report.TypeOfInstruction == 1 || report.TypeOfInstruction == 5)
+                            ? report.CauseOfInstruction
+                            : "";
+
+                        // Колонка 7: Проводивший инструктаж
+                        worksheet.Cell(rowIndex, 7).Value = employee.AssignedBy;
+
+                        // Колонка 8: Локальные акты - ENHANCED PROCESSING FOR UNPLANNED INSTRUCTIONS
+                        string normativeDocumentsText = ProcessNormativeDocuments(employee.NormativeDocuments, report.TypeOfInstruction);
+                        worksheet.Cell(rowIndex, 8).Value = normativeDocumentsText;
+
+                        // Колонка 9-10: Подписи (пусто)
+                        worksheet.Cell(rowIndex, 9).Value = "";
+                        worksheet.Cell(rowIndex, 10).Value = "";
+
+                        // Устанавливаем выравнивание по верхнему краю для всех ячеек в строке
+                        for (int col = 1; col <= 10; col++)
+                        {
+                            worksheet.Cell(rowIndex, col).Style.Alignment.Vertical = XLAlignmentVerticalValues.Top;
+                            worksheet.Cell(rowIndex, col).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                            worksheet.Cell(rowIndex, col).Style.Alignment.WrapText = true;
+                        }
+                    }
+
+                    // Page setup settings...
+                    worksheet.PageSetup.Margins.Left = 0.197;
+                    worksheet.PageSetup.Margins.Right = 0.197;
+                    worksheet.PageSetup.Margins.Top = 0.394;
+                    worksheet.PageSetup.Margins.Bottom = 0.394;
+
+                    // Column width settings...
+                    worksheet.Column(1).Width = 12;
+                    worksheet.Column(2).Width = 25;
+                    worksheet.Column(3).Width = 20;
+                    worksheet.Column(4).Width = 12;
+                    worksheet.Column(5).Width = 15;
+                    worksheet.Column(6).Width = 30;
+                    worksheet.Column(7).Width = 25;
+                    worksheet.Column(8).Width = 35; // Increased for normative documents
+                    worksheet.Column(9).Width = 10;
+                    worksheet.Column(10).Width = 10;
+
+                    worksheet.PageSetup.PaperSize = XLPaperSize.A4Paper;
+                    worksheet.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+
+                    workbook.SaveAs(filePath);
+                }
+
+                MessageBox.Show($"Отчет успешно экспортирован: {filePath}", "Экспорт завершен",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка при создании Excel файла: {ex.Message}");
+            }
+        }
+
+        private async Task<InstructionReportItem> GetInstructionComplianceReport(int instructionId)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync(
+                        ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + $"/get-instruction-compliance-report/{instructionId}");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        return JsonConvert.DeserializeObject<InstructionReportItem>(responseBody);
+                    }
+                    else
+                    {
+                        throw new Exception($"Ошибка сервера: {response.StatusCode}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка при получении данных: {ex.Message}");
+            }
+        }
+
+        private int GetInstructionIdFromSelectedItem(object selectedItem)
+        {
+            if (selectedItem is InstructionTreeItem treeItem &&
+                !treeItem.IsTypeNode &&
+                treeItem.InstructionId.HasValue)
+            {
+                return treeItem.InstructionId.Value;
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Processes normative documents for Excel export with special handling for unplanned instructions
+        /// </summary>
+        /// <param name="normativeDocuments">List of normative document names/URLs</param>
+        /// <param name="instructionType">Type of instruction (1 = Внеплановый)</param>
+        /// <returns>Formatted string for Excel cell</returns>
+        private string ProcessNormativeDocuments(List<string> normativeDocuments, byte instructionType)
+        {
+            if (normativeDocuments == null || !normativeDocuments.Any())
+            {
+                return "";
+            }
+
+            // For unplanned instructions (Внеплановый), apply special processing
+            if (instructionType == 1)
+            {
+                var processedDocuments = new List<string>();
+
+                foreach (var document in normativeDocuments)
+                {
+                    if (string.IsNullOrWhiteSpace(document))
+                        continue;
+
+                    // Check if this document contains the "Нормативная база:" prefix and "|" separators
+                    if (document.Contains("Нормативная база:") && document.Contains("|"))
+                    {
+                        // Remove the "Нормативная база:" prefix
+                        string cleanDocument = document.Replace("Нормативная база:", "").Trim();
+
+                        // Split by "|" and clean each part
+                        var parts = cleanDocument.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(part => part.Trim())
+                            .Where(part => !string.IsNullOrWhiteSpace(part))
+                            .ToList();
+
+                        processedDocuments.AddRange(parts);
+                    }
+                    else
+                    {
+                        // Regular document, add as-is
+                        processedDocuments.Add(document.Trim());
+                    }
+                }
+
+                // Join with semicolon and newline for Excel cell line breaks
+                return string.Join(";\n", processedDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+            else
+            {
+                // For other instruction types, use standard processing
+                return string.Join("; ", normativeDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+        }
+
+        // Alternative method if you want to use Alt+Enter line breaks in Excel
+        private string ProcessNormativeDocumentsWithLineBreaks(List<string> normativeDocuments, byte instructionType)
+        {
+            if (normativeDocuments == null || !normativeDocuments.Any())
+            {
+                return "";
+            }
+
+            if (instructionType == 1) // Внеплановый
+            {
+                var processedDocuments = new List<string>();
+
+                foreach (var document in normativeDocuments)
+                {
+                    if (string.IsNullOrWhiteSpace(document))
+                        continue;
+
+                    if (document.Contains("Нормативная база:") && document.Contains("|"))
+                    {
+                        string cleanDocument = document.Replace("Нормативная база:", "").Trim();
+                        var parts = cleanDocument.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(part => part.Trim())
+                            .Where(part => !string.IsNullOrWhiteSpace(part))
+                            .Select(part => $"{part};") // Add semicolon to each part
+                            .ToList();
+
+                        processedDocuments.AddRange(parts);
+                    }
+                    else
+                    {
+                        processedDocuments.Add($"{document.Trim()};");
+                    }
+                }
+
+                // Use \n for line breaks in Excel (equivalent to Alt+Enter)
+                return string.Join("\n", processedDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+            else
+            {
+                return string.Join("; ", normativeDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+            }
+        }
 
         private async Task<dynamic> GetInstructionByIdAsync(int instructionId)
         {
@@ -1556,21 +1832,374 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             }
         }
 
-        private void exportButton_Wpf_Click(object sender, RoutedEventArgs e)
+        private async void exportButton_Wpf_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                MessageBox.Show("Функция экспорта будет реализована в следующей версии.", "Информация",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                // Check if an instruction is selected in the treeview
+                if (treeViewInstructionReports_Wpf?.SelectedItem == null)
+                {
+                    MessageBox.Show("Пожалуйста, выберите конкретный инструктаж для экспорта.",
+                        "Выбор инструктажа", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Get the selected instruction - you'll need to adapt this based on your TreeView item structure
+                var selectedItem = treeViewInstructionReports_Wpf.SelectedItem;
+                int instructionId = GetInstructionIdFromSelectedItem(selectedItem);
+
+                if (instructionId <= 0)
+                {
+                    MessageBox.Show("Невозможно определить ID выбранного инструктажа.",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Disable button during export
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "🔄 Экспортирование...";
+                    button.IsEnabled = false;
+                }
+
+                // Get compliance report for the selected instruction
+                var report = await GetInstructionComplianceReport(instructionId);
+
+                if (report == null)
+                {
+                    MessageBox.Show("Не удалось получить данные о прохождении инструктажа.",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Show save dialog
+                SaveFileDialog saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel files (*.xlsx)|*.xlsx",
+                    Title = "Сохранить отчет о прохождении инструктажа",
+                    FileName = $"Отчет_инструктаж_{report.InstructionId}_{DateTime.Now:yyyyMMdd}.xlsx"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    // Export to Excel
+                    ExportToExcel(report, saveFileDialog.FileName);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка экспорта: {ex.Message}", "Ошибка",
+                MessageBox.Show($"Ошибка при экспорте: {ex.Message}", "Ошибка",
                     MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                // Re-enable button
+                var button = sender as Button;
+                if (button != null)
+                {
+                    button.Content = "📊 Экспортировать отчет";
+                    button.IsEnabled = true;
+                }
             }
         }
 
         #endregion
+
+        private async void refreshInstructionReports_Wpf_Click(object sender, RoutedEventArgs e)
+        {
+            await LoadInstructionReportsData();
+        }
+
+        private void treeViewInstructionReports_Wpf_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            try
+            {
+                var selectedItem = e.NewValue as InstructionTreeItem;
+
+                if (selectedItem != null && !selectedItem.IsTypeNode && selectedItem.InstructionId.HasValue)
+                {
+                    // Enable export button for instruction nodes
+                    exportButton_Wpf.IsEnabled = true;
+
+                    // Update instruction details
+                    UpdateInstructionDetails(selectedItem.InstructionId.Value);
+                }
+                else
+                {
+                    // Disable export button for type nodes or invalid selections
+                    exportButton_Wpf.IsEnabled = false;
+
+                    // Clear instruction details
+                    ClearInstructionDetails();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при обработке выбора: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task LoadInstructionReportsData()
+        {
+            try
+            {
+                // Clear existing data
+                treeViewInstructionReports_Wpf.Items.Clear();
+                exportButton_Wpf.IsEnabled = false;
+                ClearInstructionDetails();
+
+                // Create loading indicator
+                var loadingItem = new InstructionTreeItem
+                {
+                    DisplayName = "🔄 Загрузка данных...",
+                    IsTypeNode = true
+                };
+                treeViewInstructionReports_Wpf.Items.Add(loadingItem);
+
+                // Disable refresh button during loading
+                refreshInstructionReports_Wpf.IsEnabled = false;
+
+                // Fetch data from server
+                _cachedInstructions = await GetInstructionsWithComplianceData();
+
+                // Clear loading indicator
+                treeViewInstructionReports_Wpf.Items.Clear();
+
+                if (_cachedInstructions == null || _cachedInstructions.Count == 0)
+                {
+                    var noDataItem = new InstructionTreeItem
+                    {
+                        DisplayName = "📭 Нет доступных инструктажей",
+                        IsTypeNode = true,
+                        TextColor = Brushes.Gray
+                    };
+                    treeViewInstructionReports_Wpf.Items.Add(noDataItem);
+                    return;
+                }
+
+                // Group instructions by type
+                var instructionsByType = _cachedInstructions
+                    .GroupBy(i => i.TypeOfInstruction)
+                    .OrderBy(g => g.Key);
+
+                // Create tree structure
+                foreach (var typeGroup in instructionsByType)
+                {
+                    // Create type node
+                    var typeNode = new InstructionTreeItem
+                    {
+                        DisplayName = InstructionTypeMappings.GetInstructionName(typeGroup.Key),
+                        IsTypeNode = true,
+                        FontWeight = FontWeights.Bold,
+                        TextColor = Brushes.DarkBlue
+                    };
+
+                    // Add instruction nodes
+                    foreach (var instruction in typeGroup.OrderByDescending(i => i.BeginDate))
+                    {
+                        int totalEmployees = instruction.EmployeeData?.Count ?? 0;
+                        int passedCount = instruction.EmployeeData?.Count(e => e.HasPassed) ?? 0;
+
+                        string completionStatus = totalEmployees > 0
+                            ? $" [{passedCount}/{totalEmployees} ({(passedCount * 100 / Math.Max(totalEmployees, 1))}%)]"
+                            : " [Нет сотрудников]";
+
+                        string nodeText = $"{instruction.CauseOfInstruction} (от {instruction.BeginDate:dd.MM.yyyy}){completionStatus}";
+
+                        var instructionNode = new InstructionTreeItem
+                        {
+                            DisplayName = nodeText,
+                            InstructionId = instruction.InstructionId,
+                            IsTypeNode = false
+                        };
+
+                        // Set color based on completion status
+                        if (totalEmployees > 0)
+                        {
+                            if (passedCount == totalEmployees)
+                            {
+                                instructionNode.TextColor = Brushes.Green; // Fully completed
+                            }
+                            else if (passedCount >= totalEmployees / 2)
+                            {
+                                instructionNode.TextColor = Brushes.DarkGreen; // More than half
+                            }
+                            else if (passedCount > 0)
+                            {
+                                instructionNode.TextColor = Brushes.DarkOrange; // Some completed
+                            }
+                            else
+                            {
+                                instructionNode.TextColor = Brushes.Red; // None completed
+                            }
+                        }
+
+                        typeNode.Children.Add(instructionNode);
+                    }
+
+                    treeViewInstructionReports_Wpf.Items.Add(typeNode);
+                }
+
+                // Re-enable refresh button
+                refreshInstructionReports_Wpf.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                // Clear tree and show error
+                treeViewInstructionReports_Wpf.Items.Clear();
+                var errorItem = new InstructionTreeItem
+                {
+                    DisplayName = "❌ Ошибка загрузки данных",
+                    IsTypeNode = true,
+                    TextColor = Brushes.Red
+                };
+                treeViewInstructionReports_Wpf.Items.Add(errorItem);
+
+                MessageBox.Show($"Ошибка при загрузке данных: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // Re-enable refresh button
+                refreshInstructionReports_Wpf.IsEnabled = true;
+            }
+        }
+
+        private void UpdateInstructionDetails(int instructionId)
+        {
+            try
+            {
+                var instruction = _cachedInstructions?.FirstOrDefault(i => i.InstructionId == instructionId);
+                if (instruction == null)
+                {
+                    ClearInstructionDetails();
+                    return;
+                }
+
+                // Update basic information
+                instructionIdDetail_Wpf.Text = instruction.InstructionId.ToString();
+                instructionTypeDetail_Wpf.Text = InstructionTypeMappings.GetInstructionName(instruction.TypeOfInstruction);
+                instructionCauseDetail_Wpf.Text = instruction.CauseOfInstruction ?? "Не указана";
+                instructionStartDateDetail_Wpf.Text = instruction.BeginDate.ToString("dd.MM.yyyy");
+                instructionEndDateDetail_Wpf.Text = instruction.EndDate.ToString("dd.MM.yyyy") ?? "Не указана";
+
+                // Update progress information
+                int totalEmployees = instruction.EmployeeData?.Count ?? 0;
+                int passedCount = instruction.EmployeeData?.Count(e => e.HasPassed) ?? 0;
+                double completionPercentage = totalEmployees > 0 ? (double)passedCount / totalEmployees * 100 : 0;
+
+                totalEmployeesDetail_Wpf.Text = totalEmployees.ToString();
+                passedEmployeesDetail_Wpf.Text = passedCount.ToString();
+                completionPercentageDetail_Wpf.Text = $"{completionPercentage:F1}%";
+
+                // Update progress bar
+                completionProgressBar_Wpf.Value = completionPercentage;
+
+                // Set progress bar color based on completion
+                if (completionPercentage == 100)
+                {
+                    completionProgressBar_Wpf.Foreground = Brushes.Green;
+                }
+                else if (completionPercentage >= 75)
+                {
+                    completionProgressBar_Wpf.Foreground = Brushes.LightGreen;
+                }
+                else if (completionPercentage >= 50)
+                {
+                    completionProgressBar_Wpf.Foreground = Brushes.Orange;
+                }
+                else
+                {
+                    completionProgressBar_Wpf.Foreground = Brushes.Red;
+                }
+
+                // Update employee list
+                var employeeViewModels = instruction.EmployeeData?.Select(e => new EmployeeDetailViewModel
+                {
+                    FullName = e.FullName ?? "Не указано",
+                    Position = e.Position ?? "Не указано",
+                    HasPassed = e.HasPassed,
+                    StatusText = e.HasPassed ? "✅ Пройден" : "❌ Не пройден",
+                    DatePassedText = e.HasPassed && e.DatePassed.HasValue
+                        ? e.DatePassed.Value.ToString("dd.MM.yyyy HH:mm")
+                        : "-"
+                }).ToList() ?? new List<EmployeeDetailViewModel>();
+
+                employeeDetailsListView_Wpf.ItemsSource = employeeViewModels;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при обновлении деталей инструктажа: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                ClearInstructionDetails();
+            }
+        }
+
+        // Clear instruction details panel
+        private void ClearInstructionDetails()
+        {
+            instructionIdDetail_Wpf.Text = "-";
+            instructionTypeDetail_Wpf.Text = "-";
+            instructionCauseDetail_Wpf.Text = "-";
+            instructionStartDateDetail_Wpf.Text = "-";
+            instructionEndDateDetail_Wpf.Text = "-";
+
+            totalEmployeesDetail_Wpf.Text = "-";
+            passedEmployeesDetail_Wpf.Text = "-";
+            completionPercentageDetail_Wpf.Text = "-";
+
+            completionProgressBar_Wpf.Value = 0;
+            completionProgressBar_Wpf.Foreground = Brushes.LightGray;
+
+            employeeDetailsListView_Wpf.ItemsSource = null;
+        }
+
+        // Method to fetch instructions with compliance data from server
+        private async Task<List<InstructionReportItem>> GetInstructionsWithComplianceData()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    var response = await httpClient.GetAsync(
+                        ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-instructions-with-compliance-data");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        return JsonConvert.DeserializeObject<List<InstructionReportItem>>(responseBody);
+                    }
+                    else
+                    {
+                        throw new Exception($"Ошибка сервера: {response.StatusCode}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка при получении данных с сервера: {ex.Message}");
+            }
+        }
+
+        // Add this method to your ChiefWindow constructor or initialization
+        private async void InitializeInstructionReportsTab()
+        {
+            try
+            {
+                // Load data when the window is initialized
+                await LoadInstructionReportsData();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при инициализации вкладки отчетов: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
 
         #region Control Tab LoadControl
 
@@ -1804,6 +2433,27 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
+        }
+
+        // TreeView item class for passed instructions
+        public class InstructionTreeItem
+        {
+            public string DisplayName { get; set; }
+            public List<InstructionTreeItem> Children { get; set; } = new List<InstructionTreeItem>();
+            public int? InstructionId { get; set; }
+            public bool IsTypeNode { get; set; }
+            public Brush TextColor { get; set; } = Brushes.Black;
+            public FontWeight FontWeight { get; set; } = FontWeights.Normal;
+        }
+
+        // Employee detail class for display
+        public class EmployeeDetailViewModel
+        {
+            public string FullName { get; set; }
+            public string Position { get; set; }
+            public string StatusText { get; set; }
+            public string DatePassedText { get; set; }
+            public bool HasPassed { get; set; }
         }
     }
 }

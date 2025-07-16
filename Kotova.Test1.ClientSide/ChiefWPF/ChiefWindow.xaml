@@ -426,6 +426,7 @@
             </TabItem>
             <!-- Tab 2: Контроль (Training Compliance) -->
             <TabItem Header="🔍 Контроль" Style="{StaticResource TabItemStyle}">
+
                 <Grid Margin="20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -443,6 +444,9 @@
                               Text="📊 Контроль прохождения инструктажей" 
                               Style="{StaticResource HeaderStyle}" 
                               Margin="0,0,0,20"/>
+                    <Button x:Name="refreshDataButton_Wpf" Content="🔄 Обновить данные" 
+       Style="{StaticResource ActionButtonStyle}" 
+       Click="refreshDataButton_Wpf_Click" Grid.Column="1" Margin="50,0,50,10"/>
 
                     <!-- Left Column Top: Instructions Tree (Updated) -->
                     <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,0">
@@ -492,7 +496,7 @@
 
                             <TextBlock Grid.Row="0" Text="✅ Прошедшие инструктаж:" Style="{StaticResource SubHeaderStyle}"/>
 
-                            <DataGrid x:Name="dataGridViewPassedInstructions_Wpf" Grid.Row="1" Height="150"
+                            <DataGrid x:Name="dataGridViewPassedInstructions_Wpf" Grid.Row="1" Height="200"
                                      Style="{StaticResource ModernDataGridStyle}"
                                      AutoGenerateColumns="False">
                                 <DataGrid.Columns>
@@ -504,18 +508,194 @@
 
                             <!-- Control Buttons -->
                             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,15,0,0">
-                                <Button x:Name="refreshDataButton_Wpf" Content="🔄 Обновить данные" 
-                                       Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"
-                                       Click="refreshDataButton_Wpf_Click"/>
-                                <Button x:Name="exportButton_Wpf" Content="📊 Экспорт" 
-                                       Style="{StaticResource PrimaryButtonStyle}"
-                                       Click="exportButton_Wpf_Click"/>
                             </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Grid>
             </TabItem>
+
+            <!-- Tab 2: Отчеты о прохождении инструктажей -->
+            <TabItem Header="📊 Отчеты о прохождении" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="400"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Left Column: Instructions TreeView -->
+                    <StackPanel Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Margin="0,0,20,0">
+
+                        <!-- Header -->
+                        <TextBlock Text="📋 Список инструктажей" 
+                      Style="{StaticResource HeaderTextStyle}" FontSize="16" Margin="0,0,0,15"/>
+
+                        <!-- TreeView for instruction reports -->
+                        <TreeView x:Name="treeViewInstructionReports_Wpf" 
+                     Height="400" 
+                     Background="White"
+                     BorderBrush="#D8DEE9" 
+                     BorderThickness="1"
+                     Padding="5"
+                     Margin="0,0,0,15"
+                     SelectedItemChanged="treeViewInstructionReports_Wpf_SelectedItemChanged">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <TextBlock Text="{Binding DisplayName}" 
+                                  Foreground="{Binding TextColor}"
+                                  FontWeight="{Binding FontWeight}"/>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+
+                        <!-- Action Buttons -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button x:Name="refreshInstructionReports_Wpf" 
+                       Content="🔄 Обновить" 
+                       Style="{StaticResource ButtonStyle}" 
+                       Margin="0,0,10,0"
+                       Click="refreshInstructionReports_Wpf_Click"/>
+
+                            <Button x:Name="exportButton_Wpf" 
+                       Content="📊 Экспортировать отчет" 
+                       Style="{StaticResource SuccessButtonStyle}" 
+                       IsEnabled="False"
+                       Click="exportButton_Wpf_Click"/>
+                        </StackPanel>
+
+                        <!-- Help Text -->
+                        <TextBlock Text="Выберите конкретный инструктаж из списка и нажмите 'Экспортировать отчет' для создания Excel-файла с данными о прохождении."
+                      Style="{StaticResource HeaderTextStyle}" 
+                      FontSize="11" 
+                      Foreground="#1976D2" 
+                      Margin="0,10,0,0" 
+                      TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- Right Column: Instruction Details -->
+                    <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="3">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Details Header -->
+                        <TextBlock Grid.Row="0" Text="📋 Детали инструктажа" 
+                      Style="{StaticResource HeaderTextStyle}" FontSize="16" Margin="0,0,0,15"/>
+
+                        <!-- Instruction Details Panel -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="instructionDetailsPanel_Wpf" Margin="10">
+
+                                <!-- Basic Information -->
+                                <Border Background="#F8F9FA" BorderBrush="#E9ECEF" BorderThickness="1" 
+                           CornerRadius="5" Padding="15" Margin="0,0,0,15">
+                                    <StackPanel>
+                                        <TextBlock Text="📝 Основная информация" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="ID:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="instructionIdDetail_Wpf" Text="-" Margin="5,2"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Тип:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="instructionTypeDetail_Wpf" Text="-" Margin="5,2"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Причина:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="instructionCauseDetail_Wpf" Text="-" Margin="5,2" TextWrapping="Wrap"/>
+
+                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Дата начала:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="instructionStartDateDetail_Wpf" Text="-" Margin="5,2"/>
+
+                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Дата окончания:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="instructionEndDateDetail_Wpf" Text="-" Margin="5,2"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Progress Information -->
+                                <Border Background="#F8F9FA" BorderBrush="#E9ECEF" BorderThickness="1" 
+                           CornerRadius="5" Padding="15" Margin="0,0,0,15">
+                                    <StackPanel>
+                                        <TextBlock Text="📊 Статистика прохождения" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Всего сотрудников:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="totalEmployeesDetail_Wpf" Text="-" Margin="5,2"/>
+
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Прошли:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="passedEmployeesDetail_Wpf" Text="-" Margin="5,2"/>
+
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Процент выполнения:" FontWeight="SemiBold" Margin="0,2"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="completionPercentageDetail_Wpf" Text="-" Margin="5,2"/>
+                                        </Grid>
+
+                                        <!-- Progress Bar -->
+                                        <ProgressBar x:Name="completionProgressBar_Wpf" 
+                                        Height="20" 
+                                        Margin="0,10,0,0" 
+                                        Minimum="0" 
+                                        Maximum="100" 
+                                        Value="0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Employee List -->
+                                <Border Background="#F8F9FA" BorderBrush="#E9ECEF" BorderThickness="1" 
+                           CornerRadius="5" Padding="15">
+                                    <StackPanel>
+                                        <TextBlock Text="👥 Список сотрудников" FontWeight="Bold" FontSize="14" Margin="0,0,0,10"/>
+
+                                        <ListView x:Name="employeeDetailsListView_Wpf" 
+                                     Height="300" 
+                                     Style="{StaticResource ListViewStyle}">
+                                            <ListView.View>
+                                                <GridView>
+                                                    <GridViewColumn Header="ФИО" Width="200" DisplayMemberBinding="{Binding FullName}"/>
+                                                    <GridViewColumn Header="Должность" Width="150" DisplayMemberBinding="{Binding Position}"/>
+                                                    <GridViewColumn Header="Статус" Width="100" DisplayMemberBinding="{Binding StatusText}"/>
+                                                    <GridViewColumn Header="Дата прохождения" Width="120" DisplayMemberBinding="{Binding DatePassedText}"/>
+                                                </GridView>
+                                            </ListView.View>
+                                        </ListView>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+
             <!-- Additional tabs would go here -->
+            
+            
 
         </TabControl>
 
