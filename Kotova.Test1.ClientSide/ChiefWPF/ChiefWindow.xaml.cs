@@ -38,6 +38,13 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
         private List<EmployeeInfo> _cachedEmployees = new List<EmployeeInfo>();
         private List<NormativeInstructionInfo> _cachedNormativeInstructions = new List<NormativeInstructionInfo>();
 
+        public ObservableCollection<EmployeeComplianceViewModel> NotPassedEmployees { get; set; }
+        public ObservableCollection<EmployeeComplianceViewModel> PassedEmployees { get; set; }
+
+        // Global storage for instruction data (from ChiefForm.cs)
+        private List<InstructionForChiefDto> instructionForChiefs_global = new List<InstructionForChiefDto>();
+        private List<InstructionForChiefDto> passedInstructionsForChief_global = new List<InstructionForChiefDto>();
+
         // URLs using ConfigurationClass instead of hardcoded values
         private readonly string urlTest = ConfigurationClass.BASE_URL_DEVELOPMENT + "/api/test/TestEndpoint";
         private readonly string urlTaskTest = ConfigurationClass.BASE_TASK_URL_DEVELOPMENT + "/test-task";
@@ -79,6 +86,9 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
 
             // Load data when window opens
             Loaded += ChiefWindowFresh_Loaded;
+
+            NotPassedEmployees = new ObservableCollection<EmployeeComplianceViewModel>();
+            PassedEmployees = new ObservableCollection<EmployeeComplianceViewModel>();
         }
 
         private async void ChiefWindowFresh_Loaded(object sender, RoutedEventArgs e)
@@ -1207,6 +1217,389 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             };
         }
 
+        #region Control Tab - Data Loading Methods (New)
+
+        /// <summary>
+        /// Fetches not passed instructions from the server and populates the TreeView
+        /// Based on FetchNotPassedInstructionsForChief() from ChiefForm.cs
+        /// </summary>
+        private async Task<bool> FetchNotPassedInstructionsForChief()
+        {
+            try
+            {
+                // Clear previous data
+                NotPassedEmployees.Clear();
+                treeViewInstructions_Wpf.Items.Clear();
+
+                using (var httpClient = new HttpClient())
+                {
+                    // Get the JWT token from the login form
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    // Make the API call to get not passed instructions
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-not-passed-instructions-for-chief");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                        // Deserialize the response to the DTO format from ChiefForm.cs
+                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChiefDto>>(
+                            jsonResponse,
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (result is null)
+                        {
+                            MessageBox.Show("Произошла ошибка при получении данных с сервера!",
+                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return false;
+                        }
+
+                        if (result.Count == 0)
+                        {
+                            MessageBox.Show("Похоже все инструктажи всеми пройдены!",
+                                "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                            return true;
+                        }
+
+                        // Store globally for later use
+                        instructionForChiefs_global = result;
+
+                        // Populate the TreeView with not passed instructions
+                        PopulateNotPassedInstructionsTreeView(result);
+
+                        return true;
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Ошибка при получении данных: {response.StatusCode}",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Fetches passed instructions from the server and populates the TreeView
+        /// Based on FetchPassedInstructionsForChief() from ChiefForm.cs
+        /// </summary>
+        private async Task FetchPassedInstructionsForChief()
+        {
+            try
+            {
+                // Clear previous data
+                PassedEmployees.Clear();
+                treeViewPassedInstructions_Wpf.Items.Clear();
+
+                using (var httpClient = new HttpClient())
+                {
+                    // Get the JWT token from the login form
+                    string jwtToken = _loginForm._jwtToken;
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+                    // Make the API call to get passed instructions
+                    var response = await httpClient.GetAsync(ConfigurationClass.BASE_INSTRUCTIONS_URL_DEVELOPMENT + "/get-passed-instructions-for-chief");
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+                        // Deserialize the response to the DTO format from ChiefForm.cs
+                        var result = System.Text.Json.JsonSerializer.Deserialize<List<InstructionForChiefDto>>(
+                            jsonResponse,
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+
+                        if (result is null)
+                        {
+                            MessageBox.Show("Произошла ошибка при получении данных с сервера!",
+                                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+
+                        if (result.Count == 0)
+                        {
+                            MessageBox.Show("Нет пройденных инструктажей!",
+                                "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+                            return;
+                        }
+
+                        // Store globally for later use
+                        passedInstructionsForChief_global = result;
+
+                        // Populate the TreeView with passed instructions
+                        PopulatePassedInstructionsTreeView(result);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Ошибка при получении данных: {response.StatusCode}",
+                            "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Произошла ошибка: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Populates the not passed instructions TreeView based on ChiefForm.cs logic
+        /// </summary>
+        private void PopulateNotPassedInstructionsTreeView(List<InstructionForChiefDto> instructions)
+        {
+            treeViewInstructions_Wpf.Items.Clear();
+
+            // Group instructions by type (based on ChiefForm.cs logic)
+            var instructionsByType = instructions
+                .GroupBy(i => InstructionTypeMappings.GetInstructionName(i.TypeOfInstruction))
+                .OrderBy(g => g.Key);
+
+            foreach (var typeGroup in instructionsByType)
+            {
+                var typeNode = new TreeViewItem
+                {
+                    Header = $"{typeGroup.Key} ({typeGroup.Count()})",
+                    IsExpanded = true,
+                    Tag = $"TYPE_{typeGroup.Key}"
+                };
+
+                foreach (var instruction in typeGroup.OrderBy(i => i.CauseOfInstruction))
+                {
+                    var instructionNode = new TreeViewItem
+                    {
+                        Header = $"[{instruction.InstructionId}] {instruction.CauseOfInstruction}",
+                        Tag = instruction
+                    };
+
+                    // Add person nodes for this instruction
+                    if (instruction.Persons != null && instruction.Persons.Any())
+                    {
+                        foreach (var person in instruction.Persons.Where(p => !p.Passed))
+                        {
+                            var personNode = new TreeViewItem
+                            {
+                                Header = $"❌ {person.PersonName}",
+                                Tag = person
+                            };
+                            instructionNode.Items.Add(personNode);
+                        }
+                    }
+
+                    typeNode.Items.Add(instructionNode);
+                }
+
+                treeViewInstructions_Wpf.Items.Add(typeNode);
+            }
+        }
+
+        /// <summary>
+        /// Populates the passed instructions TreeView based on ChiefForm.cs logic
+        /// </summary>
+        private void PopulatePassedInstructionsTreeView(List<InstructionForChiefDto> instructions)
+        {
+            treeViewPassedInstructions_Wpf.Items.Clear();
+
+            // Group instructions by type (based on ChiefForm.cs logic)
+            var instructionsByType = instructions
+                .GroupBy(i => InstructionTypeMappings.GetInstructionName(i.TypeOfInstruction))
+                .OrderBy(g => g.Key);
+
+            foreach (var typeGroup in instructionsByType)
+            {
+                var typeNode = new TreeViewItem
+                {
+                    Header = $"{typeGroup.Key} ({typeGroup.Count()})",
+                    IsExpanded = true,
+                    Tag = $"TYPE_{typeGroup.Key}"
+                };
+
+                foreach (var instruction in typeGroup.OrderBy(i => i.CauseOfInstruction))
+                {
+                    var passedCount = instruction.Persons?.Count(p => p.Passed) ?? 0;
+                    var totalCount = instruction.Persons?.Count ?? 0;
+
+                    var instructionNode = new TreeViewItem
+                    {
+                        Header = $"[{instruction.InstructionId}] {instruction.CauseOfInstruction} ({passedCount}/{totalCount})",
+                        Tag = instruction
+                    };
+
+                    // Add person nodes for this instruction
+                    if (instruction.Persons != null && instruction.Persons.Any())
+                    {
+                        foreach (var person in instruction.Persons.Where(p => p.Passed))
+                        {
+                            var personNode = new TreeViewItem
+                            {
+                                Header = $"✅ {person.PersonName} ({person.DatePassed?.ToString("dd.MM.yyyy") ?? "N/A"})",
+                                Tag = person
+                            };
+                            instructionNode.Items.Add(personNode);
+                        }
+                    }
+
+                    typeNode.Items.Add(instructionNode);
+                }
+
+                treeViewPassedInstructions_Wpf.Items.Add(typeNode);
+            }
+        }
+
+        /// <summary>
+        /// Updates the not passed employees DataGrid based on selected instruction
+        /// Based on DisplayInstructionData() from ChiefForm.cs
+        /// </summary>
+        private void UpdateNotPassedEmployeesDataGrid(InstructionForChiefDto selectedInstruction)
+        {
+            try
+            {
+                NotPassedEmployees.Clear();
+
+                if (selectedInstruction?.Persons == null) return;
+
+                // Find people who haven't passed this instruction
+                var notPassedPersons = selectedInstruction.Persons.Where(p => !p.Passed);
+
+                foreach (var person in notPassedPersons)
+                {
+                    NotPassedEmployees.Add(new EmployeeComplianceViewModel
+                    {
+                        FullName = person.PersonName,
+                        Status = "Не пройден"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при отображении данных инструктажа: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Updates the passed employees DataGrid based on selected instruction
+        /// Based on ChiefForm.cs logic
+        /// </summary>
+        private void UpdatePassedEmployeesDataGrid(InstructionForChiefDto selectedInstruction)
+        {
+            try
+            {
+                PassedEmployees.Clear();
+
+                if (selectedInstruction?.Persons == null) return;
+
+                // Find people who have passed this instruction
+                var passedPersons = selectedInstruction.Persons.Where(p => p.Passed);
+
+                foreach (var person in passedPersons)
+                {
+                    PassedEmployees.Add(new EmployeeComplianceViewModel
+                    {
+                        FullName = person.PersonName,
+                        IsPassed = "Да",
+                        DatePassed = person.DatePassed?.ToString("dd.MM.yyyy") ?? "N/A"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при отображении данных инструктажа: {ex.Message}",
+                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region Missing Event Handlers for Control Tab
+
+        private void treeViewInstructions_Wpf_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            var selectedItem = e.NewValue as TreeViewItem;
+            if (selectedItem?.Tag is InstructionForChiefDto instruction)
+            {
+                UpdateNotPassedEmployeesDataGrid(instruction);
+            }
+        }
+
+        private void treeViewPassedInstructions_Wpf_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            var selectedItem = e.NewValue as TreeViewItem;
+            if (selectedItem?.Tag is InstructionForChiefDto instruction)
+            {
+                UpdatePassedEmployeesDataGrid(instruction);
+            }
+        }
+
+        private async void refreshDataButton_Wpf_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                await LoadControlTab();
+                MessageBox.Show("Данные обновлены.", "Информация",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка обновления данных: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void exportButton_Wpf_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                MessageBox.Show("Функция экспорта будет реализована в следующей версии.", "Информация",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка экспорта: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region Control Tab LoadControl
+
+        /// <summary>
+        /// Updated Control Tab loading method to use real data from ChiefForm.cs APIs
+        /// </summary>
+        private async Task LoadControlTab()
+        {
+            try
+            {
+                // Fetch real data from server using ChiefForm.cs methods
+                bool notPassedSuccess = await FetchNotPassedInstructionsForChief();
+
+                // Optionally fetch passed instructions if not passed were successful
+                if (notPassedSuccess)
+                {
+                    await FetchPassedInstructionsForChief();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки вкладки контроля: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+
         #region View Models
         public class InstructionViewModel : INotifyPropertyChanged
         {
@@ -1374,5 +1767,43 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
         }
         #endregion
+
+        public class EmployeeComplianceViewModel : INotifyPropertyChanged
+        {
+            private string _fullName;
+            private string _status;
+            private string _isPassed;
+            private string _datePassed;
+
+            public string FullName
+            {
+                get => _fullName;
+                set { _fullName = value; OnPropertyChanged(nameof(FullName)); }
+            }
+
+            public string Status
+            {
+                get => _status;
+                set { _status = value; OnPropertyChanged(nameof(Status)); }
+            }
+
+            public string IsPassed
+            {
+                get => _isPassed;
+                set { _isPassed = value; OnPropertyChanged(nameof(IsPassed)); }
+            }
+
+            public string DatePassed
+            {
+                get => _datePassed;
+                set { _datePassed = value; OnPropertyChanged(nameof(DatePassed)); }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected virtual void OnPropertyChanged(string propertyName)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
     }
 }

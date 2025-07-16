@@ -115,6 +115,166 @@
             <Setter Property="BorderBrush" Value="#D8DEE9"/>
             <Setter Property="Background" Value="White"/>
         </Style>
+
+        <!-- Missing styles for the Control tab -->
+        <Style x:Key="HeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="SubHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+            <Setter Property="Margin" Value="0,10,0,5"/>
+        </Style>
+
+        <Style x:Key="ModernDataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#D8DEE9"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#D8DEE9"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F8F9FA"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Background" Value="#5E81AC"/>
+            <Setter Property="BorderBrush" Value="#4C566A"/>
+        </Style>
+
+        <!-- TreeView Style for better readability -->
+        <Style x:Key="ModernTreeViewStyle" TargetType="TreeView">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#2E3440"/>
+            <Setter Property="BorderBrush" Value="#D8DEE9"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        </Style>
+
+        <!-- TreeViewItem Style for better hover and selection effects -->
+        <Style x:Key="ModernTreeViewItemStyle" TargetType="TreeViewItem">
+            <Setter Property="Foreground" Value="#2E3440"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="3,2"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TreeViewItem">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition MinWidth="19" Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Expander button -->
+                            <ToggleButton x:Name="Expander" 
+                                        ClickMode="Press" 
+                                        IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"/>
+
+                            <!-- Content area with background -->
+                            <Border x:Name="Bd" 
+                                  Grid.Column="1" 
+                                  Background="{TemplateBinding Background}" 
+                                  BorderBrush="{TemplateBinding BorderBrush}" 
+                                  BorderThickness="{TemplateBinding BorderThickness}" 
+                                  Padding="{TemplateBinding Padding}"
+                                  CornerRadius="2">
+                                <ContentPresenter x:Name="PART_Header" 
+                                                ContentSource="Header" 
+                                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+
+                            <!-- Children items -->
+                            <ItemsPresenter x:Name="ItemsHost" 
+                                          Grid.Row="1" 
+                                          Grid.Column="1" 
+                                          Grid.ColumnSpan="1"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="False">
+                                <Setter Property="Visibility" TargetName="ItemsHost" Value="Collapsed"/>
+                            </Trigger>
+                            <Trigger Property="HasItems" Value="False">
+                                <Setter Property="Visibility" TargetName="Expander" Value="Hidden"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" TargetName="Bd" Value="#E3F2FD"/>
+                                <Setter Property="Foreground" Value="#1976D2"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                    <Condition Property="IsSelectionActive" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" TargetName="Bd" Value="#F5F5F5"/>
+                                <Setter Property="Foreground" Value="#666666"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" TargetName="Bd" Value="#F0F8FF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#AAAAAA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Simple Expander Style for TreeView -->
+        <Style x:Key="ExpandCollapseToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="Transparent" Height="16" Padding="5,5,5,5" Width="16">
+                            <Path x:Name="ExpandPath" 
+                                  Data="M0,0 L0,6 L6,0 z" 
+                                  Fill="#2E3440" 
+                                  Stroke="#2E3440">
+                                <Path.RenderTransform>
+                                    <RotateTransform Angle="135" CenterX="3" CenterY="3"/>
+                                </Path.RenderTransform>
+                            </Path>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="RenderTransform" TargetName="ExpandPath">
+                                    <Setter.Value>
+                                        <RotateTransform Angle="180" CenterX="3" CenterY="3"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Fill" TargetName="ExpandPath" Value="#5E81AC"/>
+                                <Setter Property="Stroke" TargetName="ExpandPath" Value="#5E81AC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -264,7 +424,97 @@
                     </Grid>
                 </Grid>
             </TabItem>
+            <!-- Tab 2: Контроль (Training Compliance) -->
+            <TabItem Header="🔍 Контроль" Style="{StaticResource TabItemStyle}">
+                <Grid Margin="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
+                    <!-- Header -->
+                    <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" 
+                              Text="📊 Контроль прохождения инструктажей" 
+                              Style="{StaticResource HeaderStyle}" 
+                              Margin="0,0,0,20"/>
+
+                    <!-- Left Column Top: Instructions Tree (Updated) -->
+                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,10,0">
+                        <TextBlock Text="📋 Инструктажи:" Style="{StaticResource SubHeaderStyle}"/>
+                        <TreeView x:Name="treeViewInstructions_Wpf" Height="200" 
+             Style="{StaticResource ModernTreeViewStyle}"
+             ItemContainerStyle="{StaticResource ModernTreeViewItemStyle}"
+             SelectedItemChanged="treeViewInstructions_Wpf_SelectedItemChanged">
+                        </TreeView>
+                    </StackPanel>
+
+                    <!-- Right Column Top: Not Passed Instructions -->
+                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="10,0,0,0">
+                        <TextBlock Text="❌ Не прошедшие инструктаж:" Style="{StaticResource SubHeaderStyle}"/>
+                        <DataGrid x:Name="dataGridViewPeopleThatNotPassedInstr_Wpf" Height="200"
+                                 Style="{StaticResource ModernDataGridStyle}"
+                                 AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="*"/>
+                                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+
+                    <!-- Separator -->
+                    <Border Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" 
+                           Height="1" Background="#4C566A" Margin="0,20"/>
+
+                    <!-- Left Column Bottom: Passed Instructions Tree (Updated) -->
+                    <StackPanel Grid.Column="0" Grid.Row="3" Margin="0,20,10,0">
+                        <TextBlock Text="📊 Пройденные инструктажи:" Style="{StaticResource SubHeaderStyle}"/>
+                        <TreeView x:Name="treeViewPassedInstructions_Wpf" Height="200" 
+             Style="{StaticResource ModernTreeViewStyle}"
+             ItemContainerStyle="{StaticResource ModernTreeViewItemStyle}"
+             SelectedItemChanged="treeViewPassedInstructions_Wpf_SelectedItemChanged">
+                        </TreeView>
+                    </StackPanel>
+
+                    <!-- Right Column Bottom: Passed Instructions Details -->
+                    <StackPanel Grid.Column="1" Grid.Row="3" Margin="10,20,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="✅ Прошедшие инструктаж:" Style="{StaticResource SubHeaderStyle}"/>
+
+                            <DataGrid x:Name="dataGridViewPassedInstructions_Wpf" Grid.Row="1" Height="150"
+                                     Style="{StaticResource ModernDataGridStyle}"
+                                     AutoGenerateColumns="False">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="*"/>
+                                    <DataGridTextColumn Header="Пройден" Binding="{Binding IsPassed}" Width="80"/>
+                                    <DataGridTextColumn Header="Дата" Binding="{Binding DatePassed}" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <!-- Control Buttons -->
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,15,0,0">
+                                <Button x:Name="refreshDataButton_Wpf" Content="🔄 Обновить данные" 
+                                       Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"
+                                       Click="refreshDataButton_Wpf_Click"/>
+                                <Button x:Name="exportButton_Wpf" Content="📊 Экспорт" 
+                                       Style="{StaticResource PrimaryButtonStyle}"
+                                       Click="exportButton_Wpf_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
             <!-- Additional tabs would go here -->
 
         </TabControl>

@@ -141,6 +141,19 @@ namespace Kotova.Test1.ClientSide
             { "Целевой", 5 }
         };
 
+        public static string GetInstructionName(byte typeOfInstruction)
+        {
+            return typeOfInstruction switch
+            {
+                0 => "Вводный инструктаж",
+                1 => "Внеплановый инструктаж",
+                2 => "Первичный инструктаж",
+                3 => "Повторный инструктаж",
+                4 => "Целевой инструктаж",
+                _ => "Неизвестный тип"
+            };
+        }
+
         // Helper method to get name from ID
         public static string GetInstructionName(int id)
         {

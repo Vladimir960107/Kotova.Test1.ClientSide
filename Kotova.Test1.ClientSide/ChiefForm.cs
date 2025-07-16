@@ -1732,7 +1732,7 @@ namespace Kotova.Test1.ClientSide
                         instructionForChiefs_global = result;
 
                         // Group instructions by type
-                        var instructionsByType = result.GroupBy(i => i.TypeOfInstruction ?? "Неизвестный тип");
+                        var instructionsByType = result.GroupBy(i => i.TypeName ?? "Неизвестный тип"); //НЕПРОВЕРЕНО ПОСЛЕ ОБНОВЛЕНИЯ С TypeOFINSTRUCTION TO TypeNAme
 
                         // Populate the TreeView with instruction types and causes
                         foreach (var typeGroup in instructionsByType)
@@ -1890,7 +1890,7 @@ namespace Kotova.Test1.ClientSide
                         passedInstructionsForChief_global = result;
 
                         // Group instructions by type
-                        var instructionsByType = result.GroupBy(i => i.TypeOfInstruction ?? "Неизвестный тип");
+                        var instructionsByType = result.GroupBy(i => i.TypeName ?? "Неизвестный тип"); //НЕПРОВЕРЕНО ПОСЛЕ ОБНОВЛЕНИЯ С TypeOFINSTRUCTION TO TypeNAme
 
                         // Populate the TreeView with instruction types and causes
                         foreach (var typeGroup in instructionsByType)
@@ -1900,9 +1900,9 @@ namespace Kotova.Test1.ClientSide
                             typeNode.Tag = "Type"; // Mark as a type node
 
                             // Add child nodes for each instruction in this type, sorted by PassedPercentage in descending order
-                            foreach (var instruction in typeGroup.OrderByDescending(i => i.PassedPercentage))
+                            foreach (var instruction in typeGroup.OrderByDescending(i => i.CompletionPercentage))
                             {
-                                string completionStatus = instruction.IsPassedByEveryone ? "[ЗАВЕРШЕН]" : $"[{instruction.PassedPercentage:F0}%]";
+                                string completionStatus = instruction.IsPassedByEveryone ? "[ЗАВЕРШЕН]" : $"[{instruction.CompletionPercentage:F0}%]";
                                 TreeNode causeNode = new TreeNode($"{completionStatus} [{instruction.InstructionId}]: {instruction.CauseOfInstruction}");
                                 causeNode.Tag = instruction.InstructionId; // Store instruction ID in the Tag property
 
@@ -1911,11 +1911,11 @@ namespace Kotova.Test1.ClientSide
                                 {
                                     causeNode.ForeColor = Color.Green;
                                 }
-                                else if (instruction.PassedPercentage >= 75)
+                                else if (instruction.CompletionPercentage >= 75)
                                 {
                                     causeNode.ForeColor = Color.DarkGreen;
                                 }
-                                else if (instruction.PassedPercentage >= 50)
+                                else if (instruction.CompletionPercentage >= 50)
                                 {
                                     causeNode.ForeColor = Color.Orange;
                                 }
