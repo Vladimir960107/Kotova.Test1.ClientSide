@@ -673,7 +673,15 @@
 
                                         <ListView x:Name="employeeDetailsListView_Wpf" 
                                      Height="300" 
-                                     Style="{StaticResource ListViewStyle}">
+                                     Style="{StaticResource ListViewStyle}" RenderTransformOrigin="0.5,0.5">
+                                            <ListView.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform/>
+                                                    <SkewTransform AngleX="-0.252"/>
+                                                    <RotateTransform/>
+                                                    <TranslateTransform X="-0.661"/>
+                                                </TransformGroup>
+                                            </ListView.RenderTransform>
                                             <ListView.View>
                                                 <GridView>
                                                     <GridViewColumn Header="ФИО" Width="200" DisplayMemberBinding="{Binding FullName}"/>
@@ -694,8 +702,8 @@
 
 
             <!-- Additional tabs would go here -->
-            
-            
+
+
 
         </TabControl>
 
