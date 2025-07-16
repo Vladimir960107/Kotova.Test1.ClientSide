@@ -991,7 +991,7 @@ namespace Kotova.Test1.ClientSide.ChiefWPF
             else
             {
                 // For other instruction types, use standard processing
-                return string.Join("; ", normativeDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
+                return string.Join(";\n", normativeDocuments.Where(d => !string.IsNullOrWhiteSpace(d)));
             }
         }
 
